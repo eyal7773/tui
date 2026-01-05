@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TUI Navigator</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>TUI Navigator</h1>
+      <div id="status-indicator" class="status-badge offline">Inactive</div>
+    </header>
+
+    <main>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="status">Status</button>
+        <button class="tab-btn" data-tab="about">About</button>
+      </div>
+
+      <div id="status-tab" class="tab-content active">
+        <div class="card">
+          <h2>Current Site</h2>
+          <p id="current-site">Detecting...</p>
+          <div class="toggle-container">
+            <label class="switch">
+              <input type="checkbox" id="site-toggle">
+              <span class="slider round"></span>
+            </label>
+            <span id="toggle-label">Enable TUI</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Live Metrics</h2>
+          <div class="metric-row">
+            <span>Total Actions:</span>
+            <span id="total-actions">0</span>
+          </div>
+          <div class="metric-row">
+            <span>Elements Found:</span>
+            <span id="elements-found">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="about-tab" class="tab-content">
+        <div class="card">
+          <h2>Shortcuts</h2>
+          <ul class="shortcuts-list">
+            <li><kbd>↓</kbd> / <kbd>↑</kbd> <span>Navigate Vertical</span></li>
+            <li><kbd>→</kbd> / <kbd>←</kbd> <span>Navigate Horizontal</span></li>
+            <li><kbd>Enter</kbd> <span>Activate</span></li>
+            <li><kbd>Esc</kbd> <span>Exit TUI</span></li>
+          </ul>
+        </div>
+        <div class="footer-info">
+          <p>Version: <span id="app-version">1.0</span></p>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
