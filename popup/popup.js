@@ -11,6 +11,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Config Tab Handler
+    const configTabBtn = document.querySelector('.tab-btn[data-tab="config"]');
+    if (configTabBtn) {
+        configTabBtn.addEventListener('click', () => {
+            loadConfig();
+        });
+    }
+
+    // Save Config Handler
+    document.getElementById('save-config').addEventListener('click', saveConfig);
+
     // Load initial stats
     updateStats();
 
@@ -95,4 +106,55 @@ function updateStats() {
     // Set version
     const manifest = chrome.runtime.getManifest();
     document.getElementById('app-version').textContent = manifest.version;
+}
+
+function loadConfig() {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (!tabs[0]) return;
+
+        chrome.tabs.sendMessage(tabs[0].id, { type: 'GET_STRATEGY' }, (response) => {
+            const editor = document.getElementById('config-editor');
+            if (chrome.runtime.lastError || !response) {
+                editor.value = '// Error connecting to page or TUI not active.\n// Try reloading the page.';
+                return;
+            }
+
+            // Format JSON nicely (2 spaces)
+            editor.value = JSON.stringify(response, null, 2);
+        });
+    });
+}
+
+function saveConfig() {
+    const editor = document.getElementById('config-editor');
+    const statusEl = document.getElementById('config-status');
+    const resetStatus = () => setTimeout(() => { statusEl.textContent = ''; statusEl.className = ''; }, 3000);
+
+    try {
+        const config = JSON.parse(editor.value);
+
+        // Send to content script
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (!tabs[0]) return;
+
+            chrome.tabs.sendMessage(tabs[0].id, {
+                type: 'UPDATE_STRATEGY',
+                payload: config
+            }, (response) => {
+                if (response && response.success) {
+                    statusEl.textContent = 'Saved & Reloaded!';
+                    statusEl.className = 'success';
+                } else {
+                    statusEl.textContent = 'Failed to update page.';
+                    statusEl.className = 'error';
+                }
+                resetStatus();
+            });
+        });
+
+    } catch (e) {
+        statusEl.textContent = 'Invalid JSON: ' + e.message;
+        statusEl.className = 'error';
+        // resetStatus();
+    }
 }

@@ -44,6 +44,17 @@ class StrategyManager {
     getStrategy(url) {
         return this.adapters.find(adapter => adapter.match(url));
     }
+
+    createStrategy(config) {
+        // Hydrate config if needed (e.g. converting string pattern to RegExp)
+        if (typeof config.pattern === 'string' && config.pattern.startsWith('/')) {
+            // Simple regex hydration - specific to how we stringified it? 
+            // Actually, JSON.stringify turns regex to {}, so we need to be careful.
+            // For now, let's assume the user edits the "selector" mainly.
+            // If they provide a "pattern" string, we use it.
+        }
+        return new SiteAdapter(config);
+    }
 }
 
 // Site Configurations

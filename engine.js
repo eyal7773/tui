@@ -19,26 +19,45 @@ class TUIEngine {
     }
 
     async init() {
+        console.log('[TUI-LOG] Initializing TUI Engine...'); // LOG-ADD
         // 1. Check if globally enabled
-        const storage = await chrome.storage.local.get(['tuiEnabled']);
+        const storage = await chrome.storage.local.get(['tuiEnabled', 'tui_overrides']); // LOG-MOD
         this.isEnabled = storage.tuiEnabled !== false; // Default true
 
         // 2. Identify Strategy
         const manager = window.TUIStrategyManager;
-        if (!manager) {
-            console.warn('TUI: StrategyManager not found.');
-            return;
+        const currentUrl = window.location.href;
+        const hostname = window.location.hostname; // Key for overrides
+
+        // Check for overrides
+        let overrideConfig = null;
+        if (storage.tui_overrides && storage.tui_overrides[hostname]) {
+            console.log('[TUI-LOG] Found override for this site.');
+            overrideConfig = storage.tui_overrides[hostname];
         }
 
-        this.strategy = manager.getStrategy(window.location.href);
+        if (!manager) {
+            if (!manager) {
+                console.warn('TUI: StrategyManager not found.');
+                return;
+            }
+
+        }
+
+        if (overrideConfig) {
+            this.strategy = manager.createStrategy(overrideConfig);
+        } else {
+            this.strategy = manager.getStrategy(window.location.href);
+        }
 
         // 3. Setup Listeners
         this.attachMessageListener();
 
         if (this.strategy && this.isEnabled) {
-            console.log(`TUI: Active on ${this.strategy.name}`);
+            console.log(`[TUI-LOG] Active on ${this.strategy.name}`); // LOG-MOD
             this.isActive = true;
             this.updateElements();
+            console.log(`[TUI-LOG] Initial elements count: ${this.interactiveElements.length}`); // LOG-ADD
             this.attachDOMListeners();
         } else if (this.strategy) {
             console.log(`TUI: Match found (${this.strategy.name}) but extension is disabled.`);
@@ -54,6 +73,27 @@ class TUIEngine {
                     elementCount: this.interactiveElements.length,
                     enabled: this.isEnabled
                 });
+            } else if (message.type === 'GET_STRATEGY') {
+                if (this.strategy) {
+                    // Serialize function if needed
+                    const s = { ...this.strategy };
+                    if (typeof s.customExtract === 'function') {
+                        s.customExtract = s.customExtract.toString();
+                    }
+                    // Remove internal class props if needed or just send the POJO
+                    sendResponse({
+                        name: s.name,
+                        type: s.type,
+                        selector: s.selector,
+                        pattern: s.pattern.toString(), // Regex to string
+                        customExtract: typeof s.customExtract === 'function' ? s.customExtract.toString() : s.customExtract
+                    });
+                } else {
+                    sendResponse(null);
+                }
+            } else if (message.type === 'UPDATE_STRATEGY') {
+                this.handleStrategyUpdate(message.payload);
+                sendResponse({ success: true });
             } else if (message.type === 'TOGGLE_STATE') {
                 this.isEnabled = message.payload.enabled;
                 if (this.isEnabled && this.strategy) {
@@ -74,7 +114,7 @@ class TUIEngine {
     updateElements() {
         if (this.strategy && this.isActive) {
             this.interactiveElements = this.strategy.getElements();
-            // console.log(`TUI: Found ${this.interactiveElements.length} elements.`);
+            console.log(`[TUI-LOG] Updated elements. Found: ${this.interactiveElements.length}`); // LOG-ADD
         }
     }
 
@@ -107,10 +147,21 @@ class TUIEngine {
     }
 
     handleKeydown(e) {
-        if (!this.isActive || !this.isEnabled || this.interactiveElements.length === 0) return;
+        if (!this.isActive) { return; } // Silent fail if not active
+        if (!this.isEnabled) { return; }
+
+        console.log(`[TUI-LOG] Keydown detected: ${e.key}`); // LOG-ADD
+
+        if (this.interactiveElements.length === 0) {
+            console.log('[TUI-LOG] No interactive elements found, ignoring key.'); // LOG-ADD
+            return;
+        }
 
         // Ignore if user is typing in an input
-        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || document.activeElement.isContentEditable) return;
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || document.activeElement.isContentEditable) {
+            console.log('[TUI-LOG] Ignored: User is typing in input.'); // LOG-ADD
+            return;
+        }
 
         switch (e.key) {
             case 'ArrowDown':
@@ -139,6 +190,7 @@ class TUIEngine {
 
         const oldIndex = this.focusIndex;
         let newIndex = this.focusIndex + direction;
+        console.log(`[TUI-LOG] Moving focus. Old: ${oldIndex}, New Raw: ${newIndex}, Direction: ${direction}`); // LOG-ADD
 
         // Bounds checking
         if (newIndex < 0) newIndex = 0;
@@ -160,6 +212,7 @@ class TUIEngine {
         // Add class to new
         if (newIndex >= 0 && this.interactiveElements[newIndex]) {
             const el = this.interactiveElements[newIndex];
+            console.log(`[TUI-LOG] Rendering focus on element index ${newIndex}`, el); // LOG-ADD
             el.classList.add('tui-focus-indicator');
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             el.focus({ preventScroll: true }); // Native focus as well for accessibility
@@ -196,6 +249,27 @@ class TUIEngine {
             // Context might be invalidated
             console.log('TUI Metric Error:', e);
         }
+    }
+
+    handleStrategyUpdate(config) {
+        console.log('[TUI-LOG] Received strategy update:', config);
+
+        // Save to storage (persist)
+        const hostname = window.location.hostname;
+        chrome.storage.local.get(['tui_overrides'], (result) => {
+            const overrides = result.tui_overrides || {};
+            overrides[hostname] = config;
+            chrome.storage.local.set({ tui_overrides: overrides });
+        });
+
+        // Apply immediately
+        const manager = window.TUIStrategyManager;
+        this.strategy = manager.createStrategy(config);
+
+        // Reset and re-init
+        this.resetFocus();
+        this.updateElements();
+        console.log(`[TUI-LOG] Strategy reloaded. Found ${this.interactiveElements.length} elements.`);
     }
 }
 
