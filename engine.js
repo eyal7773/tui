@@ -75,14 +75,39 @@ class TUIEngine {
                 });
             } else if (message.type === 'GET_STRATEGY') {
                 if (this.strategy) {
-                    const s = { ...this.strategy };
-                    // ... serialization ...
-                    sendResponse({ /* simplify for this edit */ name: s.name });
+                    const s = this.strategy;
+                    const response = {
+                        name: s.name,
+                        type: s.type,
+                        selector: s.selector,
+                        pattern: s.pattern instanceof RegExp ? s.pattern.toString() : s.pattern,
+                        customExtract: typeof s.customExtract === 'function' ? s.customExtract.toString() : s.customExtract,
+                        zones: s.zones,
+                        neighbors: s.neighbors
+                    };
+                    sendResponse(response);
                 } else {
                     sendResponse(null);
                 }
             } else if (message.type === 'UPDATE_STRATEGY') {
                 this.handleStrategyUpdate(message.payload);
+                sendResponse({ success: true });
+            } else if (message.type === 'RESET_STRATEGY') {
+                const hostname = window.location.hostname;
+                chrome.storage.local.get(['tui_overrides'], (result) => {
+                    const overrides = result.tui_overrides || {};
+                    if (overrides[hostname]) {
+                        delete overrides[hostname];
+                        chrome.storage.local.set({ tui_overrides: overrides });
+                    }
+                });
+
+                // Reload default
+                const manager = window.TUIStrategyManager;
+                this.strategy = manager.getStrategy(window.location.href);
+                this.resetFocus();
+                this.updateElements();
+                console.log('[TUI-LOG] Reset to default strategy.');
                 sendResponse({ success: true });
             } else if (message.type === 'TOGGLE_STATE') {
                 this.isEnabled = message.payload.enabled;

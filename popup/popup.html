@@ -59,7 +59,7 @@
           </ul>
         </div>
         <div class="footer-info">
-          <p>Version: <span id="app-version">1.0</span></p>
+          <p>Version: <span id="app-version">1.1</span></p>
         </div>
       </div>
 
@@ -68,7 +68,10 @@
         <div class="config-container">
           <label for="config-editor">Strategy Config (JSON):</label>
           <textarea id="config-editor" rows="10" spellcheck="false"></textarea>
-          <button id="save-config" class="primary-btn">Save & Reload</button>
+          <div class="button-group">
+            <button id="save-config" class="primary-btn">Save & Reload</button>
+            <button id="reset-config" class="secondary-btn" style="background-color: #f44336;">Reset Default</button>
+          </div>
           <div id="config-status"></div>
         </div>
       </div>
