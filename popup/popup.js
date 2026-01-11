@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.getElementById('site-toggle');
     toggle.addEventListener('change', (e) => {
         const isEnabled = e.target.checked;
-        chrome.storage.local.set({ tuiEnabled: isEnabled }); // Triggers onChanged
+        chrome.storage.local.set({ tuiEnabled: isEnabled });
 
         // Notify active tab immediately
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -43,6 +43,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Admin Mode Easter Egg
+    const versionEl = document.getElementById('app-version');
+    let versionClickCount = 0;
+    let versionClickTimer = null;
+
+    versionEl.addEventListener('click', () => {
+        versionClickCount++;
+        clearTimeout(versionClickTimer);
+
+        // Reset count if valid pause
+        versionClickTimer = setTimeout(() => {
+            versionClickCount = 0;
+        }, 2000);
+
+        if (versionClickCount === 10) {
+            versionClickCount = 0;
+            // Toggle Admin Mode
+            chrome.storage.local.get(['tuiAdminMode'], (result) => {
+                const newState = !result.tuiAdminMode;
+                chrome.storage.local.set({ tuiAdminMode: newState });
+                // Visual / Haptic feedback could go here, but UI update in onChanged handles it
+            });
+        }
+    });
+
     // Listen for storage changes (Live Metrics & External Toggles)
     chrome.storage.onChanged.addListener((changes, namespace) => {
         if (namespace === 'local') {
@@ -55,19 +80,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 // We'll let refreshState or user interaction handle badge, 
                 // but checking here ensures sync if changed elsewhere
             }
+            if (changes.tuiAdminMode) {
+                updateAdminInterface(changes.tuiAdminMode.newValue);
+            }
         }
     });
 });
 
 function refreshState() {
-    // 1. Load Metrics from Storage
-    chrome.storage.local.get(['totalActions', 'tuiEnabled'], (result) => {
+    // 1. Load Storage (Metrics, Enabled, Admin)
+    chrome.storage.local.get(['totalActions', 'tuiEnabled', 'tuiAdminMode'], (result) => {
         if (result.totalActions !== undefined) {
             document.getElementById('total-actions').textContent = result.totalActions;
         }
         // Set toggle initial state
         const isEnabled = result.tuiEnabled !== false; // Default true
         document.getElementById('site-toggle').checked = isEnabled;
+
+        updateAdminInterface(result.tuiAdminMode || false);
     });
 
     // 2. Load Engine Status (The Truth)
@@ -128,6 +158,18 @@ function refreshState() {
     // Version
     const manifest = chrome.runtime.getManifest();
     document.getElementById('app-version').textContent = manifest.version;
+}
+
+function updateAdminInterface(isAdmin) {
+    const configBtn = document.querySelector('.tab-btn[data-tab="config"]');
+    if (configBtn) {
+        configBtn.style.display = isAdmin ? 'block' : 'none';
+
+        // If we are currently ON the config tab and it gets hidden, switch to status
+        if (!isAdmin && configBtn.classList.contains('active')) {
+            document.querySelector('.tab-btn[data-tab="status"]').click();
+        }
+    }
 }
 
 function updateStatusBadge(isEnabled, isSupported) {

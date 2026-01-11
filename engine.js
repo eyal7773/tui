@@ -9,6 +9,7 @@ class TUIEngine {
 
         this.isActive = false;
         this.isEnabled = true;
+        this.adminMode = false; // Admin Mode
         this.strategy = null;
         this.observer = null;
         this.debounceTimer = null;
@@ -21,15 +22,25 @@ class TUIEngine {
     }
 
     async init() {
-        console.log('[TUI-LOG] Initializing TUI Engine...');
-        const storage = await chrome.storage.local.get(['tuiEnabled', 'tui_overrides']);
+        const storage = await chrome.storage.local.get(['tuiEnabled', 'tui_overrides', 'tuiAdminMode']);
         this.isEnabled = storage.tuiEnabled !== false;
+        this.adminMode = !!storage.tuiAdminMode;
+
+        this.log('[TUI-LOG] Initializing TUI Engine...');
+
+        // Listen for dynamic admin mode toggle
+        chrome.storage.onChanged.addListener((changes, namespace) => {
+            if (namespace === 'local' && changes.tuiAdminMode) {
+                this.adminMode = !!changes.tuiAdminMode.newValue;
+                if (this.adminMode) console.log('[TUI-LOG] Admin Mode Enabled');
+            }
+        });
 
         const manager = window.TUIStrategyManager;
         const hostname = window.location.hostname;
         let overrideConfig = null;
         if (storage.tui_overrides && storage.tui_overrides[hostname]) {
-            console.log('[TUI-LOG] Found override for this site.');
+            this.log('[TUI-LOG] Found override for this site.');
             overrideConfig = storage.tui_overrides[hostname];
         }
 
@@ -47,12 +58,12 @@ class TUIEngine {
         this.attachMessageListener();
 
         if (this.strategy && this.isEnabled) {
-            console.log(`[TUI-LOG] Active on ${this.strategy.name}`);
+            this.log(`[TUI-LOG] Active on ${this.strategy.name}`);
             this.isActive = true;
             this.updateElements();
             this.attachDOMListeners();
         } else if (this.strategy) {
-            console.log(`TUI: Match found (${this.strategy.name}) but extension is disabled.`);
+            this.log(`TUI: Match found (${this.strategy.name}) but extension is disabled.`);
         }
 
         // Initial Broadcast
@@ -63,10 +74,16 @@ class TUIEngine {
             // Even if not persisted, it doesn't hurt to re-broadcast on show
             // But definitely if persisted (restored from cache)
             if (event.persisted) {
-                console.log('[TUI-LOG] Page restored from cache. Re-broadcasting status.');
+                this.log('[TUI-LOG] Page restored from cache. Re-broadcasting status.');
             }
             this.broadcastStatus();
         });
+    }
+
+    log(...args) {
+        if (this.adminMode) {
+            console.log(...args);
+        }
     }
 
     broadcastStatus() {
@@ -136,7 +153,7 @@ class TUIEngine {
                 this.strategy = manager.getStrategy(window.location.href);
                 this.resetFocus();
                 this.updateElements();
-                console.log('[TUI-LOG] Reset to default strategy.');
+                this.log('[TUI-LOG] Reset to default strategy.');
                 this.broadcastStatus(); // Update badge
                 sendResponse({ success: true });
             } else if (message.type === 'TOGGLE_STATE') {
@@ -163,7 +180,7 @@ class TUIEngine {
         } else {
             // Legacy/Simple mode
             this.interactiveElements = this.strategy.getElements();
-            console.log(`[TUI-LOG] Updated elements. Found: ${this.interactiveElements.length}`);
+            this.log(`[TUI-LOG] Updated elements. Found: ${this.interactiveElements.length}`);
         }
     }
 
@@ -197,7 +214,7 @@ class TUIEngine {
             }
         }
 
-        console.log(`[TUI-LOG] Updated Zoned Elements. Active Zone: ${this.activeZoneId}`);
+        this.log(`[TUI-LOG] Updated Zoned Elements. Active Zone: ${this.activeZoneId}`);
     }
 
     attachDOMListeners() {
@@ -314,7 +331,7 @@ class TUIEngine {
 
             if (targetElements && targetElements.length > 0) {
                 // Switch
-                console.log(`[TUI-LOG] Switching Zone: ${currentZone.id} -> ${targetZoneId} (${direction})`);
+                this.log(`[TUI-LOG] Switching Zone: ${currentZone.id} -> ${targetZoneId} (${direction})`);
                 this.activeZoneId = targetZoneId;
                 this.focusIndex = 0; // Reset to top of new zone (could be improved with spatial later)
                 this.renderFocusZoned(targetElements[0]);
@@ -391,7 +408,7 @@ class TUIEngine {
 
 
     handleStrategyUpdate(config) {
-        console.log('[TUI-LOG] Received strategy update:', config);
+        this.log('[TUI-LOG] Received strategy update:', config);
 
         // Save to storage (persist)
         const hostname = window.location.hostname;
@@ -408,7 +425,7 @@ class TUIEngine {
         // Reset and re-init
         this.resetFocus();
         this.updateElements();
-        console.log(`[TUI-LOG] Strategy reloaded. Found ${this.interactiveElements.length} elements.`);
+        this.log(`[TUI-LOG] Strategy reloaded. Found ${this.interactiveElements.length} elements.`);
     }
 }
 

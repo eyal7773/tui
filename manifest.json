@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TUI Navigator",
-  "version": "1.0",
+  "version": "1.4",
   "description": "Transform browsing into a Text-based User Interface navigation experience.",
   "permissions": [
     "storage",
@@ -12,17 +12,24 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["config.js", "engine.js"],
-      "css": ["styles.css"]
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "config.js",
+        "engine.js"
+      ],
+      "css": [
+        "styles.css"
+      ]
     }
   ],
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {
-        "16": "icons/icon16.png",
-        "48": "icons/icon48.png",
-        "128": "icons/icon128.png"
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
     }
   },
   "icons": {
