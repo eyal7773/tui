@@ -259,6 +259,9 @@ class TUIEngine {
     handleNavigation(key) {
         this.updateElements(); // Refresh
 
+        // Track the user action
+        this.trackMetric('tui_nav_move');
+
         if (this.strategy.type === 'ZONED_LAYOUT') {
             this.handleZonedNavigation(key);
         } else {

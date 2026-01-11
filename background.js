@@ -37,6 +37,16 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
+// In-memory cache to prevent race conditions
+let localTotal = 0;
+let isInitialized = false;
+
+// Initialize cache
+chrome.storage.local.get(['totalActions'], (result) => {
+  localTotal = result.totalActions || 0;
+  isInitialized = true;
+});
+
 function updateBadge(tabId, state) {
   if (state.supported && state.enabled) {
     chrome.action.setBadgeText({ text: 'ON', tabId: tabId });
@@ -47,8 +57,15 @@ function updateBadge(tabId, state) {
 }
 
 function handleMetricEvent(payload) {
-  chrome.storage.local.get(['totalActions'], (result) => {
-    let current = result.totalActions || 0;
-    chrome.storage.local.set({ totalActions: current + 1 });
-  });
+  if (isInitialized) {
+    localTotal++;
+    chrome.storage.local.set({ totalActions: localTotal });
+  } else {
+    // Fallback if event comes before init finishes (rare but possible)
+    chrome.storage.local.get(['totalActions'], (result) => {
+      localTotal = (result.totalActions || 0) + 1;
+      isInitialized = true;
+      chrome.storage.local.set({ totalActions: localTotal });
+    });
+  }
 }
