@@ -75,27 +75,50 @@ const SITE_CONFIGS = [
         type: ExtractionType.ZONED_LAYOUT,
         zones: [
             {
+                id: 'search_box',
+                selector: 'textarea[name="q"], textarea.gLFyf',
+                direction: 'horizontal'
+            },
+            {
                 id: 'tabs',
-                selector: '.hdtb-mitem a, .nfSAd a', // Standard tabs + "More" menu
-                direction: 'horizontal',
-                style: 'border-bottom: 2px solid blue' // Optional debug style
+                selector: '.Fgyi2e.rZj61.caNvfd a, .hdtb-mitem a',
+                direction: 'horizontal'
+            },
+            {
+                id: 'ai_overview',
+                selector: '.OZ9ddf.WAUd4 a, .OZ9ddf.WAUd4 [tabindex="0"]',
+                direction: 'vertical'
+            },
+            {
+                id: 'top_button',
+                selector: '.in7vHe.oQOpie.btku5b.NQYJvc.FR7ZSc.sjVJQd',
+                direction: 'vertical'
             },
             {
                 id: 'results',
-                selector: '#search a:has(h3), #rso .g a:has(h3)', // Main results
+                // Merging Main Results + People Also Ask (eJH8qe...)
+                selector: '#search a:has(h3), #rso .g a:has(h3), .eJH8qe.adDDi .UDZeY a',
                 direction: 'vertical',
                 default: true
-            },
-            {
-                id: 'sidebar',
-                selector: '#rhs a.wUn7G, #rhs a:has(h2)', // Knowledge graph
-                direction: 'vertical'
             }
         ],
         neighbors: {
-            'results': { 'up': 'tabs', 'right': 'sidebar' },
-            'tabs': { 'down': 'results', 'right': 'sidebar' }, // Fallback if sidebar is high up
-            'sidebar': { 'left': 'results', 'up': 'tabs' }
+            'search_box': { 'down': ['tabs', 'ai_overview', 'top_button', 'results'] },
+            'tabs': {
+                'up': 'search_box',
+                'down': ['ai_overview', 'top_button', 'results']
+            },
+            'ai_overview': {
+                'up': ['tabs', 'search_box'],
+                'down': ['top_button', 'results']
+            },
+            'top_button': {
+                'up': ['ai_overview', 'tabs', 'search_box'],
+                'down': ['results']
+            },
+            'results': {
+                'up': ['top_button', 'ai_overview', 'tabs', 'search_box']
+            }
         }
     },
     {

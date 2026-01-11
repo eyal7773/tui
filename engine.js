@@ -329,15 +329,23 @@ class TUIEngine {
         const zoneNeighbors = neighbors[currentZone.id];
 
         if (zoneNeighbors && zoneNeighbors[direction]) {
-            const targetZoneId = zoneNeighbors[direction];
-            const targetElements = this.zoneElementsMap.get(targetZoneId);
+            const targets = Array.isArray(zoneNeighbors[direction])
+                ? zoneNeighbors[direction]
+                : [zoneNeighbors[direction]];
 
-            if (targetElements && targetElements.length > 0) {
-                // Switch
-                this.log(`[TUI-LOG] Switching Zone: ${currentZone.id} -> ${targetZoneId} (${direction})`);
-                this.activeZoneId = targetZoneId;
-                this.focusIndex = 0; // Reset to top of new zone (could be improved with spatial later)
-                this.renderFocusZoned(targetElements[0]);
+            for (const targetZoneId of targets) {
+                const targetElements = this.zoneElementsMap.get(targetZoneId);
+
+                if (targetElements && targetElements.length > 0) {
+                    // Switch
+                    this.log(`[TUI-LOG] Switching Zone: ${currentZone.id} -> ${targetZoneId} (${direction})`);
+                    this.activeZoneId = targetZoneId;
+                    this.focusIndex = 0; // Reset to top of new zone (could be improved with spatial later)
+                    this.renderFocusZoned(targetElements[0]);
+                    return; // Found a valid target
+                } else {
+                    this.log(`[TUI-LOG] Skipping empty/missing zone: ${targetZoneId}`);
+                }
             }
         }
     }
