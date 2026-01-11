@@ -54,11 +54,39 @@ class TUIEngine {
         } else if (this.strategy) {
             console.log(`TUI: Match found (${this.strategy.name}) but extension is disabled.`);
         }
+
+        // Initial Broadcast
+        this.broadcastStatus();
+
+        // Re-broadcast on bfcache restore
+        window.addEventListener('pageshow', (event) => {
+            // Even if not persisted, it doesn't hurt to re-broadcast on show
+            // But definitely if persisted (restored from cache)
+            if (event.persisted) {
+                console.log('[TUI-LOG] Page restored from cache. Re-broadcasting status.');
+            }
+            this.broadcastStatus();
+        });
+    }
+
+    broadcastStatus() {
+        try {
+            chrome.runtime.sendMessage({
+                type: 'STATUS_UPDATE',
+                payload: {
+                    supported: !!this.strategy,
+                    enabled: this.isEnabled,
+                    siteName: this.strategy ? this.strategy.name : null
+                }
+            });
+        } catch (e) {
+            // Ignore (bg might sleep)
+        }
     }
 
     // ... attachMessageListener remains same usually, but skipping for brevity in this replace block ... 
     // We need to keep it if we are replacing the whole block or be careful.
-    // The user instruction implies replacing significant chunks.
+    // The user instruction implies replacing significant chunks. 
     // Since I can't "skip" easily in a contiguous block, I will include attachMessageListener logic if needed, 
     // but the prompt allows me to target specific lines. 
     // Let's assume I am replacing the Constructor through moveFocus.
@@ -91,6 +119,7 @@ class TUIEngine {
                 }
             } else if (message.type === 'UPDATE_STRATEGY') {
                 this.handleStrategyUpdate(message.payload);
+                this.broadcastStatus(); // Update badge
                 sendResponse({ success: true });
             } else if (message.type === 'RESET_STRATEGY') {
                 const hostname = window.location.hostname;
@@ -108,6 +137,7 @@ class TUIEngine {
                 this.resetFocus();
                 this.updateElements();
                 console.log('[TUI-LOG] Reset to default strategy.');
+                this.broadcastStatus(); // Update badge
                 sendResponse({ success: true });
             } else if (message.type === 'TOGGLE_STATE') {
                 this.isEnabled = message.payload.enabled;
@@ -120,6 +150,7 @@ class TUIEngine {
                     this.resetFocus();
                     this.disconnectObserver();
                 }
+                this.broadcastStatus(); // Update badge
             }
         });
     }
