@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TUI Navigator",
-  "version": "1.7",
+  "version": "1.8",
   "description": "Transform browsing into a Text-based User Interface navigation experience.",
   "permissions": [
     "storage",
@@ -16,7 +16,6 @@
         "<all_urls>"
       ],
       "js": [
-        "config.js",
         "engine.js"
       ],
       "css": [
