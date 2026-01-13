@@ -241,9 +241,15 @@ class TUIEngine {
     handleKeydown(e) {
         if (!this.isActive || !this.isEnabled) return;
 
-        // Ignore inputs
+        // Handle Inputs/Textareas
         if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || document.activeElement.isContentEditable) {
-            return;
+            // Allow Escape to blur focus and resume navigation
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                document.activeElement.blur();
+                return;
+            }
+            return; // Let browser handle typing
         }
 
         if (e.key.startsWith('Arrow') || ['j', 'k', 'h', 'l'].includes(e.key)) {
@@ -371,7 +377,11 @@ class TUIEngine {
         if (el) {
             el.classList.add('tui-focus-indicator');
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.focus({ preventScroll: true });
+
+            // Only focus if NOT an input (Visual-only focus for inputs)
+            if (!['INPUT', 'TEXTAREA'].includes(el.tagName)) {
+                el.focus({ preventScroll: true });
+            }
         }
     }
 
@@ -381,7 +391,11 @@ class TUIEngine {
         if (el) {
             el.classList.add('tui-focus-indicator');
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.focus({ preventScroll: true });
+
+            // Only focus if NOT an input (Visual-only focus for inputs)
+            if (!['INPUT', 'TEXTAREA'].includes(el.tagName)) {
+                el.focus({ preventScroll: true });
+            }
         }
     }
 
@@ -395,7 +409,11 @@ class TUIEngine {
         }
 
         if (el) {
-            el.click();
+            if (['INPUT', 'TEXTAREA'].includes(el.tagName)) {
+                el.focus(); // Enter -> Start Typing
+            } else {
+                el.click();
+            }
             this.trackMetric('tui_nav_click');
         }
     }
