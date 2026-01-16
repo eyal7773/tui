@@ -123,6 +123,69 @@ class SpatialEngine {
         requestAnimationFrame(() => this.isNavigating = false);
     }
 
+    /**
+     * Detects auxiliary UI elements that shouldn't be navigation targets.
+     * These are elements added by UI frameworks for visual/accessibility purposes
+     * but aren't meant for direct keyboard navigation.
+     */
+    isAuxiliaryElement(el) {
+        const classNames = el.className;
+
+        // Check 1: Common auxiliary class name patterns
+        const auxiliaryPatterns = [
+            'touch-target',
+            'ripple',
+            'overlay',
+            'focus-indicator',
+            'persistent-ripple',
+            'button-ripple',
+            'mat-ripple',
+            'backdrop',
+            'underlay',
+            'highlight'
+        ];
+
+        if (typeof classNames === 'string') {
+            const lowerClass = classNames.toLowerCase();
+            if (auxiliaryPatterns.some(pattern => lowerClass.includes(pattern))) {
+                return true;
+            }
+        }
+
+        // Check 2: Element with no meaningful content
+        const hasText = el.textContent && el.textContent.trim().length > 0;
+        const hasAriaLabel = el.hasAttribute('aria-label') && el.getAttribute('aria-label').trim().length > 0;
+        const hasVisibleChildren = el.querySelectorAll('img, svg, mat-icon, [role="img"]').length > 0;
+
+        if (!hasText && !hasAriaLabel && !hasVisibleChildren) {
+            // Empty element - check if it's positioned over a focusable parent/sibling
+            const style = window.getComputedStyle(el);
+            const position = style.position;
+
+            if (position === 'absolute' || position === 'fixed') {
+                // Check if parent or previous sibling is also focusable
+                const parent = el.parentElement;
+                if (parent) {
+                    const parentIsFocusable = parent.matches('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                    if (parentIsFocusable) {
+                        return true; // Likely a touch target over the parent
+                    }
+
+                    // Check previous sibling
+                    const prevSibling = el.previousElementSibling;
+                    if (prevSibling) {
+                        const siblingIsFocusable = prevSibling.matches('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                        if (siblingIsFocusable) {
+                            return true; // Likely a touch target near the sibling
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     refreshCandidates() {
         if (!this.candidatesDirty) return;
 
@@ -154,6 +217,11 @@ class SpatialEngine {
 
             // Is in viewport?
             if (rect.bottom < 0 || rect.top > window.innerHeight || rect.right < 0 || rect.left > window.innerWidth) {
+                return false;
+            }
+
+            // Filter out auxiliary UI elements (touch targets, ripples, overlays, etc.)
+            if (this.isAuxiliaryElement(el)) {
                 return false;
             }
 
@@ -222,33 +290,74 @@ class SpatialEngine {
         return bestCandidate;
     }
 
-    getDistance(rectA, rectB, direction) {
-        const centerA = { x: rectA.left + rectA.width / 2, y: rectA.top + rectA.height / 2 };
-        const centerB = { x: rectB.left + rectB.width / 2, y: rectB.top + rectB.height / 2 };
+    getDistance(currentRect, targetRect, direction) {
+        // Edge-based distance calculation that handles different-sized elements correctly
+        // by measuring the shortest edge-to-edge distance and detecting overlap.
 
-        const dHorizontal = Math.abs(centerA.x - centerB.x);
-        const dVertical = Math.abs(centerA.y - centerB.y);
-
-        // Weight (f)
-        // A high weight (>2) forces strict alignment (good for grids/columns).
-        // A low weight (<2) allows for jagged lists (good for search results).
-        const f = 1.3; // Reduced from 3 to 1.3 to prevent skipping closer-but-offset elements
-
-        // Distance = f * Internal + External
         switch (direction) {
-            case 'ArrowRight':
-            case 'ArrowLeft':
-                // Horizontal Move:
-                // Primary Distance = dHorizontal
-                // Penalty (Alignment) = dVertical
-                return dHorizontal + (dVertical * f);
+            case 'ArrowUp':
+                // Primary: vertical gap (positive = target is above, negative = target is below/overlapping)
+                const verticalGapUp = currentRect.top - targetRect.bottom;
+
+                // Secondary: horizontal overlap/gap
+                const overlapLeftUp = Math.max(targetRect.left, currentRect.left);
+                const overlapRightUp = Math.min(targetRect.right, currentRect.right);
+                const horizontalGapUp = overlapLeftUp < overlapRightUp
+                    ? 0  // Elements overlap horizontally - perfect alignment
+                    : Math.min(
+                        Math.abs(targetRect.left - currentRect.right),
+                        Math.abs(targetRect.right - currentRect.left)
+                    );
+
+                return verticalGapUp + (horizontalGapUp * 1.5);
 
             case 'ArrowDown':
-            case 'ArrowUp':
-                // Vertical Move:
-                // Primary Distance = dVertical
-                // Penalty (Alignment) = dHorizontal
-                return dVertical + (dHorizontal * f);
+                // Primary: vertical gap (positive = target is below)
+                const verticalGapDown = targetRect.top - currentRect.bottom;
+
+                // Secondary: horizontal overlap/gap
+                const overlapLeftDown = Math.max(targetRect.left, currentRect.left);
+                const overlapRightDown = Math.min(targetRect.right, currentRect.right);
+                const horizontalGapDown = overlapLeftDown < overlapRightDown
+                    ? 0  // Elements overlap horizontally
+                    : Math.min(
+                        Math.abs(targetRect.left - currentRect.right),
+                        Math.abs(targetRect.right - currentRect.left)
+                    );
+
+                return verticalGapDown + (horizontalGapDown * 1.5);
+
+            case 'ArrowLeft':
+                // Primary: horizontal gap (positive = target is to the left)
+                const horizontalGapLeft = currentRect.left - targetRect.right;
+
+                // Secondary: vertical overlap/gap
+                const overlapTopLeft = Math.max(targetRect.top, currentRect.top);
+                const overlapBottomLeft = Math.min(targetRect.bottom, currentRect.bottom);
+                const verticalGapLeft = overlapTopLeft < overlapBottomLeft
+                    ? 0  // Elements overlap vertically
+                    : Math.min(
+                        Math.abs(targetRect.top - currentRect.bottom),
+                        Math.abs(targetRect.bottom - currentRect.top)
+                    );
+
+                return horizontalGapLeft + (verticalGapLeft * 1.5);
+
+            case 'ArrowRight':
+                // Primary: horizontal gap (positive = target is to the right)
+                const horizontalGapRight = targetRect.left - currentRect.right;
+
+                // Secondary: vertical overlap/gap
+                const overlapTopRight = Math.max(targetRect.top, currentRect.top);
+                const overlapBottomRight = Math.min(targetRect.bottom, currentRect.bottom);
+                const verticalGapRight = overlapTopRight < overlapBottomRight
+                    ? 0  // Elements overlap vertically
+                    : Math.min(
+                        Math.abs(targetRect.top - currentRect.bottom),
+                        Math.abs(targetRect.bottom - currentRect.top)
+                    );
+
+                return horizontalGapRight + (verticalGapRight * 1.5);
 
             default:
                 return Infinity;
