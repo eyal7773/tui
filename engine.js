@@ -140,6 +140,18 @@ class SpatialEngine {
             const style = window.getComputedStyle(el);
             if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
 
+            // Details/Summary Check
+            const details = el.closest('details');
+            if (details && !details.open) {
+                // If details is closed, only the summary (and elements inside it) should be visible
+                const summary = details.querySelector('summary');
+                if (summary && (el === summary || summary.contains(el))) {
+                    // It's the summary or inside it -> OK
+                } else {
+                    return false; // Hidden content inside closed details
+                }
+            }
+
             // Is in viewport?
             if (rect.bottom < 0 || rect.top > window.innerHeight || rect.right < 0 || rect.left > window.innerWidth) {
                 return false;
