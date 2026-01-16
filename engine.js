@@ -58,7 +58,13 @@ class SpatialEngine {
         // Ignore if user is typing in an input
         if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || document.activeElement.isContentEditable) {
             if (e.key === 'Escape') {
-                document.activeElement.blur();
+                // Return focus to wrapper if possible, otherwise blur
+                const parent = document.activeElement.parentElement;
+                if (parent && parent.hasAttribute('tabindex')) {
+                    parent.focus();
+                } else {
+                    document.activeElement.blur();
+                }
                 e.preventDefault();
             }
             return;
@@ -67,6 +73,13 @@ class SpatialEngine {
         if (e.key.startsWith('Arrow')) {
             e.preventDefault();
             this.navigate(e.key);
+        } else if (e.key === 'Enter') {
+            const active = document.activeElement;
+            // Check if we are on a wrapper that has a stashed input
+            if (active && active._tui_input) {
+                e.preventDefault();
+                active._tui_input.focus();
+            }
         }
     }
 
@@ -229,6 +242,28 @@ class SpatialEngine {
     }
 
     focusElement(el) {
+        // Improvement: Don't focus inputs directly to avoid trapping arrows.
+        // Focus their parent wrapper instead.
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable) {
+            const parent = el.parentElement;
+            if (parent) {
+                // Make parent focusable if not already
+                if (!parent.hasAttribute('tabindex')) {
+                    parent.setAttribute('tabindex', '-1');
+                    // We use -1 so it's focusable by script but not tab? 
+                    // Or 0? If we want user to tab to it? script focus is fine with -1.
+                }
+
+                // Link them so Enter key knows where to go
+                parent._tui_input = el;
+
+                parent.focus();
+                parent.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                this.highlight(parent);
+                return;
+            }
+        }
+
         el.focus();
         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         this.highlight(el);
