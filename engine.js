@@ -230,7 +230,9 @@ class SpatialEngine {
         const dVertical = Math.abs(centerA.y - centerB.y);
 
         // Weight (f)
-        const f = 3; // Priority multiplier
+        // A high weight (>2) forces strict alignment (good for grids/columns).
+        // A low weight (<2) allows for jagged lists (good for search results).
+        const f = 1.3; // Reduced from 3 to 1.3 to prevent skipping closer-but-offset elements
 
         // Distance = f * Internal + External
         switch (direction) {
