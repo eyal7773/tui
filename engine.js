@@ -127,7 +127,7 @@ class SpatialEngine {
         if (!this.candidatesDirty) return;
 
         // Step A: Candidate Discovery
-        const selector = 'a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+        const selector = 'a, button, input, select, textarea, [tabindex]:not([tabindex="-1"]), [contenteditable]:not([contenteditable="false"])';
         const all = Array.from(document.querySelectorAll(selector));
 
         this.candidates = all.filter(el => {
