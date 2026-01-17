@@ -151,8 +151,14 @@ class SpatialEngine {
         // 1. Discovery
         this.refreshCandidates();
 
-        // 2. Current Position
-        const current = document.activeElement;
+        // 2. Current Position - PREFER internal tracking to avoid losing context when focus is blurred/trapped
+        let current = this.lastActiveElement;
+
+        // Validation: If our internal tracking is garbage/gone, fall back to system focus
+        if (!current || !document.body.contains(current)) {
+            current = document.activeElement;
+        }
+
         let currentRect = null;
 
         // Use body as fallback if body is focused or no focus
@@ -241,8 +247,8 @@ class SpatialEngine {
     refreshCandidates() {
         if (!this.candidatesDirty) return;
 
-        // Step A: Candidate Discovery
-        const selector = 'a, button, input, select, textarea, [tabindex]:not([tabindex="-1"]), [contenteditable]:not([contenteditable="false"])';
+        // Step A: Candidate Discovery - Expanded to include IFRAMES which are valid targets but need special handling
+        const selector = 'a, button, input, select, textarea, iframe, frame, object, embed, [tabindex]:not([tabindex="-1"]), [contenteditable]:not([contenteditable="false"])';
         const all = Array.from(document.querySelectorAll(selector));
 
         this.candidates = all.filter(el => {
@@ -296,7 +302,8 @@ class SpatialEngine {
         let minScore = Infinity;
 
         this.candidates.forEach(cand => {
-            if (cand === document.activeElement) return;
+            // Skip self
+            if (cand === this.lastActiveElement) return;
 
             const rect = cand.getBoundingClientRect();
 
@@ -416,7 +423,23 @@ class SpatialEngine {
         }
     }
 
+    isTrapElement(el) {
+        // Elements that swallow focus and prevent bubbling
+        return ['IFRAME', 'FRAME', 'OBJECT', 'EMBED'].includes(el.tagName);
+    }
+
     focusElement(el) {
+        // 1. Handle Virtual Focus for Trap Elements
+        if (this.isTrapElement(el)) {
+            // We DO NOT call el.focus() because that surrenders control to the iframe.
+            // Instead, we just highlight it and keep system focus on the body (or blur current).
+            document.activeElement.blur();
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            this.highlight(el);
+            return;
+        }
+
+        // 2. Handle Inputs (Wrapper Focus)
         // Improvement: Don't focus inputs directly to avoid trapping arrows.
         // Focus their parent wrapper instead.
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable) {
@@ -425,8 +448,6 @@ class SpatialEngine {
                 // Make parent focusable if not already
                 if (!parent.hasAttribute('tabindex')) {
                     parent.setAttribute('tabindex', '-1');
-                    // We use -1 so it's focusable by script but not tab? 
-                    // Or 0? If we want user to tab to it? script focus is fine with -1.
                 }
 
                 // Link them so Enter key knows where to go
@@ -439,6 +460,7 @@ class SpatialEngine {
             }
         }
 
+        // 3. Normal Focus
         el.focus();
         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         this.highlight(el);
