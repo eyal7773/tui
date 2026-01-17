@@ -30,7 +30,9 @@ class SpatialEngine {
         // Create Spotlight Element
         this.createSpotlight();
 
-        document.addEventListener('keydown', (e) => this.handleKeydown(e));
+        // Use Capture Phase to intercept events before the page traps them
+        document.addEventListener('keydown', (e) => this.handleKeydown(e), { capture: true });
+        // NOTE: We keep scroll passive and bubbling as scroll doesn't usually get trapped like keys
         window.addEventListener('scroll', () => this.handleScroll(), { passive: true });
 
         // Handle window resize to update spotlight position if needed
@@ -110,18 +112,24 @@ class SpatialEngine {
                     document.activeElement.blur();
                 }
                 e.preventDefault();
+                e.stopImmediatePropagation(); // Ensure page doesn't do anything else with Escape
             }
             return;
         }
 
         if (e.key.startsWith('Arrow')) {
+            // We handle this navigation action
             e.preventDefault();
+            e.stopImmediatePropagation(); // CRITICAL: Stop the page from seeing this key
             this.navigate(e.key);
         } else if (e.key === 'Enter') {
             const active = document.activeElement;
             // Check if we are on a wrapper that has a stashed input
             if (active && active._tui_input) {
                 e.preventDefault();
+                // We let propagation happen maybe? Or stop it?
+                // Actually if we are focusing an internal input, we don't want the wrapper 'click' to fire yet.
+                e.stopImmediatePropagation();
                 active._tui_input.focus();
             }
         }
