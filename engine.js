@@ -27,13 +27,23 @@ class SpatialEngine {
         console.log('[TUI Spatial] Initializing...');
         this.loadSettings();
 
+        // Create Spotlight Element
+        this.createSpotlight();
+
         document.addEventListener('keydown', (e) => this.handleKeydown(e));
         window.addEventListener('scroll', () => this.handleScroll(), { passive: true });
+
+        // Handle window resize to update spotlight position if needed
+        window.addEventListener('resize', () => {
+            if (this.lastActiveElement) this.highlight(this.lastActiveElement);
+        });
 
         // Dynamic DOM Observer
         // Marks candidates dirty so we re-scan when DOM changes
         this.observer = new MutationObserver(() => {
             this.candidatesDirty = true;
+            // Optional: Re-align spotlight if the focused element moved/resized? 
+            // For now, we trust the next recurring update or next nav action.
         });
         this.observer.observe(document.body, {
             childList: true,
@@ -44,6 +54,40 @@ class SpatialEngine {
 
         // Broadcast initial status (always supported now)
         this.broadcastStatus();
+    }
+
+    createSpotlight() {
+        // Check if exists
+        let spot = document.getElementById('tui-spotlight');
+        if (!spot) {
+            spot = document.createElement('div');
+            spot.id = 'tui-spotlight';
+            spot.className = 'tui-focus-indicator';
+            document.body.appendChild(spot);
+        }
+        this.spotlight = spot;
+    }
+
+
+
+    highlight(el) {
+        this.lastActiveElement = el; // Track what we are highlighting
+
+        // Calculate position
+        const rect = el.getBoundingClientRect();
+        const scrollX = window.scrollX || window.pageXOffset;
+        const scrollY = window.scrollY || window.pageYOffset;
+
+        // Update Spotlight Position
+        if (this.spotlight) {
+            this.spotlight.style.width = `${rect.width}px`;
+            this.spotlight.style.height = `${rect.height}px`;
+            this.spotlight.style.top = `${rect.top + scrollY}px`;
+            this.spotlight.style.left = `${rect.left + scrollX}px`;
+
+            // Ensure it's visible (in case it was hidden)
+            this.spotlight.style.display = 'block';
+        }
     }
 
     async loadSettings() {
@@ -399,12 +443,7 @@ class SpatialEngine {
         // NOTE: A re-scan happens on the NEXT keypress because scroll creates a new geometric state.
     }
 
-    highlight(el) {
-        // Remove old
-        document.querySelectorAll('.tui-focus-indicator').forEach(e => e.classList.remove('tui-focus-indicator'));
-        // Add new
-        el.classList.add('tui-focus-indicator');
-    }
+
 
     broadcastStatus() {
         chrome.runtime.sendMessage({

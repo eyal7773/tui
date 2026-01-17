@@ -1,6 +1,8 @@
 /* TUI Navigator Focus Styles */
 
 /* Base animation for the focus ring */
+/* Base animation for the focus ring */
+/* Base animation for the focus ring */
 @keyframes tui-pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.7);
@@ -16,23 +18,26 @@
 }
 
 .tui-focus-indicator {
-  /* High visibility outline */
+  /* Spotlight Overlay Styles */
+  position: absolute !important;
+  pointer-events: none !important;
+  /* Click through to element below */
+  z-index: 2147483647 !important;
+
+  /* Visuals: Outline + Pulse (restored since clipping is no longer an issue) */
   outline: 3px solid #00ff00 !important;
   outline-offset: 2px !important;
 
-  /* Background highlight for better visibility on dark modes */
+  /* Background highlight */
   background-color: rgba(0, 255, 0, 0.1) !important;
 
-  /* Ensure it sits on top */
-  z-index: 2147483647 !important;
-  position: relative !important;
+  /* Smooth movement */
+  transition: all 0.1s ease-out !important;
 
-  /* Animation */
-  animation: tui-pulse 1.5s infinite !important;
-  transition: all 0.2s ease-in-out !important;
-
-  /* Reset some potentially conflicting styles */
+  /* Reset */
   border-radius: 2px !important;
+  box-sizing: border-box !important;
+  /* Ensure width/height includes border if borders are added */
 }
 
 /* Specific overrides for common elements if needed */
