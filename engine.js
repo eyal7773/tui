@@ -333,12 +333,45 @@ class SpatialEngine {
             const topEl = document.elementFromPoint(centerX, centerY);
 
             if (topEl && !cand.contains(topEl) && !topEl.contains(cand)) {
-                // Obscured by something unrelated
-                return;
+                // BUG FIX: Allow navigation to elements obscured by fixed/sticky containers (headers/footers)
+                // We must traverse up the tree because elementFromPoint might return a child of the fixed element.
+                let isObstructingFixed = false;
+                let obstacle = topEl;
+                while (obstacle && obstacle !== document.body) {
+                    const style = window.getComputedStyle(obstacle);
+                    if (style.position === 'fixed' || style.position === 'sticky') {
+                        isObstructingFixed = true;
+                        break;
+                    }
+                    obstacle = obstacle.parentElement;
+                }
+
+                if (!isObstructingFixed) {
+                    // Obscured by something unrelated (not a fixed/sticky header)
+                    return;
+                }
             }
 
             // Step C: The Distance/Priority Formula
-            const score = this.getDistance(currentRect, rect, key);
+            let score = this.getDistance(currentRect, rect, key);
+
+            // Penalize FIXED/STICKY elements to prevent them from hijacking navigation
+            // when they visually overlap or are geometrically closer than the scrolling content.
+            // Traverse up to check if the element OR any ancestor is fixed/sticky.
+            let isSticky = false;
+            let iter = cand;
+            while (iter && iter !== document.body) {
+                const style = window.getComputedStyle(iter);
+                if (style.position === 'fixed' || style.position === 'sticky') {
+                    isSticky = true;
+                    break;
+                }
+                iter = iter.parentElement;
+            }
+
+            if (isSticky) {
+                score += 500;
+            }
 
             if (score < minScore) {
                 minScore = score;
