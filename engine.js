@@ -54,6 +54,19 @@ class SpatialEngine {
             attributeFilter: ['style', 'class', 'hidden', 'disabled']
         });
 
+        // Listen for storage changes to update debug mode dynamically
+        chrome.storage.onChanged.addListener((changes, namespace) => {
+            if (namespace === 'local') {
+                if (changes.tuiAdminMode) {
+                    this.debugMode = !!changes.tuiAdminMode.newValue;
+                    console.log(`[TUI] Debug Mode ${this.debugMode ? 'Enabled' : 'Disabled'}`);
+                }
+                if (changes.tuiEnabled) {
+                    this.isEnabled = changes.tuiEnabled.newValue !== false;
+                }
+            }
+        });
+
         // Broadcast initial status (always supported now)
         this.broadcastStatus();
     }
@@ -93,9 +106,9 @@ class SpatialEngine {
     }
 
     async loadSettings() {
-        const storage = await chrome.storage.local.get(['tuiEnabled', 'tuiDebug']);
+        const storage = await chrome.storage.local.get(['tuiEnabled', 'tuiAdminMode']);
         this.isEnabled = storage.tuiEnabled !== false;
-        this.debugMode = !!storage.tuiDebug;
+        this.debugMode = !!storage.tuiAdminMode;
     }
 
     handleKeydown(e) {
@@ -147,6 +160,17 @@ class SpatialEngine {
     navigate(key) {
         if (this.isNavigating) return;
         this.isNavigating = true;
+
+        if (this.debugMode) {
+            const active = this.lastActiveElement || document.activeElement;
+            const tag = active ? active.tagName : 'NULL';
+            const id = active && active.id ? `#${active.id}` : '';
+            let cls = '';
+            if (active && typeof active.className === 'string') {
+                cls = `.${active.className.split(' ').join('.')}`;
+            }
+            console.log(`%c[TUI] Navigating ${key} from ${tag}${id}${cls}`, 'color: cyan; font-weight: bold;');
+        }
 
         // 1. Discovery
         this.refreshCandidates();
@@ -254,6 +278,7 @@ class SpatialEngine {
         this.candidates = all.filter(el => {
             // Visibility Check
             if (el.offsetParent === null) return false; // Hidden parent
+
             const rect = el.getBoundingClientRect();
             if (rect.width === 0 || rect.height === 0) return false;
 
@@ -373,11 +398,48 @@ class SpatialEngine {
                 score += 500;
             }
 
+            if (this.debugMode) {
+                // Store for debug logging
+                cand._debugScore = score;
+                cand._debugDistance = score; // Since score IS distance currently
+            }
+
             if (score < minScore) {
                 minScore = score;
                 bestCandidate = cand;
             }
         });
+
+        if (this.debugMode) {
+            const ranked = this.candidates
+                .filter(c => c._debugScore !== undefined)
+                .sort((a, b) => a._debugScore - b._debugScore)
+                .slice(0, 5);
+
+            if (ranked.length > 0) {
+                console.groupCollapsed(`[TUI] Candidates Analysis (Top ${ranked.length})`);
+                ranked.forEach((el, i) => {
+                    const isWinner = el === bestCandidate;
+                    const marker = isWinner ? '🏆 ' : `${i + 1}. `;
+                    const style = isWinner ? 'color: green; font-weight: bold;' : 'color: #888;';
+
+                    const tag = el.tagName;
+                    const id = el.id ? `#${el.id}` : '';
+                    let cls = '';
+                    if (typeof el.className === 'string') {
+                        cls = `.${el.className.split(' ').join('.')}`;
+                    }
+                    const scoreText = el._debugScore.toFixed(2);
+                    console.log(`%c${marker}${tag}${id}${cls} [Score: ${scoreText}]`, style);
+                });
+                console.groupEnd();
+            } else {
+                console.log('[TUI] No valid candidates found in direction.');
+            }
+
+            // Cleanup
+            this.candidates.forEach(c => delete c._debugScore);
+        }
 
         return bestCandidate;
     }
