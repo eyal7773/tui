@@ -191,7 +191,7 @@ class SpatialEngine {
         }
 
         // 3. Find Best Candidate
-        const target = this.findBestCandidate(currentRect, key);
+        const target = this.findBestCandidate(currentRect, key, current);
 
         // 4. Action
         if (target) {
@@ -203,6 +203,21 @@ class SpatialEngine {
 
         // Reset lock
         requestAnimationFrame(() => this.isNavigating = false);
+    }
+
+    /**
+     * Checks if an element or its ancestors are fixed/sticky.
+     */
+    isSticky(el) {
+        let iter = el;
+        while (iter && iter !== document.body) {
+            const style = window.getComputedStyle(iter);
+            if (style.position === 'fixed' || style.position === 'sticky') {
+                return true;
+            }
+            iter = iter.parentElement;
+        }
+        return false;
     }
 
     /**
@@ -315,7 +330,7 @@ class SpatialEngine {
         if (this.debugMode) console.log(`[TUI Spatial] Candidates refreshed: ${this.candidates.length}`);
     }
 
-    findBestCandidate(currentRect, key) {
+    findBestCandidate(currentRect, key, currentEl) {
         if (!currentRect) {
             // Corner case: No focus. Pick top-left most visible element or first one.
             // If we have no origin, we can't do directional relative navigation effectively.
@@ -325,6 +340,11 @@ class SpatialEngine {
 
         let bestCandidate = null;
         let minScore = Infinity;
+
+        // Determine if we are currently starting from a sticky/fixed context (e.g. Header)
+        // BUG FIX: Also treat semantic navigation regions (HEADER, NAV) as "Sticky/Anchor" regions.
+        // This ensures that navigating FROM a header (even if not CSS sticky) to a sticky sidebar doesn't incur a penalty.
+        const currentIsSticky = currentEl ? (this.isSticky(currentEl) || !!currentEl.closest('header, nav, [role="banner"], [role="navigation"]')) : false;
 
         this.candidates.forEach(cand => {
             // Skip self
@@ -382,19 +402,11 @@ class SpatialEngine {
 
             // Penalize FIXED/STICKY elements to prevent them from hijacking navigation
             // when they visually overlap or are geometrically closer than the scrolling content.
-            // Traverse up to check if the element OR any ancestor is fixed/sticky.
-            let isSticky = false;
-            let iter = cand;
-            while (iter && iter !== document.body) {
-                const style = window.getComputedStyle(iter);
-                if (style.position === 'fixed' || style.position === 'sticky') {
-                    isSticky = true;
-                    break;
-                }
-                iter = iter.parentElement;
-            }
+            // BUG FIX: Only apply penalty if we are moving FROM non-sticky TO sticky.
+            // If we are already in a sticky container (like Header), we should be able to move to other sticky containers (Sidebar) freely.
+            const targetIsSticky = this.isSticky(cand);
 
-            if (isSticky) {
+            if (targetIsSticky && !currentIsSticky) {
                 score += 500;
             }
 
@@ -402,6 +414,7 @@ class SpatialEngine {
                 // Store for debug logging
                 cand._debugScore = score;
                 cand._debugDistance = score; // Since score IS distance currently
+                cand._debugIsSticky = targetIsSticky;
             }
 
             if (score < minScore) {
