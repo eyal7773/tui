@@ -156,8 +156,7 @@ function refreshState() {
     });
 
     // Version
-    const manifest = chrome.runtime.getManifest();
-    document.getElementById('app-version').textContent = manifest.version;
+    VersionManager.displayVersion('app-version');
 }
 
 function updateAdminInterface(isAdmin) {
