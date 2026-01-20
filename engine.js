@@ -306,7 +306,7 @@ class SpatialEngine {
         if (!this.candidatesDirty) return;
 
         // Step A: Candidate Discovery - Expanded to include IFRAMES which are valid targets but need special handling
-        const selector = 'a, button, input, select, textarea, iframe, frame, object, embed, [tabindex]:not([tabindex="-1"]), [contenteditable]:not([contenteditable="false"])';
+        const selector = 'a, button, input, select, textarea, iframe, frame, object, embed, summary, [tabindex]:not([tabindex="-1"]), [contenteditable]:not([contenteditable="false"])';
         const all = Array.from(document.querySelectorAll(selector));
 
         this.candidates = all.filter(el => {
