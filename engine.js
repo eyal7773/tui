@@ -205,9 +205,19 @@ class SpatialEngine {
         // 4. Action
         if (target) {
             this.focusElement(target);
+            // Metric Tracking
+            chrome.runtime.sendMessage({
+                type: 'METRIC_EVENT',
+                payload: { action: 'NAVIGATE', key: key }
+            }).catch(() => { });
         } else {
             // 5. Off-screen handling (scroll)
             this.handleOffScreen(key);
+            // Metric Tracking (Scroll is also an action)
+            chrome.runtime.sendMessage({
+                type: 'METRIC_EVENT',
+                payload: { action: 'SCROLL', key: key }
+            }).catch(() => { });
         }
 
         // Reset lock
