@@ -527,7 +527,7 @@ class SpatialEngine {
                         Math.abs(targetRect.bottom - currentRect.top)
                     );
 
-                return horizontalGapLeft + (verticalGapLeft * 1.5);
+                return horizontalGapLeft + (verticalGapLeft * 30);
 
             case 'ArrowRight':
                 // Primary: horizontal gap (positive = target is to the right)
@@ -543,7 +543,7 @@ class SpatialEngine {
                         Math.abs(targetRect.bottom - currentRect.top)
                     );
 
-                return horizontalGapRight + (verticalGapRight * 1.5);
+                return horizontalGapRight + (verticalGapRight * 30);
 
             default:
                 return Infinity;
