@@ -57,12 +57,14 @@ class SpatialEngine {
         // Listen for storage changes to update debug mode dynamically
         chrome.storage.onChanged.addListener((changes, namespace) => {
             if (namespace === 'local') {
+                if (changes.tuiEnabled) {
+                    this.isEnabled = changes.tuiEnabled.newValue !== false;
+                }
+            }
+            if (namespace === 'session') {
                 if (changes.tuiAdminMode) {
                     this.debugMode = !!changes.tuiAdminMode.newValue;
                     console.log(`[TUI] Debug Mode ${this.debugMode ? 'Enabled' : 'Disabled'}`);
-                }
-                if (changes.tuiEnabled) {
-                    this.isEnabled = changes.tuiEnabled.newValue !== false;
                 }
             }
         });
@@ -106,9 +108,16 @@ class SpatialEngine {
     }
 
     async loadSettings() {
-        const storage = await chrome.storage.local.get(['tuiEnabled', 'tuiAdminMode']);
-        this.isEnabled = storage.tuiEnabled !== false;
-        this.debugMode = !!storage.tuiAdminMode;
+        const localStorage = await chrome.storage.local.get(['tuiEnabled']);
+        this.isEnabled = localStorage.tuiEnabled !== false;
+
+        try {
+            const sessionStorage = await chrome.storage.session.get(['tuiAdminMode']);
+            this.debugMode = !!sessionStorage.tuiAdminMode;
+        } catch (e) {
+            console.warn('[TUI] Failed to access session storage (likely restricted context):', e);
+            this.debugMode = false;
+        }
     }
 
     handleKeydown(e) {

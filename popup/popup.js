@@ -60,9 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (versionClickCount === 10) {
             versionClickCount = 0;
             // Toggle Admin Mode
-            chrome.storage.local.get(['tuiAdminMode'], (result) => {
+            chrome.storage.session.get(['tuiAdminMode'], (result) => {
                 const newState = !result.tuiAdminMode;
-                chrome.storage.local.set({ tuiAdminMode: newState });
+                chrome.storage.session.set({ tuiAdminMode: newState });
                 // Visual / Haptic feedback could go here, but UI update in onChanged handles it
             });
         }
@@ -80,6 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // We'll let refreshState or user interaction handle badge, 
                 // but checking here ensures sync if changed elsewhere
             }
+        }
+        if (namespace === 'session') {
             if (changes.tuiAdminMode) {
                 updateAdminInterface(changes.tuiAdminMode.newValue);
             }
@@ -88,15 +90,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function refreshState() {
-    // 1. Load Storage (Metrics, Enabled, Admin)
-    chrome.storage.local.get(['totalActions', 'tuiEnabled', 'tuiAdminMode'], (result) => {
+    // 1. Load Storage (Metrics, Enabled)
+    chrome.storage.local.get(['totalActions', 'tuiEnabled'], (result) => {
         if (result.totalActions !== undefined) {
             document.getElementById('total-actions').textContent = result.totalActions;
         }
         // Set toggle initial state
         const isEnabled = result.tuiEnabled !== false; // Default true
         document.getElementById('site-toggle').checked = isEnabled;
+    });
 
+    // 1.5 Load Admin from Session
+    chrome.storage.session.get(['tuiAdminMode'], (result) => {
         updateAdminInterface(result.tuiAdminMode || false);
     });
 

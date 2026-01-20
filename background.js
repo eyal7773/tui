@@ -1,5 +1,7 @@
 chrome.runtime.onInstalled.addListener(() => {
   console.log('TUI Navigator installed.');
+  chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
+
   // Initialize storage with default values
   chrome.storage.local.get(['totalActions'], (result) => {
     // Only set if not already present to avoid wiping data on updates
