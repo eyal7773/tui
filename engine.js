@@ -277,6 +277,14 @@ class SpatialEngine {
      * but aren't meant for direct keyboard navigation.
      */
     isAuxiliaryElement(el) {
+        // BUG FIX: Semantic interactive elements should NEVER be treated as auxiliary,
+        // even if they contain classes like "ripple" or "focus-indicator".
+        // This fixes issues where buttons with visual effects (e.g. Gemini New Chat) were ignored.
+        const semanticInteractive = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'SUMMARY'];
+        if (semanticInteractive.includes(el.tagName)) {
+            return false;
+        }
+
         const classNames = el.className;
 
         // Check 1: Common auxiliary class name patterns
