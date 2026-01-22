@@ -14,6 +14,7 @@ class SpatialEngine {
         this.lastActiveElement = null;
         this.isNavigating = false;
         this.observer = null;
+        this.focusMonitorInterval = null;
 
         // Initialize
         if (document.readyState === 'loading') {
@@ -35,6 +36,10 @@ class SpatialEngine {
         // NOTE: We keep scroll passive and bubbling as scroll doesn't usually get trapped like keys
         window.addEventListener('scroll', () => this.handleScroll(), { passive: true });
 
+        // Passive interaction listeners to sync state without interference
+        document.addEventListener('click', (e) => this.handleInteraction(e), { passive: true });
+        document.addEventListener('keyup', (e) => this.handleInteraction(e), { passive: true });
+
         // Handle window resize to update spotlight position if needed
         window.addEventListener('resize', () => {
             if (this.lastActiveElement) this.highlight(this.lastActiveElement);
@@ -44,8 +49,10 @@ class SpatialEngine {
         // Marks candidates dirty so we re-scan when DOM changes
         this.observer = new MutationObserver(() => {
             this.candidatesDirty = true;
-            // Optional: Re-align spotlight if the focused element moved/resized? 
-            // For now, we trust the next recurring update or next nav action.
+
+            // Sync with active element if it changed effectively during DOM updates
+            // (e.g. "New Chat" clicked -> DOM updates -> input gets focus)
+            this.monitorFocusChange(500);
         });
         this.observer.observe(document.body, {
             childList: true,
@@ -123,6 +130,9 @@ class SpatialEngine {
     handleKeydown(e) {
         if (!this.isEnabled) return;
 
+        // User is interacting, stop any pending focus monitoring to avoid conflicts/lag
+        this.stopFocusMonitor();
+
         // Ignore if user is typing in an input
         const active = document.activeElement;
 
@@ -161,10 +171,43 @@ class SpatialEngine {
         }
     }
 
-    handleScroll() {
-        // Viewport moves, so geometric relationships change.
-        // We must re-calculate candidate visibility/positions next time.
-        this.candidatesDirty = true;
+    handleInteraction(e) {
+        // Sync internal state with system focus on user interactions
+        if (!this.isEnabled) return;
+
+        // Use the monitor to catch immediate or slightly delayed focus changes
+        this.monitorFocusChange(500);
+    }
+
+    stopFocusMonitor() {
+        if (this.focusMonitorInterval) {
+            clearInterval(this.focusMonitorInterval);
+            this.focusMonitorInterval = null;
+        }
+    }
+
+    monitorFocusChange(duration = 500) {
+        this.stopFocusMonitor(); // Reset existing to prevent overlap
+
+        let elapsed = 0;
+        const interval = 50;
+
+        this.focusMonitorInterval = setInterval(() => {
+            elapsed += interval;
+            if (elapsed >= duration) {
+                this.stopFocusMonitor();
+                return;
+            }
+
+            const active = document.activeElement;
+            // Check if focus has moved to a new meaningful element
+            if (active && active !== this.lastActiveElement && active !== document.body) {
+                this.lastActiveElement = active;
+                this.highlight(active);
+                // Once found, we can stop polling to save resources
+                this.stopFocusMonitor();
+            }
+        }, interval);
     }
 
     /**
