@@ -124,14 +124,18 @@ class SpatialEngine {
         if (!this.isEnabled) return;
 
         // Ignore if user is typing in an input
-        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || document.activeElement.isContentEditable) {
+        const active = document.activeElement;
+
+        // BUG FIX: Only trap navigation if the input actually USES arrow keys (Text, Select, etc.)
+        // Simple buttons (submit, reset, button) should NOT trap navigation.
+        if (this.shouldTrapArrows(active)) {
             if (e.key === 'Escape') {
                 // Return focus to wrapper if possible, otherwise blur
-                const parent = document.activeElement.parentElement;
+                const parent = active.parentElement;
                 if (parent && parent.hasAttribute('tabindex')) {
                     parent.focus();
                 } else {
-                    document.activeElement.blur();
+                    active.blur();
                 }
                 e.preventDefault();
                 e.stopImmediatePropagation(); // Ensure page doesn't do anything else with Escape
@@ -236,6 +240,34 @@ class SpatialEngine {
             }
             iter = iter.parentElement;
         }
+        return false;
+    }
+
+    /**
+     * Determines if an element should "trap" arrow keys, preventing TUI navigation.
+     * Returns TRUE for inputs where arrows stick/move cursor (Text, Select, Range).
+     * Returns FALSE for inputs that act like buttons (Submit, Button, Checkbox).
+     */
+    shouldTrapArrows(el) {
+        if (!el) return false;
+
+        const tagName = el.tagName;
+        if (tagName === 'TEXTAREA' || tagName === 'SELECT') return true;
+        if (el.isContentEditable) return true;
+
+        if (tagName === 'INPUT') {
+            const type = el.type ? el.type.toLowerCase() : 'text';
+
+            // These types use arrows for internal logic (cursor movement, value change)
+            const trapTypes = [
+                'text', 'search', 'password', 'email', 'url', 'tel',
+                'number', 'date', 'month', 'week', 'time', 'datetime-local',
+                'color', 'range', 'radio'
+            ];
+
+            return trapTypes.includes(type);
+        }
+
         return false;
     }
 
@@ -563,13 +595,14 @@ class SpatialEngine {
             document.activeElement.blur();
             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             this.highlight(el);
+            this.highlight(el);
             return;
         }
 
         // 2. Handle Inputs (Wrapper Focus)
-        // Improvement: Don't focus inputs directly to avoid trapping arrows.
-        // Focus their parent wrapper instead.
-        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable) {
+        // Improvement: Only wrap inputs that need arrow keys (Text, Select).
+        // Buttons, checkboxes, etc. can be focused directly.
+        if (this.shouldTrapArrows(el)) {
             const parent = el.parentElement;
             if (parent) {
                 // Make parent focusable if not already
