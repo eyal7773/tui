@@ -187,15 +187,73 @@ class SpatialEngine {
             this.navigate(e.key);
         } else if (e.key === 'Enter') {
             const active = document.activeElement;
+
             // Check if we are on a wrapper that has a stashed input
             if (active && active._tui_input) {
                 e.preventDefault();
-                // We let propagation happen maybe? Or stop it?
-                // Actually if we are focusing an internal input, we don't want the wrapper 'click' to fire yet.
                 e.stopImmediatePropagation();
                 active._tui_input.focus();
+                return;
+            }
+
+            // ROBUST CLICK SIMULATION
+            // Many modern web apps (React, etc) listen to mousedown/mouseup or require the full event chain.
+            // Simple .click() often fails on div/span elements acting as buttons.
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            if (active) this.simulateClick(active);
+        }
+    }
+
+    simulateClick(el) {
+        if (this.debugMode) console.log('[TUI] Simulating Click on:', el);
+
+        // SMART TARGETING: If this is a container element (gridcell, listitem), 
+        // try to find the actual interactive content inside.
+        // WhatsApp and similar apps often put tabindex="0" on a wrapper for keyboard focus,
+        // but the actual click listener is on an inner div.
+        let target = el;
+        const role = el.getAttribute('role');
+        if (role === 'gridcell' || role === 'listitem' || role === 'row') {
+            // Try to find WhatsApp's specific inner wrapper (class starts with _ak)
+            const innerContent = el.querySelector('div[class*="_ak"]') || el.querySelector('div');
+            if (innerContent) {
+                if (this.debugMode) console.log('[TUI] Targeting inner content:', innerContent);
+                target = innerContent;
             }
         }
+
+        // 1. Try native click first (for <button>, <a>, <input>)
+        if (typeof target.click === 'function') {
+            if (this.debugMode) console.log('[TUI] Calling native .click()');
+            target.click();
+        }
+
+        // 2. Dispatch a full Mouse/Pointer Event Sequence
+        // Modern web apps (especially React) often require specific event properties
+        const options = {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            composed: true,  // Allow events to cross shadow DOM boundaries
+            buttons: 1,
+            pointerType: 'mouse'  // Explicitly mark as mouse event (not pen/touch)
+        };
+
+        if (this.debugMode) console.log('[TUI] Dispatching synthetic events...');
+
+        // Dispatch Pointer Events (standard for modern web)
+        target.dispatchEvent(new PointerEvent('pointerdown', options));
+        target.dispatchEvent(new MouseEvent('mousedown', options));
+
+        target.dispatchEvent(new PointerEvent('pointerup', options));
+        target.dispatchEvent(new MouseEvent('mouseup', options));
+
+        target.dispatchEvent(new PointerEvent('click', options));
+        // We also fire MouseEvent click for legacy listeners
+        target.dispatchEvent(new MouseEvent('click', options));
+
+        if (this.debugMode) console.log('[TUI] Click simulation complete.');
     }
 
     handleInteraction(e) {
@@ -297,18 +355,18 @@ class SpatialEngine {
         if (target) {
             this.focusElement(target);
             // Metric Tracking
-            chrome.runtime.sendMessage({
+            this.safeSendMessage({
                 type: 'METRIC_EVENT',
                 payload: { action: 'NAVIGATE', key: key }
-            }).catch(() => { });
+            });
         } else {
             // 5. Off-screen handling (scroll)
             this.handleOffScreen(key);
             // Metric Tracking (Scroll is also an action)
-            chrome.runtime.sendMessage({
+            this.safeSendMessage({
                 type: 'METRIC_EVENT',
                 payload: { action: 'SCROLL', key: key }
-            }).catch(() => { });
+            });
         }
 
         // Reset lock
@@ -451,10 +509,14 @@ class SpatialEngine {
     refreshCandidates() {
         if (!this.candidatesDirty) return;
 
-        // Step A: Candidate Discovery - Expanded to include IFRAMES which are valid targets but need special handling
-        const selector = 'a, button, input, select, textarea, iframe, frame, object, embed, summary, [tabindex]:not([tabindex="-1"]), [contenteditable]:not([contenteditable="false"])';
-        const all = Array.from(document.querySelectorAll(selector));
+        // Step A: Candidate Discovery
+        // 1. Semantic Elements & Potential Targets
+        // NOTE: We MUST include tabindex="-1" because many modern apps (like WhatsApp) manage focus programmatically
+        // on list items using roving tabindex, usually setting them to -1 when not active.
+        const selector = 'a, button, input, select, textarea, iframe, frame, object, embed, summary, [tabindex], [contenteditable]:not([contenteditable="false"])';
+        let all = Array.from(document.querySelectorAll(selector));
 
+        // 2. Filter candidates
         this.candidates = all.filter(el => {
             // Visibility Check
             if (el.offsetParent === null) return false; // Hidden parent
@@ -486,6 +548,27 @@ class SpatialEngine {
             // Filter out auxiliary UI elements (touch targets, ripples, overlays, etc.)
             if (this.isAuxiliaryElement(el)) {
                 return false;
+            }
+
+
+            // NEW: Interactive Validation
+            // If it's a generic div/span with tabindex="-1", we need to be strictly sure it's interactive.
+            // Otherwise, we pick up every wrapper div in existence (like the WhatsApp app wrapper!).
+            if (el.getAttribute('tabindex') === '-1') {
+                if (['INPUT', 'TEXTAREA', 'IFRAME', 'BUTTON', 'A', 'SELECT', 'SUMMARY'].includes(el.tagName)) {
+                    // Keep native interactive elements even if -1
+                } else {
+                    // It's a generic div/span with tabindex="-1".
+                    // Check if it LOOKS clickable (cursor: pointer) or acts as a button (role).
+                    if (style.cursor === 'pointer' || el.getAttribute('role') === 'button' || el.getAttribute('role') === 'link') {
+                        // Keep it! This is likely our target (e.g. WhatsApp chat item)
+                    } else {
+                        // It's a generic div with tabindex="-1" but no pointer cursor or role.
+                        // This is likely a focus trap or layout wrapper using -1 for programmatic focus.
+                        // REJECT IT to avoid noise.
+                        return false;
+                    }
+                }
             }
 
             return true;
@@ -750,10 +833,29 @@ class SpatialEngine {
 
 
     broadcastStatus() {
-        chrome.runtime.sendMessage({
+        this.safeSendMessage({
             type: 'STATUS_UPDATE',
             payload: { supported: true, enabled: this.isEnabled }
-        }).catch(() => { });
+        });
+    }
+
+    /**
+     * Safely sends a message to the runtime, handling context invalidation errors.
+     * This prevents errors when the extension is updated/reloaded but the page isn't.
+     */
+    safeSendMessage(message) {
+        if (!chrome.runtime || !chrome.runtime.id) {
+            // Context is already invalidated, do nothing.
+            return;
+        }
+
+        try {
+            chrome.runtime.sendMessage(message).catch(() => {
+                // Catch promise rejections (receiver closed, etc)
+            });
+        } catch (e) {
+            // Catch synchronous errors (context invalidated)
+        }
     }
 }
 
