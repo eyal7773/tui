@@ -210,13 +210,14 @@ class SpatialEngine {
 
         // SMART TARGETING: If this is a container element (gridcell, listitem), 
         // try to find the actual interactive content inside.
-        // WhatsApp and similar apps often put tabindex="0" on a wrapper for keyboard focus,
+        // Many web apps put tabindex="0" on a wrapper for keyboard focus,
         // but the actual click listener is on an inner div.
         let target = el;
         const role = el.getAttribute('role');
         if (role === 'gridcell' || role === 'listitem' || role === 'row') {
-            // Try to find WhatsApp's specific inner wrapper (class starts with _ak)
-            const innerContent = el.querySelector('div[class*="_ak"]') || el.querySelector('div');
+            // Strategy: Look for a div with classes (content wrapper) rather than empty wrapper divs
+            // This works for WhatsApp, Google, and other modern web apps
+            const innerContent = el.querySelector('div[class]:not([class=""])') || el.querySelector('div');
             if (innerContent) {
                 if (this.debugMode) console.log('[TUI] Targeting inner content:', innerContent);
                 target = innerContent;
