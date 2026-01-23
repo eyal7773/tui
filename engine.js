@@ -202,6 +202,11 @@ class SpatialEngine {
             const active = document.activeElement;
             // Check if focus has moved to a new meaningful element
             if (active && active !== this.lastActiveElement && active !== document.body) {
+                // Ignore large layout wrappers that just confuse the user (e.g. WhatsApp Web background)
+                if (this.isLayoutWrapper(active)) {
+                    return;
+                }
+
                 this.lastActiveElement = active;
                 this.highlight(active);
                 // Once found, we can stop polling to save resources
@@ -241,8 +246,9 @@ class SpatialEngine {
 
         let currentRect = null;
 
-        // Use body as fallback if body is focused or no focus
-        if (current && current !== document.body) {
+        // Use body as fallback if body is focused or no focus.
+        // Also: treat large layout wrappers as "no focus" so we start fresh discovery instead of getting stuck on them.
+        if (current && current !== document.body && !this.isLayoutWrapper(current)) {
             currentRect = current.getBoundingClientRect();
         }
 
@@ -269,6 +275,25 @@ class SpatialEngine {
 
         // Reset lock
         requestAnimationFrame(() => this.isNavigating = false);
+    }
+
+    /**
+     * Checks if an element is likely a layout wrapper (full screen, often inadvertent target).
+     */
+    isLayoutWrapper(el) {
+        if (!el || el === document.body || el === document.documentElement) return false;
+
+        const rect = el.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // If it covers almost the entire screen (>95% width AND >95% height)
+        // AND it doesn't have semantic importance (like a video player or main text area might,
+        // but typically those focus internal controls or are contenteditable).
+        if (rect.width >= viewportWidth * 0.95 && rect.height >= viewportHeight * 0.95) {
+            return true;
+        }
+        return false;
     }
 
     /**
