@@ -552,21 +552,24 @@ class SpatialEngine {
             }
 
 
-            // NEW: Interactive Validation
-            // If it's a generic div/span with tabindex="-1", we need to be strictly sure it's interactive.
-            // Otherwise, we pick up every wrapper div in existence (like the WhatsApp app wrapper!).
-            if (el.getAttribute('tabindex') === '-1') {
+            // NEW: Interactive Validation for Generic Elements
+            // Many web apps use tabindex on wrapper divs for focus management,
+            // but these aren't actually clickable. We need to validate them.
+            const isGenericElement = ['DIV', 'SPAN', 'LI', 'TR', 'TD', 'UL', 'OL', 'NAV', 'SECTION', 'ARTICLE', 'ASIDE', 'HEADER', 'FOOTER'].includes(el.tagName);
+
+            if (isGenericElement && el.hasAttribute('tabindex')) {
+                // If it's a semantic interactive element, always keep it
                 if (['INPUT', 'TEXTAREA', 'IFRAME', 'BUTTON', 'A', 'SELECT', 'SUMMARY'].includes(el.tagName)) {
-                    // Keep native interactive elements even if -1
+                    // Keep native interactive elements
                 } else {
-                    // It's a generic div/span with tabindex="-1".
-                    // Check if it LOOKS clickable (cursor: pointer) or acts as a button (role).
-                    if (style.cursor === 'pointer' || el.getAttribute('role') === 'button' || el.getAttribute('role') === 'link') {
-                        // Keep it! This is likely our target (e.g. WhatsApp chat item)
-                    } else {
-                        // It's a generic div with tabindex="-1" but no pointer cursor or role.
-                        // This is likely a focus trap or layout wrapper using -1 for programmatic focus.
-                        // REJECT IT to avoid noise.
+                    // It's a generic element with tabindex.
+                    // Check if it LOOKS clickable or has interactive role
+                    const hasInteractiveRole = ['button', 'link', 'menuitem', 'tab', 'option', 'gridcell', 'listitem'].includes(el.getAttribute('role'));
+                    const looksClickable = style.cursor === 'pointer';
+
+                    if (!hasInteractiveRole && !looksClickable) {
+                        // It's a generic wrapper with tabindex but no interactive indicators.
+                        // REJECT IT to avoid noise (large containers, focus traps, etc.)
                         return false;
                     }
                 }
