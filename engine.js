@@ -11,6 +11,7 @@ class SpatialEngine {
         this.debugMode = false;
 
         // State
+        this.isActiveMode = false; // "Lazy Focus": only show green ring after user actively navigates with arrows
         this.lastActiveElement = null;
         this.isNavigating = false;
         this.observer = null;
@@ -37,6 +38,7 @@ class SpatialEngine {
         window.addEventListener('scroll', () => this.handleScroll(), { passive: true });
 
         // Passive interaction listeners to sync state without interference
+        document.addEventListener('mousedown', (e) => this.handleInteraction(e), { passive: true });
         document.addEventListener('click', (e) => this.handleInteraction(e), { passive: true });
         document.addEventListener('keyup', (e) => this.handleInteraction(e), { passive: true });
 
@@ -97,6 +99,15 @@ class SpatialEngine {
     highlight(el) {
         this.lastActiveElement = el; // Track what we are highlighting
 
+        // FEATURE: Lazy Focus
+        // If the user hasn't started using arrow keys yet (isActiveMode is false),
+        // we track the element internally but DO NOT show the intrusive green UI.
+        // This solves the issue on Google/WhatsApp where autofocus on load creates a Visual Bug.
+        if (!this.isActiveMode) {
+            if (this.spotlight) this.spotlight.style.display = 'none';
+            return;
+        }
+
         // Calculate position
         const rect = el.getBoundingClientRect();
         const scrollX = window.scrollX || window.pageXOffset;
@@ -124,6 +135,22 @@ class SpatialEngine {
         } catch (e) {
             console.warn('[TUI] Failed to access session storage (likely restricted context):', e);
             this.debugMode = false;
+        }
+    }
+
+    handleScroll() {
+        if (!this.isEnabled) return;
+
+        // Throttled update using requestAnimationFrame to avoid performance hits during scroll
+        if (!this._scrollFrameLocked) {
+            this._scrollFrameLocked = true;
+            requestAnimationFrame(() => {
+                this._scrollFrameLocked = false;
+                // Only update visual position if we are in "Active Mode" and have a target
+                if (this.isActiveMode && this.lastActiveElement) {
+                    this.highlight(this.lastActiveElement);
+                }
+            });
         }
     }
 
@@ -175,6 +202,13 @@ class SpatialEngine {
         // Sync internal state with system focus on user interactions
         if (!this.isEnabled) return;
 
+        // Disable "Active Mode" on mouse interaction so the green ring doesn't annoy mouse users
+        if (e.type === 'mousedown' || e.type === 'click') {
+            this.isActiveMode = false;
+            // Immediate update to hide the ring
+            if (this.lastActiveElement) this.highlight(this.lastActiveElement);
+        }
+
         // Use the monitor to catch immediate or slightly delayed focus changes
         this.monitorFocusChange(500);
     }
@@ -221,6 +255,10 @@ class SpatialEngine {
     navigate(key) {
         if (this.isNavigating) return;
         this.isNavigating = true;
+
+        // ENABLE Active Mode: The user clearly wants to use the plugin now.
+        // This will allow highlight() to actually render the green ring.
+        this.isActiveMode = true;
 
         if (this.debugMode) {
             const active = this.lastActiveElement || document.activeElement;
