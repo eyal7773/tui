@@ -189,11 +189,16 @@ class SpatialEngine {
             const active = document.activeElement;
 
             // Check if we are on a wrapper that has a stashed input
-            if (active && active._tui_input) {
+            // CRITICAL: Also check lastActiveElement in case focus is on body (contenteditable fix)
+            const wrapper = (active && active._tui_input) ? active :
+                (this.lastActiveElement && this.lastActiveElement._tui_input) ? this.lastActiveElement :
+                    null;
+
+            if (wrapper && wrapper._tui_input) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
 
-                const input = active._tui_input;
+                const input = wrapper._tui_input;
                 input.focus();
 
                 // Special handling for SELECT elements
@@ -805,6 +810,14 @@ class SpatialEngine {
     }
 
     focusElement(el) {
+        // DEBUG: Log what element we're trying to focus
+        if (this.debugMode) {
+            const tag = el.tagName;
+            const id = el.id ? `#${el.id}` : '';
+            const isContentEditable = el.isContentEditable ? ' [contenteditable]' : '';
+            console.log(`%c[TUI] focusElement: ${tag}${id}${isContentEditable}`, 'color: orange; font-weight: bold;');
+        }
+
         // 1. Handle Virtual Focus for Trap Elements
         if (this.isTrapElement(el)) {
             // We DO NOT call el.focus() because that surrenders control to the iframe.
@@ -820,8 +833,16 @@ class SpatialEngine {
         // Improvement: Only wrap inputs that need arrow keys (Text, Select).
         // Buttons, checkboxes, etc. can be focused directly.
         if (this.shouldTrapArrows(el)) {
+            if (this.debugMode) console.log('[TUI] Element needs wrapper (shouldTrapArrows=true)');
+
             const parent = el.parentElement;
             if (parent) {
+                if (this.debugMode) {
+                    const parentTag = parent.tagName;
+                    const parentId = parent.id ? `#${parent.id}` : '';
+                    console.log(`[TUI] Focusing parent wrapper: ${parentTag}${parentId}`);
+                }
+
                 // Make parent focusable if not already
                 if (!parent.hasAttribute('tabindex')) {
                     parent.setAttribute('tabindex', '-1');
@@ -831,14 +852,61 @@ class SpatialEngine {
                 parent._tui_input = el;
 
                 parent.focus();
+
+                if (this.debugMode) {
+                    console.log('[TUI] After parent.focus(), activeElement:', document.activeElement.tagName, document.activeElement.id || '(no id)');
+                    console.log('[TUI] Is contenteditable active?', document.activeElement === el);
+                }
+
+                // CRITICAL FIX: Ensure contenteditable elements don't auto-activate
+                // Some browsers/sites may still try to focus the contenteditable
+                // when its parent wrapper is focused. Explicitly blur it.
+                if (el.isContentEditable && document.activeElement === el) {
+                    if (this.debugMode) console.log('[TUI] ⚠️ Contenteditable got focus! Blurring it...');
+                    el.blur();
+                    if (this.debugMode) console.log('[TUI] After blur(), activeElement:', document.activeElement.tagName);
+                }
+
                 parent.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 this.highlight(parent);
                 return;
+            } else {
+                if (this.debugMode) console.log('[TUI] ⚠️ No parent found for wrapping!');
             }
         }
 
         // 3. Normal Focus
+        if (this.debugMode) console.log('[TUI] Using normal focus (no wrapper needed)');
         el.focus();
+        if (this.debugMode) console.log('[TUI] After el.focus(), activeElement:', document.activeElement.tagName, document.activeElement.id || '(no id)');
+
+        // CRITICAL FIX: Check if focusing this element caused a contenteditable to get focus
+        // (e.g., YouTube's YT-FORMATTED-STRING#contenteditable-textarea -> DIV#contenteditable-root)
+        const actualFocus = document.activeElement;
+        if (actualFocus !== el && actualFocus.isContentEditable) {
+            if (this.debugMode) console.log('[TUI] ⚠️ Focus shifted to contenteditable! Blurring it...');
+            actualFocus.blur();
+
+            // DON'T refocus the original element - it will just reactivate the contenteditable!
+            // Instead, treat the original element as a wrapper by storing reference and highlighting it
+            if (!el.hasAttribute('tabindex')) {
+                el.setAttribute('tabindex', '-1');
+            }
+
+            // Store reference so ENTER knows what to activate
+            el._tui_input = actualFocus;
+
+            // Keep focus on body to prevent reactivation
+            document.body.focus();
+
+            // Highlight the wrapper element visually
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            this.highlight(el);
+
+            if (this.debugMode) console.log('[TUI] Fixed. Stored reference and highlighted wrapper. ActiveElement:', document.activeElement.tagName);
+            return; // Exit early - we've handled this case
+        }
+
         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         this.highlight(el);
     }
