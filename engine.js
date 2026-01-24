@@ -192,7 +192,23 @@ class SpatialEngine {
             if (active && active._tui_input) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                active._tui_input.focus();
+
+                const input = active._tui_input;
+                input.focus();
+
+                // Special handling for SELECT elements
+                // Open the dropdown immediately and exit navigation mode
+                // so arrow keys work naturally inside the dropdown
+                if (input.tagName === 'SELECT') {
+                    // Open the dropdown
+                    input.click();
+
+                    // Exit navigation mode so the green ring disappears
+                    // and arrow keys are passed through to the SELECT
+                    this.isActiveMode = false;
+                    if (this.spotlight) this.spotlight.style.display = 'none';
+                }
+
                 return;
             }
 
