@@ -620,8 +620,21 @@ class SpatialEngine {
         const currentIsSticky = currentEl ? (this.isSticky(currentEl) || !!currentEl.closest('header, nav, [role="banner"], [role="navigation"]')) : false;
 
         this.candidates.forEach(cand => {
-            // Skip self
+            // Skip self - ENHANCED to prevent navigation loops
+            // Check multiple conditions:
+            // 1. Don't select lastActiveElement (tracked wrapper)
             if (cand === this.lastActiveElement) return;
+
+            // 2. Don't select the actual DOM focused element
+            if (cand === document.activeElement) return;
+
+            // 3. If lastActiveElement is a wrapper with a child input, skip both wrapper AND child
+            if (this.lastActiveElement && this.lastActiveElement._tui_input) {
+                if (cand === this.lastActiveElement._tui_input) return;
+            }
+
+            // 4. Don't select currentEl if it was passed explicitly
+            if (currentEl && cand === currentEl) return;
 
             const rect = cand.getBoundingClientRect();
 
