@@ -893,30 +893,46 @@ class SpatialEngine {
         el.focus();
         if (this.debugMode) console.log('[TUI] After el.focus(), activeElement:', document.activeElement.tagName, document.activeElement.id || '(no id)');
 
-        // CRITICAL FIX: Check if focusing this element caused a contenteditable to get focus
-        // (e.g., YouTube's YT-FORMATTED-STRING#contenteditable-textarea -> DIV#contenteditable-root)
+        // CRITICAL FIX: Check if focusing this element caused a DIFFERENT element to get focus
+        // This can happen with:
+        // - Contenteditable elements (YouTube comments, etc.)
+        // - Parent wrappers that intercept focus (GitHub autocomplete, etc.)
+        // - Autocomplete widgets
+        // - Custom focus management in web apps
         const actualFocus = document.activeElement;
-        if (actualFocus !== el && actualFocus.isContentEditable) {
-            if (this.debugMode) console.log('[TUI] ⚠️ Focus shifted to contenteditable! Blurring it...');
-            actualFocus.blur();
+        if (actualFocus !== el) {
+            if (this.debugMode) console.log('[TUI] ⚠️ Focus went to different element! Intended:', el.tagName, 'Actual:', actualFocus.tagName);
 
-            // DON'T refocus the original element - it will just reactivate the contenteditable!
-            // Instead, treat the original element as a wrapper by storing reference and highlighting it
+            // If actualFocus is contenteditable, blur it to prevent editing mode
+            if (actualFocus.isContentEditable) {
+                if (this.debugMode) console.log('[TUI] Blurring contenteditable element...');
+                actualFocus.blur();
+            }
+
+            // Store reference so our navigation tracking works correctly
+            // and so ENTER knows what to activate
+            el._tui_input = actualFocus;
+
+            // CRITICAL: Update lastActiveElement to point to the element we INTENDED to focus
+            // This prevents the navigation loop where we keep finding the same target
+            this.lastActiveElement = el;
+
+            // Make the intended element focusable if needed
             if (!el.hasAttribute('tabindex')) {
                 el.setAttribute('tabindex', '-1');
             }
 
-            // Store reference so ENTER knows what to activate
-            el._tui_input = actualFocus;
+            // For contenteditable, keep focus on body to prevent reactivation
+            // For other cases, we can leave focus where it went
+            if (actualFocus.isContentEditable) {
+                document.body.focus();
+            }
 
-            // Keep focus on body to prevent reactivation
-            document.body.focus();
-
-            // Highlight the wrapper element visually
+            // Visually highlight the element we intended to focus
             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             this.highlight(el);
 
-            if (this.debugMode) console.log('[TUI] Fixed. Stored reference and highlighted wrapper. ActiveElement:', document.activeElement.tagName);
+            if (this.debugMode) console.log('[TUI] Fixed. Stored reference and tracking wrapper. ActiveElement:', document.activeElement.tagName);
             return; // Exit early - we've handled this case
         }
 
