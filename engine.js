@@ -16,6 +16,7 @@ class SpatialEngine {
         this.isNavigating = false;
         this.observer = null;
         this.focusMonitorInterval = null;
+        this.failedFocusElements = new Set(); // Track elements that recently failed to receive focus
 
         // Initialize
         if (document.readyState === 'loading') {
@@ -567,6 +568,12 @@ class SpatialEngine {
                 return false;
             }
 
+            // Exclude aria-hidden elements (decorative dividers, spacers, etc.)
+            // These are hidden from assistive technologies and shouldn't be focus targets
+            if (el.getAttribute('aria-hidden') === 'true') {
+                return false;
+            }
+
             // Filter out auxiliary UI elements (touch targets, ripples, overlays, etc.)
             if (this.isAuxiliaryElement(el)) {
                 return false;
@@ -635,6 +642,12 @@ class SpatialEngine {
 
             // 4. Don't select currentEl if it was passed explicitly
             if (currentEl && cand === currentEl) return;
+
+            // 5. Skip elements that recently failed to receive focus
+            if (this.failedFocusElements.has(cand)) {
+                if (this.debugMode) console.log('[TUI] Skipping element that previously failed to focus:', cand.tagName, cand.className);
+                return;
+            }
 
             const rect = cand.getBoundingClientRect();
 
@@ -903,6 +916,22 @@ class SpatialEngine {
         if (actualFocus !== el) {
             if (this.debugMode) console.log('[TUI] ⚠️ Focus went to different element! Intended:', el.tagName, 'Actual:', actualFocus.tagName);
 
+            // SPECIAL CASE: Focus returned to the element we started from
+            // This means the browser/page REJECTED our focus attempt
+            // The target element is not actually focusable despite being in our candidates
+            if (actualFocus === this.lastActiveElement) {
+                if (this.debugMode) {
+                    console.log('[TUI] ⚠️ Focus attempt REJECTED! Focus returned to previous element.');
+                    console.log('[TUI] Adding to exclusion list. Next navigation will try different candidate.');
+                }
+                // Add to temporary exclusion list so we don't try it again
+                this.failedFocusElements.add(el);
+                // Don't update lastActiveElement - it's already correct
+                // Don't highlight or store anything - the focus attempt failed
+                // Just return and let the next navigation try a different candidate
+                return;
+            }
+
             // If actualFocus is contenteditable, blur it to prevent editing mode
             if (actualFocus.isContentEditable) {
                 if (this.debugMode) console.log('[TUI] Blurring contenteditable element...');
@@ -938,6 +967,12 @@ class SpatialEngine {
 
         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         this.highlight(el);
+
+        // Clear failed focus exclusions on successful navigation
+        if (this.failedFocusElements.size > 0) {
+            if (this.debugMode) console.log('[TUI] Successful focus. Clearing exclusion list of', this.failedFocusElements.size, 'elements.');
+            this.failedFocusElements.clear();
+        }
     }
 
     handleOffScreen(key) {
