@@ -574,6 +574,33 @@ class SpatialEngine {
                 return false;
             }
 
+            // Exclude elements that are positioned off-screen (skip links, etc.)
+            // Allow small margins for sticky headers but exclude truly hidden elements
+            const significantlyOffScreen = (
+                rect.bottom < -50 ||   // Well above viewport
+                rect.top > window.innerHeight + 50 || // Well below viewport
+                rect.right < -50 ||    // Well to the left
+                rect.left > window.innerWidth + 50    // Well to the right
+            );
+
+            if (significantlyOffScreen) {
+                return false;
+            }
+
+            // Exclude "show-on-focus" skip links (accessibility pattern)
+            // These elements are only visible when focused via Tab key and should not be
+            // part of spatial navigation candidates
+            const classNames = el.className;
+            if (typeof classNames === 'string') {
+                const lowerClass = classNames.toLowerCase();
+                if (lowerClass.includes('show-on-focus') || 
+                    lowerClass.includes('skip-to') ||
+                    lowerClass.includes('skip-link') ||
+                    lowerClass.includes('sr-only-focusable')) {
+                    return false;
+                }
+            }
+
             // Filter out auxiliary UI elements (touch targets, ripples, overlays, etc.)
             if (this.isAuxiliaryElement(el)) {
                 return false;
