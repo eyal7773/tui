@@ -536,20 +536,27 @@ class SpatialEngine {
         // 1. Semantic Elements & Potential Targets
         // NOTE: We MUST include tabindex="-1" because many modern apps (like WhatsApp) manage focus programmatically
         // on list items using roving tabindex, usually setting them to -1 when not active.
-        const selector = 'a, button, input, select, textarea, iframe, frame, object, embed, summary, [tabindex], [contenteditable]:not([contenteditable="false"])';
+        // NOTE: We include 'label' because modern UIs use labels as interactive controls (dropdowns, custom checkboxes, toggles)
+        const selector = 'a, button, input, select, textarea, label, iframe, frame, object, embed, summary, [tabindex], [contenteditable]:not([contenteditable="false"])';
         let all = Array.from(document.querySelectorAll(selector));
 
         // 2. Filter candidates
         this.candidates = all.filter(el => {
             // Visibility Check
-            if (el.offsetParent === null) return false; // Hidden parent
+            if (el.offsetParent === null) {
+                return false; // Hidden parent
+            }
 
             const rect = el.getBoundingClientRect();
-            if (rect.width === 0 || rect.height === 0) return false;
+            if (rect.width === 0 || rect.height === 0) {
+                return false;
+            }
 
             // Computed style check (expensive, maybe optimize later if slow)
             const style = window.getComputedStyle(el);
-            if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+            if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+                return false;
+            }
 
             // Details/Summary Check
             const details = el.closest('details');
@@ -569,21 +576,23 @@ class SpatialEngine {
             }
 
             // Exclude aria-hidden elements (decorative dividers, spacers, etc.)
-            // These are hidden from assistive technologies and shouldn't be focus targets
+            // EXCEPTION: Allow LABELs with aria-hidden since they often control inputs
+            // in modern accessibility patterns (prevents duplicate screen reader announcements)
             if (el.getAttribute('aria-hidden') === 'true') {
-                return false;
+                // Labels with 'for' attribute are functional, not decorative
+                if (el.tagName === 'LABEL' && el.hasAttribute('for')) {
+                    // Keep this label - it controls an input
+                } else {
+                    return false;  // Filter out other aria-hidden elements
+                }
             }
 
-            // Exclude elements that are positioned off-screen (skip links, etc.)
-            // Allow small margins for sticky headers but exclude truly hidden elements
-            const significantlyOffScreen = (
-                rect.bottom < -50 ||   // Well above viewport
-                rect.top > window.innerHeight + 50 || // Well below viewport
-                rect.right < -50 ||    // Well to the left
-                rect.left > window.innerWidth + 50    // Well to the right
-            );
-
-            if (significantlyOffScreen) {
+            // Exclude elements that are visually off-screen (e.g., skip links, hidden menus)
+            // But be careful not to exclude elements that are just barely off-screen (scrollable)
+            if (rect.right < 0 || rect.bottom < 0 ||
+                rect.left > window.innerWidth || rect.top > window.innerHeight) {
+                // Check if it's scrollable into view... for now, strict viewport check for candidates
+                // to avoid jumping to invisible footer items.
                 return false;
             }
 
@@ -659,10 +668,14 @@ class SpatialEngine {
             // Skip self - ENHANCED to prevent navigation loops
             // Check multiple conditions:
             // 1. Don't select lastActiveElement (tracked wrapper)
-            if (cand === this.lastActiveElement) return;
+            if (cand === this.lastActiveElement) {
+                return;
+            }
 
             // 2. Don't select the actual DOM focused element
-            if (cand === document.activeElement) return;
+            if (cand === document.activeElement) {
+                return;
+            }
 
             // 3. If lastActiveElement is a wrapper with a child input, skip both wrapper AND child
             if (this.lastActiveElement && this.lastActiveElement._tui_input) {
@@ -698,6 +711,11 @@ class SpatialEngine {
                     break;
             }
 
+            if (this.debugMode && (cand.id === 'vector-main-menu-dropdown-label' || cand.id === 'vector-main-menu-dropdown-checkbox')) {
+                console.log(`[TUI DEBUG CONE] Direction: ${key}, IsValid: ${isValid}`);
+                console.log(`- Logic (${key}): Rect[${rect.left}, ${rect.right}, ${rect.top}, ${rect.bottom}] vs Current[${currentRect.left}, ${currentRect.right}, ${currentRect.top}, ${currentRect.bottom}]`);
+            }
+
             if (!isValid) return;
 
             // Check for Overlapping Elements (Visual Obstruction)
@@ -706,22 +724,36 @@ class SpatialEngine {
             const topEl = document.elementFromPoint(centerX, centerY);
 
             if (topEl && !cand.contains(topEl) && !topEl.contains(cand)) {
-                // BUG FIX: Allow navigation to elements obscured by fixed/sticky containers (headers/footers)
-                // We must traverse up the tree because elementFromPoint might return a child of the fixed element.
-                let isObstructingFixed = false;
-                let obstacle = topEl;
-                while (obstacle && obstacle !== document.body) {
-                    const style = window.getComputedStyle(obstacle);
-                    if (style.position === 'fixed' || style.position === 'sticky') {
-                        isObstructingFixed = true;
-                        break;
-                    }
-                    obstacle = obstacle.parentElement;
+                // FIX: Allow Label <-> Input obstruction
+                // If the candidate is a label and it's obscured by its target input (or vice versa), that's fine.
+                // This happens with custom checkboxes/radios where the input is on top of the label.
+                let isRelatedControl = false;
+                if (cand.tagName === 'LABEL' && cand.getAttribute('for') === topEl.id) {
+                    isRelatedControl = true;
+                } else if (topEl.tagName === 'LABEL' && topEl.getAttribute('for') === cand.id) {
+                    isRelatedControl = true;
                 }
 
-                if (!isObstructingFixed) {
-                    // Obscured by something unrelated (not a fixed/sticky header)
-                    return;
+                if (isRelatedControl) {
+                    // Valid obstruction by related control -> Allow
+                } else {
+                    // BUG FIX: Allow navigation to elements obscured by fixed/sticky containers (headers/footers)
+                    // We must traverse up the tree because elementFromPoint might return a child of the fixed element.
+                    let isObstructingFixed = false;
+                    let obstacle = topEl;
+                    while (obstacle && obstacle !== document.body) {
+                        const style = window.getComputedStyle(obstacle);
+                        if (style.position === 'fixed' || style.position === 'sticky') {
+                            isObstructingFixed = true;
+                            break;
+                        }
+                        obstacle = obstacle.parentElement;
+                    }
+
+                    if (!isObstructingFixed) {
+                        // Obscured by something unrelated (not a fixed/sticky header)
+                        return;
+                    }
                 }
             }
 
@@ -755,28 +787,16 @@ class SpatialEngine {
             const ranked = this.candidates
                 .filter(c => c._debugScore !== undefined)
                 .sort((a, b) => a._debugScore - b._debugScore)
-                .slice(0, 5);
-
-            if (ranked.length > 0) {
-                console.groupCollapsed(`[TUI] Candidates Analysis (Top ${ranked.length})`);
-                ranked.forEach((el, i) => {
-                    const isWinner = el === bestCandidate;
-                    const marker = isWinner ? '🏆 ' : `${i + 1}. `;
-                    const style = isWinner ? 'color: green; font-weight: bold;' : 'color: #888;';
-
-                    const tag = el.tagName;
-                    const id = el.id ? `#${el.id}` : '';
-                    let cls = '';
-                    if (typeof el.className === 'string') {
-                        cls = `.${el.className.split(' ').join('.')}`;
-                    }
-                    const scoreText = el._debugScore.toFixed(2);
-                    console.log(`%c${marker}${tag}${id}${cls} [Score: ${scoreText}]`, style);
+                .slice(0, 5)
+                .map(c => {
+                    let name = c.tagName;
+                    if (c.id) name += '#' + c.id;
+                    else if (c.className) name += '.' + c.className.split(' ').join('.');
+                    return `🏆 ${name} [Score: ${c._debugScore.toFixed(2)}]`;
                 });
-                console.groupEnd();
-            } else {
-                console.log('[TUI] No valid candidates found in direction.');
-            }
+
+            console.log('[TUI] Candidates Analysis (Top 5)');
+            ranked.forEach((r, i) => console.log(i === 0 ? r : `${i + 1}. ${r.replace('🏆 ', '')}`));
 
             // Cleanup
             this.candidates.forEach(c => delete c._debugScore);
@@ -937,6 +957,7 @@ class SpatialEngine {
 
         // CRITICAL FIX: Check if focusing this element caused a DIFFERENT element to get focus
         // This can happen with:
+        // - LABELs that redirect focus to their associated INPUT (checkbox, radio)
         // - Contenteditable elements (YouTube comments, etc.)
         // - Parent wrappers that intercept focus (GitHub autocomplete, etc.)
         // - Autocomplete widgets
@@ -960,6 +981,26 @@ class SpatialEngine {
                 // Just return and let the next navigation try a different candidate
                 return;
             }
+
+            // SPECIAL CASE: LABEL → INPUT focus redirect
+            // When user focuses a LABEL, browser automatically focuses the associated INPUT
+            // For bidirectional navigation, we should track the INPUT directly, not use _tui_input wrapper
+            const isLabelRedirect = (el.tagName === 'LABEL' &&
+                el.hasAttribute('for') &&
+                actualFocus.tagName === 'INPUT');
+
+            if (isLabelRedirect) {
+                // Track the INPUT as lastActiveElement so we can navigate back to it
+                this.lastActiveElement = actualFocus;
+
+                // Highlight the INPUT (the actual focused element)
+                actualFocus.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                this.highlight(actualFocus);
+
+                return; // Exit early - handled
+            }
+
+            // For other focus redirects (contenteditable, wrappers, etc.), use _tui_input mechanism
 
             // If actualFocus is contenteditable, blur it to prevent editing mode
             if (actualFocus.isContentEditable) {
