@@ -593,9 +593,11 @@ class SpatialEngine {
             const classNames = el.className;
             if (typeof classNames === 'string') {
                 const lowerClass = classNames.toLowerCase();
-                if (lowerClass.includes('show-on-focus') || 
+                if (lowerClass.includes('show-on-focus') ||
                     lowerClass.includes('skip-to') ||
                     lowerClass.includes('skip-link') ||
+                    lowerClass.includes('jump-link') ||      // Wikipedia pattern
+                    lowerClass.includes('jump-to') ||        // Variation
                     lowerClass.includes('sr-only-focusable')) {
                     return false;
                 }
