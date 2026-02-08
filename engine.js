@@ -246,14 +246,6 @@ class SpatialEngine {
             }
         }
 
-        // 1. Try native click first (for <button>, <a>, <input>)
-        if (typeof target.click === 'function') {
-            if (this.debugMode) console.log('[TUI] Calling native .click()');
-            target.click();
-        }
-
-        // 2. Dispatch a full Mouse/Pointer Event Sequence
-        // Modern web apps (especially React) often require specific event properties
         const options = {
             view: window,
             bubbles: true,
@@ -265,16 +257,24 @@ class SpatialEngine {
 
         if (this.debugMode) console.log('[TUI] Dispatching synthetic events...');
 
-        // Dispatch Pointer Events (standard for modern web)
+        // 1. Dispatch generic Down/Up events first (required for some UI frameworks)
+        // Standard sequence: pointerdown -> mousedown -> pointerup -> mouseup -> click
         target.dispatchEvent(new PointerEvent('pointerdown', options));
         target.dispatchEvent(new MouseEvent('mousedown', options));
-
         target.dispatchEvent(new PointerEvent('pointerup', options));
         target.dispatchEvent(new MouseEvent('mouseup', options));
 
-        target.dispatchEvent(new PointerEvent('click', options));
-        // We also fire MouseEvent click for legacy listeners
-        target.dispatchEvent(new MouseEvent('click', options));
+        // 2. Perform the Click
+        // Use native click() if available as it effectively triggers the 'click' event 
+        // AND handles default behaviors (like navigation for <a> tags).
+        if (typeof target.click === 'function') {
+            if (this.debugMode) console.log('[TUI] Calling native .click()');
+            target.click();
+        } else {
+            // Fallback for elements without .click() (e.g., SVG in some contexts)
+            if (this.debugMode) console.log('[TUI] Dispatching synthetic click event');
+            target.dispatchEvent(new MouseEvent('click', options));
+        }
 
         if (this.debugMode) console.log('[TUI] Click simulation complete.');
     }
@@ -931,6 +931,14 @@ class SpatialEngine {
                 if (this.debugMode) {
                     console.log('[TUI] After parent.focus(), activeElement:', document.activeElement.tagName, document.activeElement.id || '(no id)');
                     console.log('[TUI] Is contenteditable active?', document.activeElement === el);
+                }
+
+                // CRITICAL FIX: Verify wrapper focus success
+                // If focus didn't move to parent (or inside it), it means parent refused focus.
+                if (document.activeElement !== parent && !parent.contains(document.activeElement)) {
+                    if (this.debugMode) console.log('[TUI] ⚠️ Wrapper focus FAILED. Parent is not focusable. Marking candidate as failed.');
+                    this.failedFocusElements.add(el);
+                    return;
                 }
 
                 // CRITICAL FIX: Ensure contenteditable elements don't auto-activate
