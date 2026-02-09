@@ -352,44 +352,66 @@ class SpatialEngine {
             console.log(`%c[TUI] Navigating ${key} from ${tag}${id}${cls}`, 'color: cyan; font-weight: bold;');
         }
 
-        // 1. Discovery
-        this.refreshCandidates();
+        // AUTO-RETRY LOOP
+        // If focus fails (phantom element), we try again immediately with the next best candidate.
+        // Limit to 5 attempts to prevent infinite loops or performance issues.
+        let attempts = 0;
+        const maxAttempts = 5;
+        let success = false;
 
-        // 2. Current Position - PREFER internal tracking to avoid losing context when focus is blurred/trapped
-        let current = this.lastActiveElement;
+        while (attempts < maxAttempts && !success) {
+            attempts++;
+            if (attempts > 1 && this.debugMode) {
+                console.log(`[TUI] Navigation Retry Attempt ${attempts}/${maxAttempts}`);
+            }
 
-        // Validation: If our internal tracking is garbage/gone, fall back to system focus
-        if (!current || !document.body.contains(current)) {
-            current = document.activeElement;
-        }
+            // 1. Discovery
+            // Only strictly needed on first attempt or if we want to be very safe,
+            // but refreshing candidates is relatively cheap if dirty flag is managed.
+            this.refreshCandidates();
 
-        let currentRect = null;
+            // 2. Current Position - PREFER internal tracking
+            let current = this.lastActiveElement;
+            if (!current || !document.body.contains(current)) {
+                current = document.activeElement;
+            }
 
-        // Use body as fallback if body is focused or no focus.
-        // Also: treat large layout wrappers as "no focus" so we start fresh discovery instead of getting stuck on them.
-        if (current && current !== document.body && !this.isLayoutWrapper(current)) {
-            currentRect = current.getBoundingClientRect();
-        }
+            let currentRect = null;
+            if (current && current !== document.body && !this.isLayoutWrapper(current)) {
+                currentRect = current.getBoundingClientRect();
+            }
 
-        // 3. Find Best Candidate
-        const target = this.findBestCandidate(currentRect, key, current);
+            // 3. Find Best Candidate
+            // Note: findBestCandidate automatically filters out elements in this.failedFocusElements
+            const target = this.findBestCandidate(currentRect, key, current);
 
-        // 4. Action
-        if (target) {
-            this.focusElement(target);
-            // Metric Tracking
-            this.safeSendMessage({
-                type: 'METRIC_EVENT',
-                payload: { action: 'NAVIGATE', key: key }
-            });
-        } else {
-            // 5. Off-screen handling (scroll)
-            this.handleOffScreen(key);
-            // Metric Tracking (Scroll is also an action)
-            this.safeSendMessage({
-                type: 'METRIC_EVENT',
-                payload: { action: 'SCROLL', key: key }
-            });
+            // 4. Action
+            if (target) {
+                // Try to focus. access result to see if we should stop or retry.
+                const focusResult = this.focusElement(target);
+
+                if (focusResult) {
+                    success = true;
+                    // Metric Tracking
+                    this.safeSendMessage({
+                        type: 'METRIC_EVENT',
+                        payload: { action: 'NAVIGATE', key: key }
+                    });
+                } else {
+                    // Focus failed. The element was added to failedFocusElements inside focusElement().
+                    // The loop will continue, and findBestCandidate will skip this element next time.
+                    if (this.debugMode) console.log('[TUI] Focus failed. Retrying navigation...');
+                }
+            } else {
+                // 5. Off-screen handling (scroll) - Only if NO candidate found
+                this.handleOffScreen(key);
+                success = true; // Treat scroll as "success" to stop retrying
+                // Metric Tracking
+                this.safeSendMessage({
+                    type: 'METRIC_EVENT',
+                    payload: { action: 'SCROLL', key: key }
+                });
+            }
         }
 
         // Reset lock
@@ -901,7 +923,7 @@ class SpatialEngine {
             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             this.highlight(el);
             this.highlight(el);
-            return;
+            return true; // Success (Virtual)
         }
 
         // 2. Handle Inputs (Wrapper Focus)
@@ -938,7 +960,7 @@ class SpatialEngine {
                 if (document.activeElement !== parent && !parent.contains(document.activeElement)) {
                     if (this.debugMode) console.log('[TUI] ⚠️ Wrapper focus FAILED. Parent is not focusable. Marking candidate as failed.');
                     this.failedFocusElements.add(el);
-                    return;
+                    return false; // Failed
                 }
 
                 // CRITICAL FIX: Ensure contenteditable elements don't auto-activate
@@ -952,9 +974,10 @@ class SpatialEngine {
 
                 parent.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 this.highlight(parent);
-                return;
+                return true; // Success
             } else {
                 if (this.debugMode) console.log('[TUI] ⚠️ No parent found for wrapping!');
+                // Fallthrough to normal focus if no parent
             }
         }
 
@@ -987,7 +1010,7 @@ class SpatialEngine {
                 // Don't update lastActiveElement - it's already correct
                 // Don't highlight or store anything - the focus attempt failed
                 // Just return and let the next navigation try a different candidate
-                return;
+                return false; // Failed
             }
 
             // SPECIAL CASE: LABEL → INPUT focus redirect
@@ -1005,7 +1028,7 @@ class SpatialEngine {
                 actualFocus.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 this.highlight(actualFocus);
 
-                return; // Exit early - handled
+                return true; // Success (Redirected)
             }
 
             // For other focus redirects (contenteditable, wrappers, etc.), use _tui_input mechanism
@@ -1040,7 +1063,7 @@ class SpatialEngine {
             this.highlight(el);
 
             if (this.debugMode) console.log('[TUI] Fixed. Stored reference and tracking wrapper. ActiveElement:', document.activeElement.tagName);
-            return; // Exit early - we've handled this case
+            return true; // Success (Handled redirection)
         }
 
         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1051,6 +1074,8 @@ class SpatialEngine {
             if (this.debugMode) console.log('[TUI] Successful focus. Clearing exclusion list of', this.failedFocusElements.size, 'elements.');
             this.failedFocusElements.clear();
         }
+
+        return true; // Success
     }
 
     handleOffScreen(key) {
