@@ -570,7 +570,9 @@ class SpatialEngine {
             }
 
             const rect = el.getBoundingClientRect();
-            if (rect.width === 0 || rect.height === 0) {
+            // FILTER: Tiny elements (1px spacing hacks, etc.)
+            // Skip links are often 1x1 pixels. We require a minimum interactive size.
+            if (rect.width < 4 || rect.height < 4) {
                 return false;
             }
 
@@ -578,6 +580,25 @@ class SpatialEngine {
             const style = window.getComputedStyle(el);
             if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
                 return false;
+            }
+
+            // FILTER: Clipped elements (Accessibly Hidden pattern)
+            // Many sites use clip: rect(0 0 0 0) or clip-path to hide skip links visually
+            if (style.clip === 'rect(0px, 0px, 0px, 0px)' ||
+                style.clip === 'rect(0 0 0 0)' ||
+                style.clipPath === 'inset(50%)' ||
+                (style.width === '1px' && style.height === '1px' && style.overflow === 'hidden')) {
+                return false;
+            }
+
+            // FILTER: "Skip to Content" text check
+            // If the element text explicitly says "Skip to", it's likely a hidden navigation aid.
+            // These should only be candidates if they are ALREADY focused (i.e. user Tabbed to them).
+            if (document.activeElement !== el) {
+                const text = (el.textContent || '').toLowerCase().trim();
+                if (text.startsWith('skip to ') || text === 'skip navigation' || text === 'skip main navigation') {
+                    return false;
+                }
             }
 
             // Details/Summary Check
