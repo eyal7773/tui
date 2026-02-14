@@ -570,6 +570,24 @@ class SpatialEngine {
             }
 
             const rect = el.getBoundingClientRect();
+
+            // FILTER: Negative Tabindex on native controls (unless part of a widget)
+            // This excludes helper inputs used by libraries (e.g. Jira, React-Select)
+            if (el.getAttribute('tabindex') === '-1') {
+                // Allow if currently focused (user is already there)
+                if (document.activeElement !== el) {
+                    const tagName = el.tagName;
+                    if (['INPUT', 'BUTTON', 'SELECT', 'TEXTAREA', 'A'].includes(tagName)) {
+                        // Check for Roving Tabindex roles that SHOULD be reachable via arrow keys
+                        const role = el.getAttribute('role');
+                        const rovingRoles = ['menuitem', 'menuitemradio', 'menuitemcheckbox', 'option', 'gridcell', 'tab', 'treeitem', 'listitem'];
+                        if (!role || !rovingRoles.includes(role)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+
             // FILTER: Tiny elements (1px spacing hacks, etc.)
             // Skip links are often 1x1 pixels. We require a minimum interactive size.
             if (rect.width < 4 || rect.height < 4) {
@@ -578,8 +596,30 @@ class SpatialEngine {
 
             // Computed style check (expensive, maybe optimize later if slow)
             const style = window.getComputedStyle(el);
-            if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+            const opacity = parseFloat(style.opacity);
+            if (style.display === 'none' || style.visibility === 'hidden' || opacity < 0.05) {
                 return false;
+            }
+
+            // FILTER: Parent explicitly marked as non-focusable (often hides internal inputs)
+            // This fixes Jira resize handles where a SPAN[tabindex="-1"] wraps a hidden INPUT
+            if (el.parentElement && el.parentElement.getAttribute('tabindex') === '-1') {
+                const parentRole = el.parentElement.getAttribute('role');
+                const validParentRoles = ['row', 'grid', 'list', 'menu', 'menubar', 'tablist', 'treegrid'];
+                if (!parentRole || !validParentRoles.includes(parentRole)) {
+                    return false;
+                }
+            }
+
+            // FILTER: Tiny inputs (often used for focus traps or file uploads)
+            if (el.tagName === 'INPUT') {
+                const type = el.type ? el.type.toLowerCase() : 'text';
+                // Removed 'range' from specific exclusions - visible sliders should be > 10px
+                if (type !== 'checkbox' && type !== 'radio') {
+                    if (rect.width < 10 || rect.height < 10) {
+                        return false;
+                    }
+                }
             }
 
             // FILTER: Clipped elements (Accessibly Hidden pattern)
@@ -726,7 +766,16 @@ class SpatialEngine {
             }
 
             // 4. Don't select currentEl if it was passed explicitly
-            if (currentEl && cand === currentEl) return;
+            if (currentEl) {
+                if (cand === currentEl) return;
+
+                // CRITICAL FIX: Don't select ANCESTORS of the current element
+                // Navigating from Input -> Parent Div/Label is almost never desired and causes loops
+                if (cand.contains(currentEl)) return;
+
+                // CRITICAL FIX: Don't select LABELs that control the current input
+                if (cand.tagName === 'LABEL' && cand.getAttribute('for') === currentEl.id) return;
+            }
 
             // 5. Skip elements that recently failed to receive focus
             if (this.failedFocusElements.has(cand)) {
@@ -1038,8 +1087,7 @@ class SpatialEngine {
             // When user focuses a LABEL, browser automatically focuses the associated INPUT
             // For bidirectional navigation, we should track the INPUT directly, not use _tui_input wrapper
             const isLabelRedirect = (el.tagName === 'LABEL' &&
-                el.hasAttribute('for') &&
-                actualFocus.tagName === 'INPUT');
+                (actualFocus.tagName === 'INPUT' || actualFocus.tagName === 'TEXTAREA' || actualFocus.tagName === 'SELECT'));
 
             if (isLabelRedirect) {
                 // Track the INPUT as lastActiveElement so we can navigate back to it

@@ -20,7 +20,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     handleMetricEvent(message.payload);
   } else if (message.type === 'STATUS_UPDATE') {
     // Update badge based on support AND enabled state
-    updateBadge(sender.tab.id, message.payload);
+    if (sender.tab) {
+      updateBadge(sender.tab.id, message.payload);
+    }
   }
 });
 
