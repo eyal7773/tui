@@ -388,7 +388,7 @@ class SpatialEngine {
             // 4. Action
             if (target) {
                 // Try to focus. access result to see if we should stop or retry.
-                const focusResult = this.focusElement(target);
+                const focusResult = this.focusElement(target, attempts);
 
                 if (focusResult) {
                     success = true;
@@ -400,7 +400,7 @@ class SpatialEngine {
                 } else {
                     // Focus failed. The element was added to failedFocusElements inside focusElement().
                     // The loop will continue, and findBestCandidate will skip this element next time.
-                    if (this.debugMode) console.log('[TUI] Focus failed. Retrying navigation...');
+                    if (this.debugMode) console.log(`[TUI] Focus failed (Attempt ${attempts}/${maxAttempts}). Retrying navigation...`);
                 }
             } else {
                 // 5. Off-screen handling (scroll) - Only if NO candidate found
@@ -700,6 +700,57 @@ class SpatialEngine {
                 return false;
             }
 
+            // CRITICAL FIX: Stricter LABEL filtering
+            // Labels are only interactive if:
+            // 1. They have a tabindex (custom implementation)
+            // 2. They point to a valid, focusable input (native behavior)
+            if (el.tagName === 'LABEL') {
+                const hasTabindex = el.hasAttribute('tabindex') && el.getAttribute('tabindex') !== '-1';
+                if (hasTabindex) return true; // Explicitly interactive
+
+                const forId = el.getAttribute('for');
+                if (forId) {
+                    const targetInput = document.getElementById(forId);
+                    if (targetInput) {
+                        // Check if target is focusable
+                        const targetStyle = window.getComputedStyle(targetInput);
+                        const targetRect = targetInput.getBoundingClientRect();
+
+                        // If target is hidden, disabled, or not focusable, the label is useless
+                        if (targetInput.disabled ||
+                            targetStyle.display === 'none' ||
+                            targetStyle.visibility === 'hidden' ||
+                            targetInput.getAttribute('type') === 'hidden' ||
+                            targetInput.getAttribute('aria-hidden') === 'true' ||
+                            targetRect.width === 0 || targetRect.height === 0 ||
+                            targetInput.getAttribute('tabindex') === '-1') {
+                            return false;
+                        }
+                        // Target is valid -> Keep label (it will redirect focus)
+                        return true;
+                    }
+                }
+                // No tabindex and no valid target -> Skip (it's just text)
+                return false;
+            }
+
+            // FILTER: Buttons with tabindex="-1"
+            // Many UI frameworks use buttons as non-interactive icons or helpers.
+            // If it has tabindex="-1", it's likely not meant for navigation UNLESS it has a specific role.
+            if (el.tagName === 'BUTTON' && el.getAttribute('tabindex') === '-1') {
+                const role = el.getAttribute('role');
+                const validRoles = ['menuitem', 'menuitemradio', 'menuitemcheckbox', 'option', 'tab', 'treeitem', 'gridcell'];
+                if (!role || !validRoles.includes(role)) {
+                    return false;
+                }
+            }
+
+            // FILTER: Elements that are explicitly aria-hidden
+            // (Unless they are labels, which we handled above)
+            if (el.getAttribute('aria-hidden') === 'true') {
+                return false;
+            }
+
 
             // NEW: Interactive Validation for Generic Elements
             // Many web apps use tabindex on wrapper divs for focus management,
@@ -976,14 +1027,61 @@ class SpatialEngine {
         return ['IFRAME', 'FRAME', 'OBJECT', 'EMBED'].includes(el.tagName);
     }
 
-    focusElement(el) {
+    focusElement(el, attempt = 1) {
         // DEBUG: Log what element we're trying to focus
         if (this.debugMode) {
             const tag = el.tagName;
             const id = el.id ? `#${el.id}` : '';
+            const cls = el.className ? `.${el.className.split(' ').join('.')}` : '';
             const isContentEditable = el.isContentEditable ? ' [contenteditable]' : '';
-            console.log(`%c[TUI] focusElement: ${tag}${id}${isContentEditable}`, 'color: orange; font-weight: bold;');
+
+            console.group(`[TUI] focusElement (Attempt ${attempt})`);
+            console.log(`Target: ${tag}${id}${cls}${isContentEditable}`);
+
+            // Log relevant attributes for diagnosis
+            const attrs = ['tabindex', 'role', 'aria-hidden', 'aria-disabled', 'disabled', 'type'];
+            const attrLog = attrs.reduce((acc, attr) => {
+                if (el.hasAttribute(attr)) acc[attr] = el.getAttribute(attr);
+                return acc;
+            }, {});
+            console.log('Attributes:', attrLog);
+
+            // Log Label diagnostics
+            if (tag === 'LABEL') {
+                const forId = el.getAttribute('for');
+                if (forId) {
+                    const target = document.getElementById(forId);
+                    if (target) {
+                        const style = window.getComputedStyle(target);
+                        console.log('Label Target:', {
+                            tagName: target.tagName,
+                            id: target.id,
+                            type: target.getAttribute('type'),
+                            display: style.display,
+                            visibility: style.visibility,
+                            disabled: target.disabled,
+                            tabindex: target.getAttribute('tabindex'),
+                            ariaHidden: target.getAttribute('aria-hidden')
+                        });
+                    } else {
+                        console.warn('Label Target: NOT FOUND (ID: ' + forId + ')');
+                    }
+                } else {
+                    console.log('Label: No "for" attribute');
+                }
+            }
+
+            // Log computed style focus blockers
+            const style = window.getComputedStyle(el);
+            if (style.display === 'none' || style.visibility === 'hidden') console.warn('⚠️ Element is hidden!');
+            if (style.pointerEvents === 'none') console.warn('⚠️ pointer-events: none');
+
+            console.log('OuterHTML (truncated):', el.outerHTML.substring(0, 150) + '...');
         }
+
+        const cleanupLogs = () => {
+            if (this.debugMode) console.groupEnd();
+        };
 
         // 1. Handle Virtual Focus for Trap Elements
         if (this.isTrapElement(el)) {
@@ -992,7 +1090,7 @@ class SpatialEngine {
             document.activeElement.blur();
             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             this.highlight(el);
-            this.highlight(el);
+            cleanupLogs();
             return true; // Success (Virtual)
         }
 
@@ -1030,6 +1128,7 @@ class SpatialEngine {
                 if (document.activeElement !== parent && !parent.contains(document.activeElement)) {
                     if (this.debugMode) console.log('[TUI] ⚠️ Wrapper focus FAILED. Parent is not focusable. Marking candidate as failed.');
                     this.failedFocusElements.add(el);
+                    cleanupLogs();
                     return false; // Failed
                 }
 
@@ -1044,6 +1143,7 @@ class SpatialEngine {
 
                 parent.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 this.highlight(parent);
+                cleanupLogs();
                 return true; // Success
             } else {
                 if (this.debugMode) console.log('[TUI] ⚠️ No parent found for wrapping!');
@@ -1064,28 +1164,25 @@ class SpatialEngine {
         // - Autocomplete widgets
         // - Custom focus management in web apps
         const actualFocus = document.activeElement;
+
+        // Simple check: did focus move at all?
+        // Note: actualFocus could be body if focus failed completely
+
         if (actualFocus !== el) {
             if (this.debugMode) console.log('[TUI] ⚠️ Focus went to different element! Intended:', el.tagName, 'Actual:', actualFocus.tagName);
 
             // SPECIAL CASE: Focus returned to the element we started from
-            // This means the browser/page REJECTED our focus attempt
-            // The target element is not actually focusable despite being in our candidates
             if (actualFocus === this.lastActiveElement) {
                 if (this.debugMode) {
                     console.log('[TUI] ⚠️ Focus attempt REJECTED! Focus returned to previous element.');
                     console.log('[TUI] Adding to exclusion list. Next navigation will try different candidate.');
                 }
-                // Add to temporary exclusion list so we don't try it again
                 this.failedFocusElements.add(el);
-                // Don't update lastActiveElement - it's already correct
-                // Don't highlight or store anything - the focus attempt failed
-                // Just return and let the next navigation try a different candidate
+                cleanupLogs();
                 return false; // Failed
             }
 
             // SPECIAL CASE: LABEL → INPUT focus redirect
-            // When user focuses a LABEL, browser automatically focuses the associated INPUT
-            // For bidirectional navigation, we should track the INPUT directly, not use _tui_input wrapper
             const isLabelRedirect = (el.tagName === 'LABEL' &&
                 (actualFocus.tagName === 'INPUT' || actualFocus.tagName === 'TEXTAREA' || actualFocus.tagName === 'SELECT'));
 
@@ -1097,54 +1194,25 @@ class SpatialEngine {
                 actualFocus.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 this.highlight(actualFocus);
 
-                return true; // Success (Redirected)
+                cleanupLogs();
+                return true;
             }
 
-            // For other focus redirects (contenteditable, wrappers, etc.), use _tui_input mechanism
+            // Trust the browser focus (it moved somewhere valid)
+            this.lastActiveElement = actualFocus;
+            this.highlight(actualFocus);
 
-            // If actualFocus is contenteditable, blur it to prevent editing mode
-            if (actualFocus.isContentEditable) {
-                if (this.debugMode) console.log('[TUI] Blurring contenteditable element...');
-                actualFocus.blur();
-            }
-
-            // Store reference so our navigation tracking works correctly
-            // and so ENTER knows what to activate
-            el._tui_input = actualFocus;
-
-            // CRITICAL: Update lastActiveElement to point to the element we INTENDED to focus
-            // This prevents the navigation loop where we keep finding the same target
-            this.lastActiveElement = el;
-
-            // Make the intended element focusable if needed
-            if (!el.hasAttribute('tabindex')) {
-                el.setAttribute('tabindex', '-1');
-            }
-
-            // For contenteditable, keep focus on body to prevent reactivation
-            // For other cases, we can leave focus where it went
-            if (actualFocus.isContentEditable) {
-                document.body.focus();
-            }
-
-            // Visually highlight the element we intended to focus
-            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            this.highlight(el);
-
-            if (this.debugMode) console.log('[TUI] Fixed. Stored reference and tracking wrapper. ActiveElement:', document.activeElement.tagName);
-            return true; // Success (Handled redirection)
+            cleanupLogs();
+            return true;
         }
 
+        // Focus succeeded as expected (actualFocus === el)
+        this.lastActiveElement = el;
         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         this.highlight(el);
 
-        // Clear failed focus exclusions on successful navigation
-        if (this.failedFocusElements.size > 0) {
-            if (this.debugMode) console.log('[TUI] Successful focus. Clearing exclusion list of', this.failedFocusElements.size, 'elements.');
-            this.failedFocusElements.clear();
-        }
-
-        return true; // Success
+        cleanupLogs();
+        return true;
     }
 
     handleOffScreen(key) {
