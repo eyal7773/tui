@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TUI Navigator",
-  "version": "0.1.53",
+  "version": "0.1.55",
   "description": "Transform browsing into a Text-based User Interface navigation experience.",
   "permissions": [
     "storage",
@@ -35,5 +35,15 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "menu.html"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
 }

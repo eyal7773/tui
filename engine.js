@@ -18,6 +18,12 @@ class SpatialEngine {
         this.focusMonitorInterval = null;
         this.failedFocusElements = new Set(); // Track elements that recently failed to receive focus
 
+        // Menu State
+        this.isMenuOpen = false;
+        this.menuContainer = null;
+        this.menuItems = [];
+        this.selectedMenuIndex = -1;
+
         // Initialize
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.init());
@@ -81,6 +87,9 @@ class SpatialEngine {
 
         // Broadcast initial status (always supported now)
         this.broadcastStatus();
+
+        // Inject Menu
+        this.injectMenu();
     }
 
     createSpotlight() {
@@ -160,6 +169,18 @@ class SpatialEngine {
 
         // User is interacting, stop any pending focus monitoring to avoid conflicts/lag
         this.stopFocusMonitor();
+
+        if (e.key === 'F10') {
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggleMenu();
+            return;
+        }
+
+        if (this.isMenuOpen) {
+            this.handleMenuNavigation(e);
+            return;
+        }
 
         // Ignore if user is typing in an input
         const active = document.activeElement;
@@ -1247,6 +1268,111 @@ class SpatialEngine {
             });
         } catch (e) {
             // Catch synchronous errors (context invalidated)
+        }
+    }
+
+
+    /*
+     * MENU SYSTEM
+     */
+    async injectMenu() {
+        if (document.getElementById('tui-menu-container')) return;
+
+        try {
+            const response = await fetch(chrome.runtime.getURL('menu.html'));
+            const html = await response.text();
+
+            // Create a wrapper to hold the HTML string
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+
+            this.menuContainer = wrapper.firstElementChild;
+            document.body.appendChild(this.menuContainer);
+
+            // Cache menu items
+            this.menuItems = Array.from(this.menuContainer.querySelectorAll('.tui-menu-item'));
+
+            // Add click listeners for mouse support
+            this.menuItems.forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    this.executeMenuAction(item.dataset.action);
+                });
+                item.addEventListener('mouseenter', () => {
+                    this.selectedMenuIndex = index;
+                    this.updateMenuSelection();
+                });
+            });
+
+        } catch (e) {
+            console.error('[TUI] Failed to load menu:', e);
+        }
+    }
+
+    toggleMenu() {
+        if (this.isMenuOpen) {
+            this.closeMenu();
+        } else {
+            this.openMenu();
+        }
+    }
+
+    openMenu() {
+        if (!this.menuContainer) return;
+        this.isMenuOpen = true;
+        this.menuContainer.classList.add('tui-menu-visible');
+        this.selectedMenuIndex = 0; // Select first item by default
+        this.updateMenuSelection();
+        this.isActiveMode = false; // Disable navigation ring while in menu
+        if (this.spotlight) this.spotlight.style.display = 'none';
+    }
+
+    closeMenu() {
+        if (!this.menuContainer) return;
+        this.isMenuOpen = false;
+        this.menuContainer.classList.remove('tui-menu-visible');
+    }
+
+    handleMenuNavigation(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (e.key === 'Escape') {
+            this.closeMenu();
+            return;
+        }
+
+        if (e.key === 'ArrowDown') {
+            this.selectedMenuIndex = (this.selectedMenuIndex + 1) % this.menuItems.length;
+            this.updateMenuSelection();
+        } else if (e.key === 'ArrowUp') {
+            this.selectedMenuIndex = (this.selectedMenuIndex - 1 + this.menuItems.length) % this.menuItems.length;
+            this.updateMenuSelection();
+        } else if (e.key === 'Enter') {
+            const selectedItem = this.menuItems[this.selectedMenuIndex];
+            if (selectedItem) {
+                this.executeMenuAction(selectedItem.dataset.action);
+            }
+        }
+    }
+
+    updateMenuSelection() {
+        this.menuItems.forEach((item, index) => {
+            if (index === this.selectedMenuIndex) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    executeMenuAction(action) {
+        console.log('[TUI] Executing menu action:', action);
+        this.closeMenu();
+
+        if (action === 'duplicate') {
+            window.open(window.location.href, '_blank');
+        } else if (action === 'back') {
+            window.history.back();
         }
     }
 }
