@@ -170,7 +170,7 @@ class SpatialEngine {
         // User is interacting, stop any pending focus monitoring to avoid conflicts/lag
         this.stopFocusMonitor();
 
-        if (e.key === 'F10') {
+        if (e.key === 'F10' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
             e.preventDefault();
             e.stopPropagation();
             this.toggleMenu();
