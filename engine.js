@@ -629,10 +629,16 @@ class SpatialEngine {
             // FILTER: Parent explicitly marked as non-focusable (often hides internal inputs)
             // This fixes Jira resize handles where a SPAN[tabindex="-1"] wraps a hidden INPUT
             if (el.parentElement && el.parentElement.getAttribute('tabindex') === '-1') {
-                const parentRole = el.parentElement.getAttribute('role');
-                const validParentRoles = ['row', 'grid', 'list', 'menu', 'menubar', 'tablist', 'treegrid'];
-                if (!parentRole || !validParentRoles.includes(parentRole)) {
-                    return false;
+                // Exception: contenteditable elements inside a tabindex=-1 wrapper are REAL
+                // interactive inputs (e.g. Telegram's message box). The wrapper uses tabindex=-1
+                // purely for programmatic focus management — not to hide the element.
+                // Never filter these out; they are valid navigation targets.
+                if (!el.isContentEditable) {
+                    const parentRole = el.parentElement.getAttribute('role');
+                    const validParentRoles = ['row', 'grid', 'list', 'menu', 'menubar', 'tablist', 'treegrid'];
+                    if (!parentRole || !validParentRoles.includes(parentRole)) {
+                        return false;
+                    }
                 }
             }
 
@@ -784,7 +790,15 @@ class SpatialEngine {
                     const hasInteractiveRole = ['button', 'link', 'menuitem', 'tab', 'option', 'gridcell', 'listitem'].includes(el.getAttribute('role'));
                     const looksClickable = style.cursor === 'pointer';
 
-                    if (!hasInteractiveRole && !looksClickable) {
+                    // Exception: allow wrapper divs that contain a contenteditable (e.g. Telegram's
+                    // div.input-message-container[tabindex="-1"]).  These are genuine text-input containers
+                    // whose cursor is 'text', not 'pointer', so they'd be wrongly rejected by the checks
+                    // above.  Pressing Enter on such a wrapper will simulate a click, which naturally
+                    // focuses the inner contenteditable so the user can type.
+                    const containsEditable = !hasInteractiveRole && !looksClickable &&
+                        !!el.querySelector('[contenteditable]:not([contenteditable="false"])');
+
+                    if (!hasInteractiveRole && !looksClickable && !el.isContentEditable && !containsEditable) {
                         // It's a generic wrapper with tabindex but no interactive indicators.
                         // REJECT IT to avoid noise (large containers, focus traps, etc.)
                         return false;
@@ -797,6 +811,38 @@ class SpatialEngine {
 
         this.candidatesDirty = false;
         if (this.debugMode) console.log(`[TUI Spatial] Candidates refreshed: ${this.candidates.length}`);
+
+        // [DEBUG] Trace every element that IS or CONTAINS a contenteditable.
+        // Shows whether it made it into the candidate list, and if not, at which filter it was killed.
+        if (this.debugMode) {
+            const editableParents = new Set();
+            document.querySelectorAll('[contenteditable]:not([contenteditable="false"])').forEach(ce => {
+                if (ce.offsetParent !== null) {
+                    editableParents.add(ce);          // the contenteditable itself
+                    if (ce.parentElement) editableParents.add(ce.parentElement); // its container
+                }
+            });
+
+            editableParents.forEach(el => {
+                const survived = this.candidates.includes(el);
+                const rect = el.getBoundingClientRect();
+                const tag = el.tagName;
+                const cls = el.className && typeof el.className === 'string' ? el.className : '';
+                const ti = el.getAttribute('tabindex') ?? '(none)';
+                const ce = el.isContentEditable ? 'yes' : 'no';
+                const containsEditable = !el.isContentEditable && !!el.querySelector('[contenteditable]:not([contenteditable="false"])');
+                const parentTI = el.parentElement ? (el.parentElement.getAttribute('tabindex') ?? '(none)') : 'N/A';
+                const role = el.getAttribute('role') ?? '(none)';
+                const cursor = window.getComputedStyle(el).cursor;
+                console.log(
+                    `[TUI INPUT-TRACE] ${survived ? '✅ CANDIDATE' : '❌ FILTERED'} | ` +
+                    `${tag}.${cls.split(' ').join('.')} | ` +
+                    `tabindex=${ti} role=${role} contenteditable=${ce} containsEditable=${containsEditable} | ` +
+                    `cursor=${cursor} | parentTabindex=${parentTI} | ` +
+                    `rect: L${rect.left.toFixed(0)} R${rect.right.toFixed(0)} T${rect.top.toFixed(0)} B${rect.bottom.toFixed(0)} W${rect.width.toFixed(0)} H${rect.height.toFixed(0)}`
+                );
+            });
+        }
     }
 
     findBestCandidate(currentRect, key, currentEl) {
@@ -874,6 +920,17 @@ class SpatialEngine {
             if (this.debugMode && (cand.id === 'vector-main-menu-dropdown-label' || cand.id === 'vector-main-menu-dropdown-checkbox')) {
                 console.log(`[TUI DEBUG CONE] Direction: ${key}, IsValid: ${isValid}`);
                 console.log(`- Logic (${key}): Rect[${rect.left}, ${rect.right}, ${rect.top}, ${rect.bottom}] vs Current[${currentRect.left}, ${currentRect.right}, ${currentRect.top}, ${currentRect.bottom}]`);
+            }
+
+            // [DEBUG] Spatial trace for contenteditable-related elements
+            if (this.debugMode && (cand.isContentEditable || !!cand.querySelector?.('[contenteditable]:not([contenteditable="false"])'))) {
+                const cls = cand.className && typeof cand.className === 'string' ? cand.className : '';
+                console.log(
+                    `[TUI INPUT-TRACE SPATIAL] ${cand.tagName}.${cls.split(' ').join('.')} | ` +
+                    `direction=${key} isValid=${isValid} | ` +
+                    `candRect: L${rect.left.toFixed(0)} T${rect.top.toFixed(0)} | ` +
+                    `currentRect: R${currentRect.right.toFixed(0)} B${currentRect.bottom.toFixed(0)}`
+                );
             }
 
             if (!isValid) return;
