@@ -603,7 +603,11 @@ class SpatialEngine {
                         const role = el.getAttribute('role');
                         const rovingRoles = ['menuitem', 'menuitemradio', 'menuitemcheckbox', 'option', 'gridcell', 'tab', 'treeitem', 'listitem'];
                         if (!role || !rovingRoles.includes(role)) {
-                            return false;
+                            // Also allow if this element is part of a roving tabindex group
+                            // (e.g. WhatsApp navbar buttons inside <header tabindex="0">)
+                            if (!this.isRovingTabindexMember(el)) {
+                                return false;
+                            }
                         }
                     }
                 }
@@ -755,16 +759,8 @@ class SpatialEngine {
                 return false;
             }
 
-            // FILTER: Buttons with tabindex="-1"
-            // Many UI frameworks use buttons as non-interactive icons or helpers.
-            // If it has tabindex="-1", it's likely not meant for navigation UNLESS it has a specific role.
-            if (el.tagName === 'BUTTON' && el.getAttribute('tabindex') === '-1') {
-                const role = el.getAttribute('role');
-                const validRoles = ['menuitem', 'menuitemradio', 'menuitemcheckbox', 'option', 'tab', 'treeitem', 'gridcell'];
-                if (!role || !validRoles.includes(role)) {
-                    return false;
-                }
-            }
+            // NOTE: BUTTON[tabindex="-1"] is already handled by Filter 1 above
+            // (which now also detects roving tabindex group members via isRovingTabindexMember).
 
             // FILTER: Elements that are explicitly aria-hidden
             // (Unless they are labels, which we handled above)
@@ -1046,6 +1042,49 @@ class SpatialEngine {
     isTrapElement(el) {
         // Elements that swallow focus and prevent bubbling
         return ['IFRAME', 'FRAME', 'OBJECT', 'EMBED'].includes(el.tagName);
+    }
+
+    /**
+     * Detects if an element is a member of a roving tabindex group.
+     * Roving tabindex is a pattern where a composite widget (toolbar, navbar, etc.)
+     * owns the tab stop (tabindex="0" on the container) while child items have
+     * tabindex="-1" and are navigated via arrow keys.
+     * This allows TUI to include those children as spatial navigation candidates.
+     */
+    isRovingTabindexMember(el) {
+        // Walk up ancestors (limit depth to avoid perf issues)
+        let ancestor = el.parentElement;
+        let depth = 0;
+        while (ancestor && ancestor !== document.body && depth < 6) {
+            const ati = ancestor.getAttribute('tabindex');
+            if (ati === '0') {
+                // Container owns the tab stop; children use roving tabindex
+                return true;
+            }
+            const role = ancestor.getAttribute('role');
+            const tag = ancestor.tagName;
+            // Composite widget roles and semantic elements that imply roving tabindex
+            if (['toolbar', 'tablist', 'menubar', 'menu', 'listbox', 'tree', 'grid', 'radiogroup'].includes(role) ||
+                ['NAV', 'HEADER'].includes(tag)) {
+                return true;
+            }
+            ancestor = ancestor.parentElement;
+            depth++;
+        }
+
+        // Sibling heuristic: if siblings share the same tag and also have tabindex,
+        // they are likely part of a roving group (e.g. multiple buttons in a navbar).
+        const parent = el.parentElement;
+        if (parent) {
+            const siblings = Array.from(parent.children);
+            const sameTagSiblings = siblings.filter(s => s !== el && s.tagName === el.tagName);
+            const hasRovingSiblings = sameTagSiblings.some(s =>
+                s.getAttribute('tabindex') === '-1' || s.getAttribute('tabindex') === '0'
+            );
+            if (hasRovingSiblings) return true;
+        }
+
+        return false;
     }
 
     focusElement(el, attempt = 1) {
