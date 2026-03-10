@@ -414,8 +414,21 @@ class SpatialEngine {
             this.refreshCandidates();
 
             // 2. Current Position - PREFER internal tracking
+            if (this.debugMode) {
+                const lae = this.lastActiveElement;
+                console.log('[TUI NAV] lastActiveElement:', lae ? `${lae.tagName}#${lae.id}` : 'null',
+                    '| _tui_input:', lae?._tui_input ? `${lae._tui_input.tagName}#${lae._tui_input.id}` : 'none');
+            }
             let current = this.lastActiveElement;
             if (!current || !document.body.contains(current)) {
+                current = document.activeElement;
+            }
+
+            // Clear stale wrapper state if the wrapper is no longer focused.
+            // This handles popup close/reopen: _tui_input persists on the DOM node,
+            // causing SELECT to be wrongly excluded on the next navigation.
+            if (current && current._tui_input && current !== document.activeElement) {
+                current._tui_input = null;
                 current = document.activeElement;
             }
 
@@ -651,14 +664,21 @@ class SpatialEngine {
             // FILTER: Parent explicitly marked as non-focusable (often hides internal inputs)
             // This fixes Jira resize handles where a SPAN[tabindex="-1"] wraps a hidden INPUT
             if (el.parentElement && el.parentElement.getAttribute('tabindex') === '-1') {
-                // Exception: contenteditable elements inside a tabindex=-1 wrapper are REAL
-                // interactive inputs (e.g. Telegram's message box). The wrapper uses tabindex=-1
-                // purely for programmatic focus management — not to hide the element.
-                // Never filter these out; they are valid navigation targets.
-                if (!el.isContentEditable) {
+                // Exception: TUI itself set this wrapper (shouldTrapArrows pattern).
+                // parent._tui_input === el means we own this tabindex, so never filter it.
+                if (el.parentElement._tui_input === el) {
+                    // allow through
+                } else if (!el.isContentEditable) {
+                    // Exception: contenteditable elements inside a tabindex=-1 wrapper are REAL
+                    // interactive inputs (e.g. Telegram's message box). The wrapper uses tabindex=-1
+                    // purely for programmatic focus management — not to hide the element.
+                    // Never filter these out; they are valid navigation targets.
                     const parentRole = el.parentElement.getAttribute('role');
                     const validParentRoles = ['row', 'grid', 'list', 'menu', 'menubar', 'tablist', 'treegrid'];
                     if (!parentRole || !validParentRoles.includes(parentRole)) {
+                        if (this.debugMode && ['SELECT', 'INPUT', 'TEXTAREA'].includes(el.tagName)) {
+                            console.log('[TUI FILTER] Dropping', el.tagName, el.id || '', '— parent tabindex=-1, _tui_input:', el.parentElement._tui_input || 'NOT SET');
+                        }
                         return false;
                     }
                 }
@@ -898,7 +918,12 @@ class SpatialEngine {
 
             // 3. If lastActiveElement is a wrapper with a child input, skip both wrapper AND child
             if (this.lastActiveElement && this.lastActiveElement._tui_input) {
-                if (cand === this.lastActiveElement._tui_input) return;
+                if (cand === this.lastActiveElement._tui_input) {
+                    if (this.debugMode && ['SELECT', 'INPUT', 'TEXTAREA'].includes(cand.tagName)) {
+                        console.log('[TUI SKIP] Skipping', cand.tagName, cand.id || '', '— it is lastActiveElement._tui_input (wrapper already active)');
+                    }
+                    return;
+                }
             }
 
             // 4. Don't select currentEl if it was passed explicitly
