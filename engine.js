@@ -895,6 +895,17 @@ class SpatialEngine {
             return this.candidates.length > 0 ? this.candidates[0] : null;
         }
 
+        // Special case: ArrowDown from an open SUMMARY → enter popup in DOM order
+        if (key === 'ArrowDown' && currentEl && currentEl.tagName === 'SUMMARY') {
+            const details = currentEl.parentElement;
+            if (details && details.tagName === 'DETAILS' && details.open) {
+                const firstDescendant = this.candidates.find(
+                    c => c !== currentEl && details.contains(c)
+                );
+                if (firstDescendant) return firstDescendant;
+            }
+        }
+
         let bestCandidate = null;
         let minScore = Infinity;
 
