@@ -9,6 +9,10 @@ class SpatialEngine {
         this.candidatesDirty = true;
         this.isEnabled = true;
         this.debugMode = false;
+        this.logBuffer = [];
+        this._originalConsoleLog = null;
+        this._originalConsoleGroup = null;
+        this._originalConsoleGroupEnd = null;
 
         // State
         this.isActiveMode = false; // "Lazy Focus": only show green ring after user actively navigates with arrows
@@ -81,6 +85,12 @@ class SpatialEngine {
                 if (changes.tuiAdminMode) {
                     this.debugMode = !!changes.tuiAdminMode.newValue;
                     console.log(`[TUI] Debug Mode ${this.debugMode ? 'Enabled' : 'Disabled'}`);
+                    if (this.debugMode) {
+                        this.logBuffer = [];
+                        this._startLogCapture();
+                    } else {
+                        this._stopLogCapture();
+                    }
                 }
             }
         });
@@ -90,6 +100,14 @@ class SpatialEngine {
 
         // Inject Menu
         this.injectMenu();
+
+        // Listen for log download requests from the popup
+        chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+            if (message.type === 'GET_DEBUG_LOGS') {
+                sendResponse({ logs: this.logBuffer.slice() });
+                return true;
+            }
+        });
     }
 
     createSpotlight() {
@@ -142,6 +160,10 @@ class SpatialEngine {
         try {
             const sessionStorage = await chrome.storage.session.get(['tuiAdminMode']);
             this.debugMode = !!sessionStorage.tuiAdminMode;
+            if (this.debugMode) {
+                this.logBuffer = [];
+                this._startLogCapture();
+            }
         } catch (e) {
             console.warn('[TUI] Failed to access session storage (likely restricted context):', e);
             this.debugMode = false;
@@ -1340,6 +1362,66 @@ class SpatialEngine {
     }
 
 
+
+    _startLogCapture() {
+        if (this._originalConsoleLog) return; // Already capturing
+        this._originalConsoleLog = console.log;
+        this._originalConsoleGroup = console.group;
+        this._originalConsoleGroupEnd = console.groupEnd;
+
+        let tuiGroupDepth = 0;
+        const self = this;
+
+        const format = (...args) => args.map(a => {
+            if (typeof a === 'object') {
+                try { return JSON.stringify(a); } catch (e) { return String(a); }
+            }
+            return String(a).replace(/%c/g, '');
+        }).join(' ');
+
+        const isTui = msg => msg.includes('[TUI]') || msg.includes('[TUI Spatial]');
+
+        console.group = function (...args) {
+            self._originalConsoleGroup.apply(console, args);
+            const msg = format(...args);
+            if (isTui(msg)) {
+                tuiGroupDepth++;
+                self.logBuffer.push(`[${new Date().toISOString()}] ${msg}`);
+            } else if (tuiGroupDepth > 0) {
+                tuiGroupDepth++;
+                self.logBuffer.push(`[${new Date().toISOString()}] ${'  '.repeat(tuiGroupDepth)}${msg}`);
+            }
+        };
+
+        console.groupEnd = function () {
+            self._originalConsoleGroupEnd.apply(console);
+            if (tuiGroupDepth > 0) tuiGroupDepth--;
+        };
+
+        console.log = function (...args) {
+            self._originalConsoleLog.apply(console, args);
+            const msg = format(...args);
+            if (isTui(msg) || tuiGroupDepth > 0) {
+                const indent = '  '.repeat(tuiGroupDepth);
+                self.logBuffer.push(`[${new Date().toISOString()}] ${indent}${msg}`);
+            }
+        };
+    }
+
+    _stopLogCapture() {
+        if (this._originalConsoleLog) {
+            console.log = this._originalConsoleLog;
+            this._originalConsoleLog = null;
+        }
+        if (this._originalConsoleGroup) {
+            console.group = this._originalConsoleGroup;
+            this._originalConsoleGroup = null;
+        }
+        if (this._originalConsoleGroupEnd) {
+            console.groupEnd = this._originalConsoleGroupEnd;
+            this._originalConsoleGroupEnd = null;
+        }
+    }
 
     broadcastStatus() {
         this.safeSendMessage({

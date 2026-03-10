@@ -14,7 +14,114 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial Data Load
     refreshState();
 
+    // Download Logs button
+    document.getElementById('download-logs-btn').addEventListener('click', () => {
+        const statusEl = document.getElementById('logs-status');
+        statusEl.textContent = '';
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (!tabs[0]) {
+                statusEl.textContent = 'No active tab found.';
+                return;
+            }
+            chrome.tabs.sendMessage(tabs[0].id, { type: 'GET_DEBUG_LOGS' }, (response) => {
+                if (chrome.runtime.lastError || !response) {
+                    statusEl.textContent = 'Error: ' + (chrome.runtime.lastError?.message || 'No response from page.');
+                    return;
+                }
+                const logs = response.logs;
+                if (!logs || logs.length === 0) {
+                    statusEl.textContent = 'No logs yet. Enable debug mode first.';
+                    return;
+                }
+                const blob = new Blob([logs.join('\n')], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `tui-logs-${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                statusEl.textContent = `Downloaded ${logs.length} log entries.`;
+            });
+        });
+    });
 
+
+
+    // Download Page (MHTML) button
+    document.getElementById('download-page-btn').addEventListener('click', () => {
+        const statusEl = document.getElementById('page-status');
+        statusEl.textContent = '';
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (!tabs[0]) {
+                statusEl.textContent = 'No active tab found.';
+                return;
+            }
+            const tab = tabs[0];
+            chrome.pageCapture.saveAsMHTML({ tabId: tab.id }, (mhtmlData) => {
+                if (chrome.runtime.lastError || !mhtmlData) {
+                    statusEl.textContent = 'Error: ' + (chrome.runtime.lastError?.message || 'Capture failed.');
+                    return;
+                }
+                const hostname = new URL(tab.url).hostname.replace(/[^a-z0-9.-]/gi, '_') || 'page';
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const filename = `${hostname}-${timestamp}.mhtml`;
+                const blob = new Blob([mhtmlData], { type: 'multipart/related' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                statusEl.textContent = `Saved as ${filename}`;
+            });
+        });
+    });
+
+    // Download Report (ZIP) button
+    document.getElementById('download-report-btn').addEventListener('click', () => {
+        const statusEl = document.getElementById('report-status');
+        const problemText = document.getElementById('problem-description').value.trim();
+        statusEl.textContent = 'Generating report...';
+
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (!tabs[0]) { statusEl.textContent = 'No active tab found.'; return; }
+            const tab = tabs[0];
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+            chrome.tabs.sendMessage(tab.id, { type: 'GET_DEBUG_LOGS' }, (logResponse) => {
+                const logs = (!chrome.runtime.lastError && logResponse?.logs) ? logResponse.logs : [];
+                const logsText = logs.length ? logs.join('\n') : '(no logs)';
+
+                chrome.pageCapture.saveAsMHTML({ tabId: tab.id }, (mhtmlData) => {
+                    if (chrome.runtime.lastError || !mhtmlData) {
+                        statusEl.textContent = 'Error capturing page: ' + (chrome.runtime.lastError?.message || 'failed');
+                        return;
+                    }
+
+                    const zip = new JSZip();
+                    zip.file('problem.txt', problemText || '(no description provided)');
+                    zip.file(`tui-logs-${timestamp}.txt`, logsText);
+                    zip.file(`page-${timestamp}.mhtml`, mhtmlData);
+
+                    zip.generateAsync({ type: 'blob' }).then((zipBlob) => {
+                        const url = URL.createObjectURL(zipBlob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `tui-report-${timestamp}.zip`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        statusEl.textContent = 'Report downloaded.';
+                    });
+                });
+            });
+        });
+    });
 
     // Admin Mode Easter Egg
     const versionEl = document.getElementById('app-version');

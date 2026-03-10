@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
   "name": "TUI Navigator",
-  "version": "0.1.66",
+  "version": "0.1.70",
   "description": "Transform browsing into a Text-based User Interface navigation experience.",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "pageCapture"
   ],
   "background": {
     "service_worker": "background.js"

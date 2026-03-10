@@ -44,6 +44,19 @@ Click the extension icon to:
 -   View usage statistics (Total Actions).
 -   Enable/Disable TUI for the current session.
 
+## Debug Log Download
+
+When **Admin/Debug Mode** is active, the extension captures all internal `[TUI]` log entries in memory. Open the popup → **Config** tab → click **Download Logs** to save them as a `.txt` file. Useful for diagnosing navigation issues without keeping the browser DevTools open.
+
+## Report a Problem
+
+The **Config** tab also includes a **Report a Problem** section. Enter a description of the issue, then click **Download Report (ZIP)** to generate a bundle containing:
+- `problem.txt` — your description
+- `tui-logs-*.txt` — captured debug logs
+- `page-*.mhtml` — a snapshot of the current page
+
+Requires Admin/Debug Mode to be active.
+
 ## Troubleshooting
 -   **"Extension invalidated"**: If you see errors in the console, refresh the extension on the `chrome://extensions` page.
 -   **No Focus Ring**: Ensure you are on a supported site. Try refreshing the page.

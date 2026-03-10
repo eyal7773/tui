@@ -50,10 +50,30 @@
       <div id="config-tab" class="tab-content">
         <div class="config-container">
           <p>Admin Mode Active</p>
+          <div class="card">
+            <h2>Debug Logs</h2>
+            <p class="config-hint">Logs are captured while debug mode is active.</p>
+            <button id="download-logs-btn" class="secondary-btn">Download Logs</button>
+            <p id="logs-status" class="config-status"></p>
+          </div>
+          <div class="card">
+            <h2>Page Capture</h2>
+            <p class="config-hint">Saves the current active tab as a self-contained MHTML archive.</p>
+            <button id="download-page-btn" class="secondary-btn">Download Page (MHTML)</button>
+            <p id="page-status" class="config-status"></p>
+          </div>
+          <div class="card">
+            <h2>Report a Problem</h2>
+            <p class="config-hint">Describe the issue, then download a report bundle (problem description, logs, and page snapshot).</p>
+            <textarea id="problem-description" class="report-textarea" placeholder="Describe the problem here..."></textarea>
+            <button id="download-report-btn" class="secondary-btn">Download Report (ZIP)</button>
+            <p id="report-status" class="config-status"></p>
+          </div>
         </div>
       </div>
     </main>
   </div>
+  <script src="../lib/jszip.min.js"></script>
   <script src="version_manager.js"></script>
   <script src="popup.js"></script>
 </body>
