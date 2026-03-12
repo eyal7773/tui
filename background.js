@@ -35,7 +35,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         updateBadge(tabId, response);
       } else {
         // Clear badge if no script response (likely navigating to unsupported/restricted page)
-        chrome.action.setBadgeText({ text: '', tabId: tabId });
+        chrome.action.setBadgeText({ text: '', tabId: tabId }).catch(() => {});
       }
     });
   }
@@ -53,10 +53,10 @@ chrome.storage.local.get(['totalActions'], (result) => {
 
 function updateBadge(tabId, state) {
   if (state.supported && state.enabled) {
-    chrome.action.setBadgeText({ text: 'ON', tabId: tabId });
-    chrome.action.setBadgeBackgroundColor({ color: '#4caf50', tabId: tabId });
+    chrome.action.setBadgeText({ text: 'ON', tabId: tabId }).catch(() => {});
+    chrome.action.setBadgeBackgroundColor({ color: '#4caf50', tabId: tabId }).catch(() => {});
   } else {
-    chrome.action.setBadgeText({ text: '', tabId: tabId });
+    chrome.action.setBadgeText({ text: '', tabId: tabId }).catch(() => {});
   }
 }
 

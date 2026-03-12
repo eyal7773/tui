@@ -224,7 +224,7 @@ class SpatialEngine {
             return;
         }
 
-        if (e.key.startsWith('Arrow')) {
+        if (e.key && e.key.startsWith('Arrow')) {
             // We handle this navigation action
             e.preventDefault();
             e.stopImmediatePropagation(); // CRITICAL: Stop the page from seeing this key
