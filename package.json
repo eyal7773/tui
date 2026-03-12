@@ -1,0 +1,9 @@
+{
+  "name": "tui-navigator",
+  "version": "0.1.75",
+  "description": "Transform browsing into a Text-based User Interface navigation experience.",
+  "scripts": {
+    "bump-version": "node scripts/bump-version.js"
+  },
+  "private": true
+}
