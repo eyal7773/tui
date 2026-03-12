@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Keyboard Stats — TUI Navigator</title>
+  <link rel="stylesheet" href="stats.css">
+</head>
+<body>
+  <div class="page">
+
+    <header class="page-header">
+      <h1>Your Keyboard Stats</h1>
+      <p class="subtitle" id="days-subtitle">Loading...</p>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero card">
+      <div class="hero-number" id="hero-total">0</div>
+      <div class="hero-label">total keyboard actions</div>
+      <div class="pride-msg" id="pride-msg"></div>
+      <div class="badges-row" id="badges-row"></div>
+    </section>
+
+    <!-- Key Metrics Grid -->
+    <section class="metrics-grid">
+      <div class="card metric-card">
+        <div class="metric-value" id="time-saved">0s</div>
+        <div class="metric-label">Time Saved</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value" id="pages-opened">0</div>
+        <div class="metric-label">Pages Opened</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value" id="session-count">0</div>
+        <div class="metric-label">Sessions</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value" id="avg-per-session">0</div>
+        <div class="metric-label">Avg Actions / Session</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value streak-value" id="current-streak">0</div>
+        <div class="metric-label">Day Streak</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value" id="active-days">0</div>
+        <div class="metric-label">Active Days</div>
+      </div>
+    </section>
+
+    <!-- Efficiency & Patterns -->
+    <section class="metrics-grid">
+      <div class="card metric-card">
+        <div class="metric-value" id="nav-efficiency">0%</div>
+        <div class="metric-label">Navigation Efficiency</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value" id="peak-hour">—</div>
+        <div class="metric-label">Peak Hour</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value" id="most-active-day">—</div>
+        <div class="metric-label">Most Active Day</div>
+      </div>
+    </section>
+
+    <!-- Direction Breakdown -->
+    <section class="card">
+      <h2 class="section-title">Direction Breakdown</h2>
+      <div class="compass-wrapper">
+        <div class="compass" id="compass">
+          <div class="compass-bar bar-up" id="bar-up"><div class="bar-fill" id="fill-up"></div></div>
+          <div class="compass-bar bar-down" id="bar-down"><div class="bar-fill" id="fill-down"></div></div>
+          <div class="compass-bar bar-left" id="bar-left"><div class="bar-fill" id="fill-left"></div></div>
+          <div class="compass-bar bar-right" id="bar-right"><div class="bar-fill" id="fill-right"></div></div>
+          <div class="compass-center"></div>
+        </div>
+        <div class="compass-counts" id="compass-counts"></div>
+      </div>
+      <div class="dominant-dir" id="dominant-dir"></div>
+    </section>
+
+    <!-- Navigation Paths -->
+    <section class="card">
+      <h2 class="section-title">Navigation Paths</h2>
+      <p class="section-hint">Your most common 3-key navigation patterns</p>
+      <div id="sequences-list" class="sequences-list"></div>
+    </section>
+
+    <!-- 30-Day Activity Chart -->
+    <section class="card">
+      <h2 class="section-title">30-Day Activity</h2>
+      <div class="bar-chart" id="activity-chart"></div>
+    </section>
+
+    <!-- Weekday Heatmap -->
+    <section class="card">
+      <h2 class="section-title">Activity by Day of Week</h2>
+      <div class="weekday-chart" id="weekday-chart"></div>
+    </section>
+
+    <!-- Affiliate Card -->
+    <section class="affiliate-card">
+      <span class="affiliate-badge">Recommended</span>
+      <h3 class="affiliate-headline">Level up your keyboard game</h3>
+      <p class="affiliate-body">You're already a keyboard power user. A mechanical keyboard makes it even better.</p>
+      <a href="https://www.keychron.com" target="_blank" rel="noopener" class="affiliate-cta">Shop Keychron Keyboards</a>
+      <p class="affiliate-disclaimer">Affiliate link — we may earn a small commission.</p>
+    </section>
+
+  </div>
+  <script src="stats.js"></script>
+</body>
+</html>

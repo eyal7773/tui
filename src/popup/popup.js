@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial Data Load
     refreshState();
 
+    // Open Stats page
+    document.getElementById('open-stats-btn').addEventListener('click', () => {
+        chrome.tabs.create({ url: chrome.runtime.getURL('stats/stats.html') });
+    });
+
     // Download Logs button
     document.getElementById('download-logs-btn').addEventListener('click', () => {
         const statusEl = document.getElementById('logs-status');

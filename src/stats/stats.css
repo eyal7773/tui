@@ -1,0 +1,443 @@
+:root {
+  --bg: #1e1e1e;
+  --card-bg: #2d2d2d;
+  --text: #ffffff;
+  --text-dim: #aaaaaa;
+  --accent: #00cc66;
+  --accent-dim: #009944;
+  --bar-color: #00cc66;
+  --bar-dim: #3a3a3a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+/* ── Header ── */
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-header h1 {
+  font-size: 28px;
+  margin: 0 0 6px;
+  color: var(--accent);
+}
+
+.subtitle {
+  color: var(--text-dim);
+  margin: 0;
+  font-size: 15px;
+}
+
+/* ── Cards ── */
+.card {
+  background-color: var(--card-bg);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+/* ── Hero ── */
+.hero {
+  text-align: center;
+  padding: 36px 20px;
+}
+
+.hero-number {
+  font-size: 72px;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 20px rgba(0, 204, 102, 0.4);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.hero-label {
+  color: var(--text-dim);
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+.pride-msg {
+  font-size: 16px;
+  color: var(--text);
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+.badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* ── Badges ── */
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-base      { background: #2a4a3a; color: #66cc88; border: 1px solid #3a6a4a; }
+.badge-silver    { background: #3a3a4a; color: #aaaaee; border: 1px solid #5a5a7a; }
+.badge-gold      { background: #4a3a10; color: #ffcc44; border: 1px solid #7a6020; }
+.badge-legendary { background: #4a1a3a; color: #ff66cc; border: 1px solid #8a3a6a; }
+.badge-streak    { background: #1a3a4a; color: #44ccff; border: 1px solid #2a6a8a; }
+
+/* ── Metrics Grid ── */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.metric-card {
+  text-align: center;
+  padding: 20px 12px;
+}
+
+.metric-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.streak-value {
+  color: #44ccff;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.3;
+}
+
+/* Efficiency coloring */
+.efficiency-high { color: var(--accent); }
+.efficiency-mid  { color: #ffcc44; }
+.efficiency-low  { color: var(--text-dim); }
+
+/* ── Section titles ── */
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.section-hint {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: -8px 0 14px;
+}
+
+.no-data {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* ── Compass ── */
+.compass-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 12px;
+}
+
+.compass {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+}
+
+.compass-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background: var(--text-dim);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+/* Each bar is a track; the fill grows from the center outward */
+.compass-bar {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bar-up, .bar-down {
+  left: 50%;
+  width: 10px;
+  transform: translateX(-50%);
+}
+
+.bar-left, .bar-right {
+  top: 50%;
+  height: 10px;
+  transform: translateY(-50%);
+}
+
+/* Up: bar sits above center, fill grows upward */
+.bar-up {
+  bottom: 50%;
+  height: 50px;
+  flex-direction: column-reverse;
+  padding-bottom: 5px;
+}
+
+/* Down: bar sits below center, fill grows downward */
+.bar-down {
+  top: 50%;
+  height: 50px;
+  flex-direction: column;
+  padding-top: 5px;
+}
+
+/* Left: bar sits left of center, fill grows left */
+.bar-left {
+  right: 50%;
+  width: 50px;
+  flex-direction: row-reverse;
+  padding-right: 5px;
+}
+
+/* Right: bar sits right of center, fill grows right */
+.bar-right {
+  left: 50%;
+  width: 50px;
+  flex-direction: row;
+  padding-left: 5px;
+}
+
+.bar-fill {
+  background: var(--bar-dim);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+/* Up/Down fills use height */
+.bar-up .bar-fill,
+.bar-down .bar-fill {
+  width: 10px;
+  height: var(--bar-size, 4px);
+}
+
+/* Left/Right fills use width */
+.bar-left .bar-fill,
+.bar-right .bar-fill {
+  height: 10px;
+  width: var(--bar-size, 4px);
+}
+
+.bar-fill.dominant {
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(0, 204, 102, 0.5);
+}
+
+.compass-counts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dir-count {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.dominant-count {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.dominant-dir {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* ── Sequences ── */
+.sequences-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sequence-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #232323;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.seq-glyphs {
+  font-size: 20px;
+  letter-spacing: 4px;
+  color: var(--text);
+}
+
+.seq-count {
+  font-size: 13px;
+  color: var(--text-dim);
+  background: #3a3a3a;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+/* ── Bar Charts ── */
+.bar-chart,
+.weekday-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 80px;
+  overflow-x: auto;
+}
+
+.bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 18px;
+  height: 100%;
+  cursor: default;
+}
+
+.bar-inner {
+  width: 100%;
+  background: var(--bar-color);
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+
+.bar-col:hover .bar-inner {
+  opacity: 1;
+}
+
+.bar-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-top: 3px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 100%;
+  text-overflow: clip;
+}
+
+.weekday-chart .bar-col {
+  min-width: 32px;
+}
+
+.weekday-chart .bar-label {
+  font-size: 11px;
+}
+
+/* ── Affiliate ── */
+.affiliate-card {
+  position: relative;
+  background: linear-gradient(135deg, #1a2a1a, #2d2d2d);
+  border: 1px solid #3a5a3a;
+  border-radius: 10px;
+  padding: 24px 24px 20px;
+  margin-top: 8px;
+}
+
+.affiliate-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--accent);
+  color: #000;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.affiliate-headline {
+  font-size: 18px;
+  margin: 0 0 10px;
+  color: var(--text);
+}
+
+.affiliate-body {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin: 0 0 20px;
+  max-width: 480px;
+  line-height: 1.5;
+}
+
+.affiliate-cta {
+  display: inline-block;
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px 22px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.affiliate-cta:hover {
+  background: #00ff88;
+}
+
+.affiliate-disclaimer {
+  font-size: 11px;
+  color: #666;
+  margin: 14px 0 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .hero-number {
+    font-size: 52px;
+  }
+  .compass-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}

@@ -40,7 +40,10 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "menu.html"
+        "menu.html",
+        "stats/stats.html",
+        "stats/stats.js",
+        "stats/stats.css"
       ],
       "matches": [
         "<all_urls>"

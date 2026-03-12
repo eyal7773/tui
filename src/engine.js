@@ -266,7 +266,10 @@ class SpatialEngine {
             // Simple .click() often fails on div/span elements acting as buttons.
             e.preventDefault();
             e.stopImmediatePropagation();
-            if (active) this.simulateClick(active);
+            if (active) {
+                this.simulateClick(active);
+                this.safeSendMessage({ type: 'METRIC_EVENT', payload: { action: 'ENTER', key: 'Enter' } });
+            }
         }
     }
 

@@ -253,6 +253,25 @@ input:checked+.slider:before {
     min-height: 1.2em;
 }
 
+.stats-link-row {
+    margin-top: 8px;
+    text-align: right;
+}
+
+.stats-link-btn {
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+}
+
+.stats-link-btn:hover {
+    color: #00aaff;
+}
+
 .report-textarea {
     width: 100%;
     font-family: monospace;
