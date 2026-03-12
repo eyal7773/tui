@@ -1,6 +1,34 @@
-document.addEventListener('DOMContentLoaded', loadStats);
+// Theme toggle
+let activityChart = null;
+let weekdayChart = null;
+let _lastDailyActions = {};
+let _lastWeekdayActivity = {};
+
+function initTheme() {
+  const saved = localStorage.getItem('tui-theme') || 'light';
+  document.documentElement.setAttribute('data-bs-theme', saved);
+  document.getElementById('theme-toggle').textContent = saved === 'dark' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-bs-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-bs-theme', next);
+  localStorage.setItem('tui-theme', next);
+  document.getElementById('theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+  if (activityChart) { activityChart.destroy(); activityChart = null; }
+  if (weekdayChart) { weekdayChart.destroy(); weekdayChart = null; }
+  renderActivityChart(_lastDailyActions);
+  renderWeekdayChart(_lastWeekdayActivity);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+  loadStats();
+});
 
 function loadStats() {
+  initTheme();
   chrome.storage.local.get([
     'totalActions',
     'pagesOpened',
@@ -59,6 +87,10 @@ function loadStats() {
 
     // Navigation sequences
     renderTopSequences(keySequences);
+
+    // Save for re-render on theme switch
+    _lastDailyActions = dailyActions;
+    _lastWeekdayActivity = weekdayActivity;
 
     // Charts
     renderActivityChart(dailyActions);
@@ -213,44 +245,60 @@ function renderTopSequences(keySequences) {
 }
 
 function renderActivityChart(dailyActions) {
-  const container = document.getElementById('activity-chart');
   const today = new Date();
-  const days = [];
+  const labels = [];
+  const data = [];
   for (let i = 29; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const key = d.toISOString().slice(0, 10);
-    days.push({ key, count: dailyActions[key] || 0 });
+    labels.push(key.slice(5).replace('-', '/'));
+    data.push(dailyActions[key] || 0);
   }
-  const maxCount = Math.max(...days.map(d => d.count), 1);
-  container.innerHTML = days.map(({ key, count }) => {
-    const heightPct = Math.round((count / maxCount) * 100);
-    const label = key.slice(5); // MM-DD
-    return `<div class="bar-col" title="${key}: ${count}">
-      <div class="bar-inner" style="height:${heightPct}%"></div>
-      <div class="bar-label">${label.replace('-', '/')}</div>
-    </div>`;
-  }).join('');
+  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+  const labelColor = isDark ? '#aaaaaa' : '#666666';
+  const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+  activityChart = new ApexCharts(document.querySelector('#activity-chart'), {
+    chart: { type: 'bar', height: 180, toolbar: { show: false }, background: 'transparent', foreColor: labelColor },
+    series: [{ name: 'Actions', data }],
+    xaxis: {
+      categories: labels,
+      axisBorder: { show: false }, axisTicks: { show: false },
+      labels: { rotate: -45, style: { colors: labelColor, fontSize: '10px' } },
+      tickAmount: 10
+    },
+    yaxis: { labels: { style: { colors: labelColor } } },
+    grid: { strokeDashArray: 3, borderColor: gridColor },
+    fill: { colors: ['#00cc66'] },
+    dataLabels: { enabled: false },
+    tooltip: { theme: isDark ? 'dark' : 'light' },
+    theme: { mode: isDark ? 'dark' : 'light' },
+    plotOptions: { bar: { borderRadius: 2 } }
+  });
+  activityChart.render();
 }
 
 function renderWeekdayChart(weekdayActivity) {
-  const container = document.getElementById('weekday-chart');
-  const days = [
-    { label: 'Sun', key: '0' },
-    { label: 'Mon', key: '1' },
-    { label: 'Tue', key: '2' },
-    { label: 'Wed', key: '3' },
-    { label: 'Thu', key: '4' },
-    { label: 'Fri', key: '5' },
-    { label: 'Sat', key: '6' }
-  ];
-  const counts = days.map(d => weekdayActivity[d.key] || 0);
-  const maxCount = Math.max(...counts, 1);
-  container.innerHTML = days.map(({ label }, i) => {
-    const heightPct = Math.round((counts[i] / maxCount) * 100);
-    return `<div class="bar-col" title="${label}: ${counts[i]}">
-      <div class="bar-inner" style="height:${heightPct}%"></div>
-      <div class="bar-label">${label}</div>
-    </div>`;
-  }).join('');
+  const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const data = labels.map((_, i) => weekdayActivity[String(i)] || 0);
+  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+  const labelColor = isDark ? '#aaaaaa' : '#666666';
+  const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+  weekdayChart = new ApexCharts(document.querySelector('#weekday-chart'), {
+    chart: { type: 'bar', height: 180, toolbar: { show: false }, background: 'transparent', foreColor: labelColor },
+    series: [{ name: 'Actions', data }],
+    xaxis: {
+      categories: labels,
+      axisBorder: { show: false }, axisTicks: { show: false },
+      labels: { style: { colors: labelColor, fontSize: '12px' } }
+    },
+    yaxis: { labels: { style: { colors: labelColor } } },
+    grid: { strokeDashArray: 3, borderColor: gridColor },
+    fill: { colors: ['#00cc66'] },
+    dataLabels: { enabled: false },
+    tooltip: { theme: isDark ? 'dark' : 'light' },
+    theme: { mode: isDark ? 'dark' : 'light' },
+    plotOptions: { bar: { borderRadius: 3 } }
+  });
+  weekdayChart.render();
 }

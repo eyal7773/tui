@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TUI Navigator",
-  "version": "0.1.75",
+  "version": "0.1.79",
   "description": "Transform browsing into a Text-based User Interface navigation experience.",
   "permissions": [
     "storage",
@@ -43,7 +43,9 @@
         "menu.html",
         "stats/stats.html",
         "stats/stats.js",
-        "stats/stats.css"
+        "stats/stats.css",
+        "stats/apexcharts.min.js",
+        "stats/bootstrap.bundle.min.js"
       ],
       "matches": [
         "<all_urls>"
