@@ -848,6 +848,19 @@ class SpatialEngine {
                         // REJECT IT to avoid noise (large containers, focus traps, etc.)
                         return false;
                     }
+
+                    // Reject large containers regardless of which indicator let them through
+                    // (cursor:pointer inheritance OR containsEditable deep inside).
+                    // The containsEditable exception was designed for small wrappers like Telegram's
+                    // message input div — NOT for whole-column containers that happen to have a
+                    // compose box buried inside. Real interactive widgets fit well within 20% of the
+                    // viewport; full-column/page containers (Twitter timeline, feed sections) do not.
+                    if (!hasInteractiveRole && !el.isContentEditable) {
+                        const viewportArea = window.innerWidth * window.innerHeight;
+                        if (rect.width * rect.height > viewportArea * 0.2) {
+                            return false;
+                        }
+                    }
                 }
             }
 
