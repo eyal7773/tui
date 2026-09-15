@@ -66,8 +66,9 @@
 
     .bar {
       display: flex;
+      flex-wrap: wrap;
       align-items: baseline;
-      gap: 1rem;
+      gap: 0.5rem 1rem;
       padding: 1rem 0;
       border-bottom: 1px solid var(--rule);
       font-family: var(--mono);
@@ -146,11 +147,16 @@
 
     .row {
       display: block;
+      width: 100%;
+      text-align: left;
       padding: 0.7rem 0.75rem;
       font-family: var(--mono);
       font-size: 0.85rem;
+      line-height: 1.4;
       color: var(--ink);
-      text-decoration: none;
+      background: none;
+      border: none;
+      cursor: pointer;
       outline: none;
     }
 
@@ -178,7 +184,9 @@
       outline: none;
     }
 
-    /* The one bold moment: the focus ring, ported from the extension's styles.css. */
+    /* The one bold moment: the ring, ported from the extension's styles.css.
+       The extension paints its own indicator rather than leaning on native
+       focus, so the demo carries the state in a class the same way. */
     .tui-on {
       outline: 3px solid var(--ring);
       outline-offset: 2px;
@@ -310,8 +318,8 @@
 
     dl.keys {
       display: grid;
-      grid-template-columns: 7.5rem 1fr;
-      gap: 0 1.5rem;
+      grid-template-columns: 9rem 1fr;
+      gap: 0;
       margin: 0;
       max-width: 46rem;
       align-items: baseline;
@@ -320,7 +328,7 @@
     dl.keys dt {
       font-family: var(--mono);
       font-size: 0.8rem;
-      padding: 0.5rem 0;
+      padding: 0.5rem 1.5rem 0.5rem 0;
       border-bottom: 1px solid var(--rule);
     }
 
@@ -421,12 +429,12 @@
       <div class="demo">
         <div class="demo-chrome">results for &ldquo;keyboard navigation&rdquo;</div>
         <ul class="rows">
-          <li><a class="row" href="#install">Keyboard-only browsing is faster than you think
-              <span class="meta">example.com — 4 min read</span></a></li>
-          <li><a class="row" href="#install">Why focus indicators matter
-              <span class="meta">example.org — 7 min read</span></a></li>
-          <li><a class="row" href="#install">A short history of text-based interfaces
-              <span class="meta">example.net — 12 min read</span></a></li>
+          <li><button class="row" type="button">Keyboard-only browsing is faster than you think
+              <span class="meta">example.com — 4 min read</span></button></li>
+          <li><button class="row" type="button">Why focus indicators matter
+              <span class="meta">example.org — 7 min read</span></button></li>
+          <li><button class="row" type="button">A short history of text-based interfaces
+              <span class="meta">example.net — 12 min read</span></button></li>
         </ul>
         <div class="row-actions">
           <button class="chip" type="button">Next page</button>
@@ -499,83 +507,86 @@
   <script>
     (function () {
       var demo = document.querySelector('.demo');
-      var hint = document.getElementById('hint');
       if (!demo) return;
 
-      // Only the elements inside the demo take part.
+      // Only the elements inside the demo take part. `current` is the one place
+      // the ring's position is stored; paint() is the only thing that writes it.
       var items = Array.prototype.slice.call(demo.querySelectorAll('.row, .chip'));
       var current = null;
-      var used = false;
-
-      function clear() {
-        items.forEach(function (i) { i.classList.remove('tui-on'); });
-      }
 
       function paint(el) {
-        clear();
-        if (el) {
-          el.classList.add('tui-on');
-          el.focus({ preventScroll: true });
-        }
+        items.forEach(function (i) { i.classList.toggle('tui-on', i === el); });
         current = el;
       }
 
-      // Spatial move: nearest item in the direction travelled, which is the
-      // same idea the extension applies to a real page.
-      function move(dir) {
-        if (!current) { paint(items[0]); return; }
-
-        var from = current.getBoundingClientRect();
-        var fx = from.left + from.width / 2;
-        var fy = from.top + from.height / 2;
+      // Nearest item in the direction travelled, which is the idea the
+      // extension applies to a real page. Distance along the direction comes
+      // from the centres; drift across it comes from the leading edges, so a
+      // narrow button under a full-width row still lines up with its start.
+      function next(from, dir) {
+        var box = from.getBoundingClientRect();
+        var vertical = (dir === 'ArrowUp' || dir === 'ArrowDown');
         var best = null;
         var bestScore = Infinity;
 
         items.forEach(function (el) {
-          if (el === current) return;
+          if (el === from) return;
 
           var r = el.getBoundingClientRect();
-          var dx = (r.left + r.width / 2) - fx;
-          var dy = (r.top + r.height / 2) - fy;
           var along, across;
 
-          if (dir === 'ArrowDown') { along = dy; across = Math.abs(dx); }
-          else if (dir === 'ArrowUp') { along = -dy; across = Math.abs(dx); }
-          else if (dir === 'ArrowRight') { along = dx; across = Math.abs(dy); }
-          else { along = -dx; across = Math.abs(dy); }
+          if (vertical) {
+            along = (r.top + r.height / 2) - (box.top + box.height / 2);
+            if (dir === 'ArrowUp') along = -along;
+            across = Math.abs(r.left - box.left);
+          } else {
+            // Sideways moves stay on the band they started on, so they never
+            // hop between rows.
+            if (r.bottom <= box.top || r.top >= box.bottom) return;
+            along = (r.left + r.width / 2) - (box.left + box.width / 2);
+            if (dir === 'ArrowLeft') along = -along;
+            across = Math.abs(r.top - box.top);
+          }
 
           if (along < 6) return;               // behind us, or level with us
           var score = along + across * 2;      // prefer straight ahead
           if (score < bestScore) { bestScore = score; best = el; }
         });
 
-        if (best) paint(best);
+        return best;
       }
 
-      demo.addEventListener('focusin', function (e) {
-        if (items.indexOf(e.target) !== -1) paint(e.target);
+      // Starting the demo takes a deliberate click or tab into it.
+      items.forEach(function (el) {
+        el.addEventListener('click', function () { paint(el); });
+        el.addEventListener('focus', function () {
+          if (current !== el) paint(el);       // guard against a paint/focus loop
+        });
       });
 
-      demo.addEventListener('focusout', function (e) {
-        // Leaving the demo entirely puts the ring away.
-        if (!demo.contains(e.relatedTarget)) {
-          clear();
-          current = null;
-        }
+      // Clicking anywhere else hands the arrow keys back to the page.
+      document.addEventListener('click', function (e) {
+        if (!demo.contains(e.target)) paint(null);
       });
 
       document.addEventListener('keydown', function (e) {
-        if (!current) return;                        // demo is not active
+        if (!current) return;                  // demo has not been started
         if (e.key.indexOf('Arrow') !== 0) return;
         if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-        e.preventDefault();                          // do not scroll the page
-        move(e.key);
-
-        if (!used) {
-          used = true;
-          hint.textContent = 'That is the ring. On a real page it moves the same way.';
+        // Focus moved on to a real element elsewhere: stop intercepting.
+        var active = document.activeElement;
+        if (active && active !== document.body && !demo.contains(active)) {
+          paint(null);
+          return;
         }
+
+        var target = next(current, e.key);
+        if (!target) return;
+
+        e.preventDefault();                    // do not scroll the page
+        paint(target);
+        target.focus({ preventScroll: true });
       });
     })();
   </script>
