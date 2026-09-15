@@ -12,6 +12,11 @@ concurrency:
   group: release-main
   cancel-in-progress: false
 
+env:
+  # How many releases to keep. Older ones (and their tags) are deleted after
+  # each successful release. Set to 0 to disable pruning.
+  KEEP_RELEASES: "2"
+
 jobs:
   release:
     # Skip the run triggered by our own version-bump commit.
@@ -67,6 +72,9 @@ jobs:
         with:
           name: tui-navigator-v${{ steps.version.outputs.version }}
           path: dist/*.zip
+          # Short retention: the zip also lives on the release, and Actions
+          # artifacts do count against the account storage quota.
+          retention-days: 7
 
       - name: Write release notes
         env:
@@ -99,3 +107,32 @@ jobs:
             --title "TUI Navigator v$VERSION" \
             --notes-file dist/notes.md \
             --latest
+
+      - name: Prune old releases
+        if: env.KEEP_RELEASES != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KEEP: ${{ env.KEEP_RELEASES }}
+        run: |
+          set -euo pipefail
+          gh release list --limit 200 --json tagName,createdAt > dist/releases.json
+
+          node -e "
+            const all = JSON.parse(require('fs').readFileSync('dist/releases.json', 'utf8'));
+            all.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            const keep = Number(process.env.KEEP);
+            console.error('Found ' + all.length + ' releases, keeping newest ' + keep);
+            const stale = all.slice(keep).map(r => r.tagName);
+            if (stale.length) process.stdout.write(stale.join('\n') + '\n');
+          " > dist/stale.txt
+
+          if [ ! -s dist/stale.txt ]; then
+            echo "Nothing to prune."
+            exit 0
+          fi
+
+          while read -r tag; do
+            [ -z "$tag" ] && continue
+            echo "Deleting release $tag (and its tag)"
+            gh release delete "$tag" --yes --cleanup-tag
+          done < dist/stale.txt
