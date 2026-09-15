@@ -1,0 +1,101 @@
+name: Release Extension
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # Skip the run triggered by our own version-bump commit.
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Resolve release version
+        id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./src/manifest.json').version")
+
+          # If this version was already released, bump the patch level and push it back.
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null 2>&1 \
+             || gh release view "v$version" >/dev/null 2>&1; then
+            echo "v$version already exists - bumping patch version"
+            npm run bump-version
+            version=$(node -p "require('./src/manifest.json').version")
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -am "chore: release v$version [skip ci]"
+            git push origin HEAD:main
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Releasing v$version"
+
+      - name: Package extension
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          (cd src && zip -qr "../dist/tui-navigator-v$VERSION.zip" . -x '.DS_Store' '*/.DS_Store' 'Thumbs.db')
+          unzip -l "dist/tui-navigator-v$VERSION.zip"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tui-navigator-v${{ steps.version.outputs.version }}
+          path: dist/*.zip
+
+      - name: Write release notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA: ${{ steps.version.outputs.sha }}
+        run: |
+          set -euo pipefail
+          {
+            echo "Unpacked build of TUI Navigator v$VERSION."
+            echo
+            echo "**Install (Developer mode):**"
+            echo
+            echo "1. Download \`tui-navigator-v$VERSION.zip\` below and unzip it."
+            echo "2. Open \`chrome://extensions/\` and turn on **Developer mode**."
+            echo "3. Click **Load unpacked** and pick the unzipped folder (the one containing \`manifest.json\`)."
+            echo
+            echo "Built from commit $SHA."
+          } > dist/notes.md
+          cat dist/notes.md
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA: ${{ steps.version.outputs.sha }}
+        run: |
+          set -euo pipefail
+          gh release create "v$VERSION" "dist/tui-navigator-v$VERSION.zip" \
+            --target "$SHA" \
+            --title "TUI Navigator v$VERSION" \
+            --notes-file dist/notes.md \
+            --latest

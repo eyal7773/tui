@@ -4,24 +4,39 @@ TUI Navigator is a chrome extension that transforms the browsing experience on d
 
 ## Installation Instructions
 
-1.  **Download the Source Code**:
-    Ensure you have the `tui-navigator` folder with all the extension files (`manifest.json`, `background.js`, `popup/`, etc.).
+### Option A — Download a release (recommended)
 
-2.  **Open Chrome Extensions Page**:
-    -   Open Google Chrome.
-    -   Navigate to `chrome://extensions/` in the address bar.
+Every push to `main` builds a new release automatically via GitHub Actions.
 
-3.  **Enable Developer Mode**:
-    -   Look for the toggle switch named **"Developer mode"** in the top right corner.
-    -   Turn it **ON**.
+1.  Go to the [Releases page](https://github.com/eyal7773/tui/releases) and download the latest
+    `tui-navigator-vX.Y.Z.zip`.
+2.  Unzip it anywhere on disk.
+3.  Open `chrome://extensions/` in Google Chrome.
+4.  Turn **Developer mode** ON (toggle in the top right corner).
+5.  Click **Load unpacked** and select the unzipped folder — the one that contains `manifest.json`.
 
-4.  **Load Unpacked Extension**:
-    -   Click the **"Load unpacked"** button that appears in the top left.
-    -   Select the `c:\Users\USER\source\repos\tui` folder (or wherever you saved the project).
+### Option B — Load straight from the repo
 
-5.  **Verify Installation**:
-    -   You should see "TUI Navigator" in your list of extensions.
-    -   The icon (terminal arrow) should appear in your browser toolbar.
+1.  Clone or download this repository.
+2.  Open `chrome://extensions/`, turn **Developer mode** ON.
+3.  Click **Load unpacked** and select the **`src`** folder of the repo (that is where
+    `manifest.json` lives), e.g. `c:\Users\USER\source\repos\tui\src`.
+
+### Verify installation
+
+-   You should see "TUI Navigator" in your list of extensions.
+-   The icon (terminal arrow) should appear in your browser toolbar.
+
+## Releases & Versioning
+
+-   `.github/workflows/release.yml` runs on every push to `main`.
+-   It reads the version from `src/manifest.json`. If that version was already released, it bumps
+    the patch number (`npm run bump-version`), commits the bump back to `main` with `[skip ci]`,
+    and releases the new version.
+-   The zip contains the contents of `src/` at its root, so the unzipped folder is directly
+    loadable with **Load unpacked**.
+-   To control the version yourself, run `npm run bump-version` locally (or edit
+    `src/manifest.json`) before pushing.
 
 ## Usage Guide
 
