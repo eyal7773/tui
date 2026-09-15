@@ -1,5 +1,7 @@
 # TUI Navigator
 
+[![Release Extension](https://github.com/eyal7773/tui/actions/workflows/release.yml/badge.svg)](https://github.com/eyal7773/tui/actions/workflows/release.yml)
+
 TUI Navigator is a chrome extension that transforms the browsing experience on data-heavy websites into a **Text-based User Interface (TUI)**. Navigate search results and lists using your keyboard with high-contrast visibility.
 
 ## Installation Instructions
