@@ -15,7 +15,7 @@ concurrency:
 env:
   # How many releases to keep. Older ones (and their tags) are deleted after
   # each successful release. Set to 0 to disable pruning.
-  KEEP_RELEASES: "2"
+  KEEP_RELEASES: "5"
 
 jobs:
   release:

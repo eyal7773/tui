@@ -39,6 +39,11 @@ Every push to `main` builds a new release automatically via GitHub Actions.
     loadable with **Load unpacked**.
 -   To control the version yourself, run `npm run bump-version` locally (or edit
     `src/manifest.json`) before pushing.
+-   Only the newest `KEEP_RELEASES` releases are kept (default **5**). After each successful
+    release the workflow deletes older releases and their tags. Change the value at the top of
+    `.github/workflows/release.yml`, or set it to `0` to keep every release forever.
+-   The build is also uploaded as an Actions artifact, kept for 7 days. Unlike release assets,
+    Actions artifacts count against your account storage quota.
 
 ## Usage Guide
 
