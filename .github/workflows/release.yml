@@ -42,12 +42,19 @@ jobs:
           set -euo pipefail
           version=$(node -p "require('./src/manifest.json').version")
 
-          # If this version was already released, bump the patch level and push it back.
+          # If this version was already released, bump the patch level.
           if git rev-parse -q --verify "refs/tags/v$version" >/dev/null 2>&1 \
              || gh release view "v$version" >/dev/null 2>&1; then
             echo "v$version already exists - bumping patch version"
             npm run bump-version
             version=$(node -p "require('./src/manifest.json').version")
+          fi
+
+          # Keep the GitHub Pages site in docs/ showing the version being shipped.
+          node scripts/sync-site-version.js "$version"
+
+          # One commit covers both the version bump and the site update.
+          if ! git diff --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git commit -am "chore: release v$version [skip ci]"
