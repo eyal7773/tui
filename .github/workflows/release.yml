@@ -42,12 +42,25 @@ jobs:
           set -euo pipefail
           version=$(node -p "require('./src/manifest.json').version")
 
-          # If this version was already released, bump the patch level.
-          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null 2>&1 \
-             || gh release view "v$version" >/dev/null 2>&1; then
+          taken() {
+            git rev-parse -q --verify "refs/tags/v$1" >/dev/null 2>&1 \
+              || gh release view "v$1" >/dev/null 2>&1
+          }
+
+          # Bump until the version is actually free. A single bump is not enough:
+          # if an earlier run tagged a release but could not push its bump back to
+          # main, the checked-out manifest still names a version that is already
+          # taken, and one step forward would land on another taken one.
+          for _ in $(seq 1 50); do
+            taken "$version" || break
             echo "v$version already exists - bumping patch version"
             npm run bump-version
             version=$(node -p "require('./src/manifest.json').version")
+          done
+
+          if taken "$version"; then
+            echo "::error::Could not find a free version after 50 bumps; last tried v$version."
+            exit 1
           fi
 
           # Keep the GitHub Pages site in docs/ showing the version being shipped.
@@ -58,7 +71,17 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git commit -am "chore: release v$version [skip ci]"
-            git push origin HEAD:main
+
+            if ! git push origin HEAD:main; then
+              echo "::error::Pushing the v$version version bump to main was rejected."
+              echo "This usually means a ruleset or branch protection now guards main."
+              echo "Actions has to push this commit, so give it a bypass:"
+              echo "  Settings -> Rules -> Rulesets -> (the ruleset covering main)"
+              echo "  -> Bypass list -> Add bypass -> Repository admin / Deploy keys"
+              echo "     and the 'github-actions[bot]' app, then re-run this job."
+              echo "Nothing was released; the tag and the bump stay unclaimed until this is fixed."
+              exit 1
+            fi
           fi
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
