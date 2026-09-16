@@ -34,6 +34,25 @@ Every push to `main` builds a new release automatically via GitHub Actions.
 -   You should see "TUI Navigator" in your list of extensions.
 -   The icon (terminal arrow) should appear in your browser toolbar.
 
+## Handing the keyboard back
+
+Spatial navigation works by moving real focus, and a site that routes its own
+shortcuts by focus loses them while the ring is holding one of its links. On a
+YouTube watch page, for example, space stops playing and pausing the video once
+you start moving around.
+
+**Esc hands the keyboard back.** The ring disappears, focus is released, and the
+extension stops intercepting anything, so every shortcut the site defines behaves
+exactly as it would with the extension uninstalled. **Esc again takes it back**
+and navigation resumes.
+
+The toolbar badge clears while the page has the keys, so the state is visible.
+It lasts until the page is reloaded and is never saved; a fresh page always
+starts out navigable. Inside a text box Escape keeps its existing meaning of
+leaving the box, so the handover needs a second press there.
+
+Escape is never swallowed: the page receives it either way.
+
 ## Excluded sites
 
 Open the toolbar popup and pick the **Settings** tab to switch TUI Navigator off on
@@ -149,10 +168,11 @@ git pull --rebase
 ### Controls
 | Key | Action |
 | :--- | :--- |
-| **Arrrow Down / J** | Move focus to next item |
-| **Arrow Up / K** | Move focus to previous item |
-| **Enter** | Click/Open the selected item |
-| **Esc** | Reset focus / Deactivate |
+| **Arrow Down** | Move focus to the item below |
+| **Arrow Up** | Move focus to the item above |
+| **Arrow Left / Right** | Move across the current row |
+| **Enter** | Activate the focused item |
+| **Esc** | Leave a text box, or hand the keyboard back to the page |
 
 ### Management
 Click the extension icon to:

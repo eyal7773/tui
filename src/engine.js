@@ -23,6 +23,10 @@ class SpatialEngine {
         this.currentHostname = null;
         this.hostnameResolved = false;
 
+        // Escape hands the keyboard to the page until Escape takes it back. Per
+        // page, and deliberately not persisted: a fresh load starts navigating.
+        this.isSuspended = false;
+
         // State
         this.isActiveMode = false; // "Lazy Focus": only show green ring after user actively navigates with arrows
         this.lastActiveElement = null;
@@ -206,10 +210,46 @@ class SpatialEngine {
         }
     }
 
-    /** Recomputes isEnabled from the two inputs and tidies up the ring if needed. */
+    /**
+     * True when Escape should mean "swap who owns the keyboard" rather than
+     * anything else. Inside a text box Escape already means "leave the box", and
+     * in the menu it means "close the menu"; both keep their meaning. A site the
+     * user switched off entirely has nothing to hand over.
+     */
+    canToggleHandover() {
+        if (!this.userEnabled || this.isExcluded) return false;
+        if (this.isMenuOpen) return false;
+        return !this.shouldTrapArrows(document.activeElement);
+    }
+
+    /**
+     * Hand the keyboard to the page, or take it back. While handed over the
+     * engine intercepts nothing, so the site's own shortcuts work exactly as
+     * they would without the extension installed.
+     */
+    setSuspended(suspended) {
+        if (this.isSuspended === suspended) return;
+        this.isSuspended = suspended;
+
+        if (suspended) {
+            // Letting go of focus is the part that matters. Sites like YouTube
+            // route their shortcuts by what is focused, so hiding the ring while
+            // still holding a link would not give the page its keys back.
+            const active = document.activeElement;
+            if (active && active !== document.body && typeof active.blur === 'function') {
+                active.blur();
+            }
+            this.lastActiveElement = null;
+        }
+
+        this.applyEnabledState();
+        console.log(`[TUI] Keyboard ${suspended ? 'handed back to the page' : 'taken back'} (Escape).`);
+    }
+
+    /** Recomputes isEnabled from its inputs and tidies up the ring if needed. */
     applyEnabledState() {
         const wasEnabled = this.isEnabled;
-        this.isEnabled = this.userEnabled && !this.isExcluded;
+        this.isEnabled = this.userEnabled && !this.isExcluded && !this.isSuspended;
 
         if (wasEnabled === this.isEnabled) return;
 
@@ -302,6 +342,16 @@ class SpatialEngine {
     }
 
     handleKeydown(e) {
+        // Escape hands the keyboard back to the page, and takes it again. Read
+        // before the enabled check, because once the keyboard is handed over the
+        // engine is disabled and would otherwise have no way to hear the key that
+        // takes it back. Never preventDefault here: Escape belongs to the page
+        // too, and swallowing it would trade one stolen key for another.
+        if (e.key === 'Escape' && this.canToggleHandover()) {
+            this.setSuspended(!this.isSuspended);
+            return;
+        }
+
         if (!this.isEnabled) return;
 
         // User is interacting, stop any pending focus monitoring to avoid conflicts/lag
