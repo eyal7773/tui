@@ -45,6 +45,11 @@ This is less cosmetic than it sounds. Bright green is one of the hardest colours
 to pick out with red-green colour blindness, which is common enough to matter,
 and blue, orange and yellow stay distinguishable where green does not.
 
+The swatches are the bright terminal palette, which is where the default green
+already sat: pure hues at the corners of the RGB cube, which is what makes them
+read as phosphor. Orange is the one exception, kept because no corner offers it
+and it is one of the hues that survives colour blindness.
+
 The settings reach the page as custom properties — `--tui-ring`,
 `--tui-ring-wash` and `--tui-ring-width` — written inline on the ring element.
 The rules in `styles.css` keep their `!important`, so a page still cannot

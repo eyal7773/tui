@@ -25,15 +25,31 @@
   const DEFAULT_MOTION = 'auto';
   const RING_TRANSITION = 'all 0.1s ease-out';
 
-  // Chosen so that something stays distinguishable when green does not work:
-  // red-green colour blindness leaves blue, orange and yellow intact.
+  /*
+   * The bright terminal palette, which is where the default green already sits.
+   * Two different things used to stop the others glowing like it:
+   *
+   *   #ff3b3b carried grey. Its lowest channel was 59 rather than 0, which
+   *   desaturates the colour no matter how bright the red is.
+   *
+   *   #00b4ff and #ff8a00 were fully saturated but sat part way along an edge of
+   *   the RGB cube, so each was a blend of two hues. The corners - cyan, yellow,
+   *   magenta, and the primaries - are the pure hues, and purity is what reads
+   *   as phosphor rather than paint.
+   *
+   * Orange is the deliberate exception, kept off a corner because there is no
+   * corner for it. It earns its place anyway: red-green colour blindness leaves
+   * blue, orange and yellow distinguishable when green is not, so trading it for
+   * a tidier rule would cost more than it gains. #ff6a00 moves it away from the
+   * brown end of the edge without pretending to be a corner.
+   */
   const PRESETS = [
     { hex: '#00ff00', name: 'Green' },
-    { hex: '#00b4ff', name: 'Blue' },
-    { hex: '#ff8a00', name: 'Orange' },
-    { hex: '#ffe600', name: 'Yellow' },
-    { hex: '#ff00d4', name: 'Magenta' },
-    { hex: '#ff3b3b', name: 'Red' }
+    { hex: '#00ffff', name: 'Cyan' },
+    { hex: '#ff6a00', name: 'Orange' },
+    { hex: '#ffff00', name: 'Yellow' },
+    { hex: '#ff00ff', name: 'Magenta' },
+    { hex: '#ff0000', name: 'Red' }
   ];
 
   /** "#0F0" | "00ff00" | " #00FF00 " -> "#00ff00". Anything else -> null. */
