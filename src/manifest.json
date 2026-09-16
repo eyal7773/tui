@@ -21,6 +21,7 @@
       "js": [
         "site-rules.js",
         "ring-style.js",
+        "line-rules.js",
         "engine.js"
       ],
       "css": [

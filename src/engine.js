@@ -27,6 +27,11 @@ class SpatialEngine {
         // page, and deliberately not persisted: a fresh load starts navigating.
         this.isSuspended = false;
 
+        // The last arrow that actually moved the ring. Home and End read it to
+        // decide which axis they run along. Starting at ArrowRight means End
+        // works on the first press, before anything has moved.
+        this.lastDirection = 'ArrowRight';
+
         // Ring appearance and motion, applied to the spotlight as custom
         // properties. Motion also decides how scrolling behaves.
         this.ringColor = null;
@@ -474,6 +479,21 @@ class SpatialEngine {
             return;
         }
 
+        if (e.key === 'Home' || e.key === 'End') {
+            // Ctrl+End is "end of document" and Shift+Home selects. Those belong
+            // to the page, so anything with a modifier passes straight through.
+            if (e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) return;
+            if (!window.TuiLineRules) return;
+
+            const direction = window.TuiLineRules.directionFor(e.key, this.lastDirection);
+            if (!direction) return;
+
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            this.navigate(direction, 'extreme');
+            return;
+        }
+
         if (e.key && e.key.startsWith('Arrow')) {
             // We handle this navigation action
             e.preventDefault();
@@ -629,7 +649,7 @@ class SpatialEngine {
     /**
      * Main Navigation Logic
      */
-    navigate(key) {
+    navigate(key, mode) {
         if (this.isNavigating) return;
         this.isNavigating = true;
 
@@ -692,7 +712,7 @@ class SpatialEngine {
 
             // 3. Find Best Candidate
             // Note: findBestCandidate automatically filters out elements in this.failedFocusElements
-            const target = this.findBestCandidate(currentRect, key, current);
+            const target = this.findBestCandidate(currentRect, key, current, mode);
 
             // 4. Action
             if (target) {
@@ -701,6 +721,9 @@ class SpatialEngine {
 
                 if (focusResult) {
                     success = true;
+                    // Remember the axis for Home/End. A jump counts the same as a
+                    // step: both leave the ring travelling in that direction.
+                    this.lastDirection = key;
                     // Metric Tracking
                     this.safeSendMessage({
                         type: 'METRIC_EVENT',
@@ -711,6 +734,11 @@ class SpatialEngine {
                     // The loop will continue, and findBestCandidate will skip this element next time.
                     if (this.debugMode) console.log(`[TUI] Focus failed (Attempt ${attempts}/${maxAttempts}). Retrying navigation...`);
                 }
+            } else if (mode === 'extreme') {
+                // Home/End stop at the end of the line rather than scrolling on.
+                // Scrolling here would turn a second press into a page-down,
+                // which is not what the key was asked to do.
+                success = true;
             } else {
                 // 5. Off-screen handling (scroll) - Only if NO candidate found
                 this.handleOffScreen(key);
@@ -1153,7 +1181,7 @@ class SpatialEngine {
         }
     }
 
-    findBestCandidate(currentRect, key, currentEl) {
+    findBestCandidate(currentRect, key, currentEl, mode) {
         if (!currentRect) {
             // Corner case: No focus. Pick top-left most visible element or first one.
             // If we have no origin, we can't do directional relative navigation effectively.
@@ -1298,17 +1326,36 @@ class SpatialEngine {
                 }
             }
 
-            // Step C: The Distance/Priority Formula
-            let score = this.getDistance(currentRect, rect, key);
-
-            // Penalize FIXED/STICKY elements to prevent them from hijacking navigation
-            // when they visually overlap or are geometrically closer than the scrolling content.
-            // BUG FIX: Only apply penalty if we are moving FROM non-sticky TO sticky.
-            // If we are already in a sticky container (like Header), we should be able to move to other sticky containers (Sidebar) freely.
             const targetIsSticky = this.isSticky(cand);
+            let score;
 
-            if (targetIsSticky && !currentIsSticky) {
-                score += 500;
+            if (mode === 'extreme') {
+                // Home/End: stay on the line and take the furthest one. The cone
+                // above already guaranteed the direction, so all that is left is
+                // membership of the line and reach along it.
+                if (!window.TuiLineRules) return;
+
+                const axis = window.TuiLineRules.axisOf(key);
+                if (!window.TuiLineRules.sameLine(currentRect, rect, axis)) return;
+
+                // Negated, so the furthest element wins the lowest-score contest
+                // this loop already runs.
+                score = -window.TuiLineRules.reach(rect, key);
+
+                // No sticky penalty here on purpose. "The last one on this row"
+                // should mean exactly that; a hidden weighting would make the
+                // key land somewhere the user cannot predict from the layout.
+            } else {
+                // Step C: The Distance/Priority Formula
+                score = this.getDistance(currentRect, rect, key);
+
+                // Penalize FIXED/STICKY elements to prevent them from hijacking navigation
+                // when they visually overlap or are geometrically closer than the scrolling content.
+                // BUG FIX: Only apply penalty if we are moving FROM non-sticky TO sticky.
+                // If we are already in a sticky container (like Header), we should be able to move to other sticky containers (Sidebar) freely.
+                if (targetIsSticky && !currentIsSticky) {
+                    score += 500;
+                }
             }
 
             if (this.debugMode) {

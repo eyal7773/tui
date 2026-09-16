@@ -71,6 +71,34 @@ system either way.
 
 The setting covers both the page scroll and the ring's own movement.
 
+## Home and End
+
+**End** jumps to the far end of the line you are on, **Home** to the near end.
+The last arrow you pressed decides which way a line runs: after moving sideways
+it is the row you are in, after moving up or down it is the column. Before you
+have moved at all the axis is horizontal, so End works on the first press.
+
+A line is decided by overlap. On a row, anything whose vertical span covers at
+least half the shorter of the two elements counts as being on it, which keeps a
+tall neighbour from joining a row it merely clips.
+
+**It reaches across the whole width of the window, not just the block you are
+reading.** If a sidebar link happens to sit at the same height as the row, End
+will land on it, because it genuinely is the rightmost thing at that height.
+That is the rule working as intended rather than a bug, but it is worth knowing
+before it surprises you.
+
+Nothing is ever skipped over: if there is no candidate further along the line,
+the ring stays where it is. Home and End never scroll, so a second press does
+nothing rather than turning into a page-down.
+
+`Ctrl+Home`, `Ctrl+End` and `Shift+Home` keep their usual meaning and are passed
+to the page, and inside a text box both keys still move the caret to the start
+or end of the line.
+
+The geometry lives in `src/line-rules.js` as pure functions over rectangles, so
+the awkward cases can be tested against exact coordinates.
+
 ## Handing the keyboard back
 
 Spatial navigation works by moving real focus, and a site that routes its own
@@ -208,6 +236,7 @@ git pull --rebase
 | **Arrow Down** | Move focus to the item below |
 | **Arrow Up** | Move focus to the item above |
 | **Arrow Left / Right** | Move across the current row |
+| **Home / End** | Jump to either end of the current line (see below) |
 | **Enter** | Activate the focused item |
 | **Esc** | Leave a text box, or hand the keyboard back to the page |
 
