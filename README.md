@@ -24,7 +24,10 @@ Every push to `main` builds a new release automatically via GitHub Actions.
 1.  Clone or download this repository.
 2.  Open `chrome://extensions/`, turn **Developer mode** ON.
 3.  Click **Load unpacked** and select the **`src`** folder of the repo (that is where
-    `manifest.json` lives), e.g. `c:\Users\USER\source\repos\tui\src`.
+    `manifest.json` lives), e.g. `<path-to-your-clone>/tui/src`.
+
+    Pick the `src` folder itself, not the repository root — Chrome needs the folder that
+    directly contains `manifest.json`, and loading the repo root will fail.
 
 ### Verify installation
 
