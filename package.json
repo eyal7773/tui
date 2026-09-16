@@ -4,7 +4,8 @@
   "description": "Transform browsing into a Text-based User Interface navigation experience.",
   "scripts": {
     "bump-version": "node scripts/bump-version.js",
-    "sync-site-version": "node scripts/sync-site-version.js"
+    "sync-site-version": "node scripts/sync-site-version.js",
+    "test": "node --test \"tests/*.test.js\""
   },
   "private": true
 }

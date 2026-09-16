@@ -214,6 +214,95 @@ kbd {
   line-height: 1.4;
 }
 
+/* ── Personal settings ── */
+.current-site {
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--text);
+  margin: 0 0 10px;
+  word-break: break-all;
+}
+
+.current-site.is-excluded {
+  color: var(--error);
+}
+
+.add-site-row {
+  display: flex;
+  gap: 6px;
+}
+
+/* .secondary-btn is full width by default, which would crush the input. */
+.add-site-row .secondary-btn {
+  flex: none;
+  width: auto;
+}
+
+.add-site-input {
+  flex: 1;
+  min-width: 0;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.add-site-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.excluded-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.excluded-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.excluded-list .domain {
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
+}
+
+.remove-site-btn {
+  flex: none;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.remove-site-btn:hover {
+  color: var(--error);
+  background: rgba(224, 85, 85, 0.1);
+}
+
+.remove-site-btn:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+.excluded-empty {
+  margin: 10px 0 0;
+}
+
 .config-warning {
   font-size: 12px;
   line-height: 1.4;
@@ -229,6 +318,10 @@ kbd {
   color: var(--text-dim);
   margin: 6px 0 0;
   min-height: 1.2em;
+}
+
+.config-status.is-error {
+  color: var(--error);
 }
 
 /* ── Buttons ── */

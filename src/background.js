@@ -44,6 +44,28 @@ function initStorage() {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'GET_TAB_HOSTNAME') {
+    // Fallback for a content script that cannot see the top frame's host.
+    // sender.tab.url is the address-bar URL, which is what exclusions match on.
+    let hostname = null;
+    try {
+      if (sender.tab && sender.tab.url) hostname = new URL(sender.tab.url).hostname || null;
+    } catch (e) {
+      hostname = null;
+    }
+    sendResponse({ hostname });
+    return true; // keep the message channel open for the async reply
+  }
+
+  if (message.type === 'STATUS_CHANGED') {
+    // The same payload as STATUS_UPDATE, but raised when a setting flips rather
+    // than on a page load. Refresh the badge without counting another session.
+    if (sender.tab) {
+      updateBadge(sender.tab.id, message.payload);
+    }
+    return;
+  }
+
   if (message.type === 'METRIC_EVENT') {
     handleMetricEvent(message.payload);
   } else if (message.type === 'STATUS_UPDATE') {

@@ -34,6 +34,21 @@ Every push to `main` builds a new release automatically via GitHub Actions.
 -   You should see "TUI Navigator" in your list of extensions.
 -   The icon (terminal arrow) should appear in your browser toolbar.
 
+## Excluded sites
+
+Open the toolbar popup and pick the **Settings** tab to switch TUI Navigator off on
+individual sites.
+
+-   **Turn off here** excludes whatever site the current tab is on.
+-   The text box takes a domain by hand. Paste a full URL if it is easier; it is
+    reduced to the bare domain.
+-   Exclusions cover subdomains, so `google.com` also silences `mail.google.com`.
+    `notgoogle.com` is untouched.
+
+On an excluded site the extension stops handling the arrow keys, hides the focus
+ring, and records no statistics. The list lives in `chrome.storage.local` under
+`tuiExcludedSites` and applies immediately to tabs that are already open.
+
 ## Releases & Versioning
 
 Every push to `main` builds the extension and publishes it as a GitHub Release —

@@ -18,6 +18,7 @@
       <div class="tabs">
         <button class="tab-btn active" data-tab="status">Status</button>
         <button class="tab-btn" data-tab="about">About</button>
+        <button class="tab-btn" data-tab="settings">Settings</button>
         <button class="tab-btn" data-tab="config">Config</button>
       </div>
 
@@ -46,6 +47,36 @@
         </div>
         <div class="footer-info">
           <p>Version: <span id="app-version">1.2</span></p>
+        </div>
+      </div>
+
+      <!-- Personal Settings Tab -->
+      <div id="settings-tab" class="tab-content">
+        <div class="card">
+          <h2>This site</h2>
+          <p id="current-site" class="current-site">—</p>
+          <button id="toggle-site-btn" class="secondary-btn" type="button" disabled>
+            Turn off here
+          </button>
+          <p id="site-status" class="config-status"></p>
+        </div>
+
+        <div class="card">
+          <h2>Excluded sites</h2>
+          <p class="config-hint">TUI Navigator stays out of the way on these sites.
+            Subdomains are covered too, so <code>google.com</code> also means
+            <code>mail.google.com</code>.</p>
+
+          <form id="add-site-form" class="add-site-row">
+            <input id="add-site-input" class="add-site-input" type="text"
+              placeholder="example.com" autocomplete="off" spellcheck="false"
+              aria-label="Domain to exclude">
+            <button class="secondary-btn" type="submit">Add</button>
+          </form>
+          <p id="add-site-status" class="config-status"></p>
+
+          <ul id="excluded-list" class="excluded-list"></ul>
+          <p id="excluded-empty" class="config-hint excluded-empty">No sites excluded yet.</p>
         </div>
       </div>
 
@@ -80,6 +111,7 @@
     </main>
   </div>
   <script src="../lib/jszip.min.js"></script>
+  <script src="../site-rules.js"></script>
   <script src="version_manager.js"></script>
   <script src="popup.js"></script>
 </body>

@@ -14,6 +14,15 @@ class SpatialEngine {
         this._originalConsoleGroup = null;
         this._originalConsoleGroupEnd = null;
 
+        // Excluded sites. userEnabled is the global on/off switch; isExcluded is
+        // this particular site being on the list. isEnabled is derived from both,
+        // so every existing `if (!this.isEnabled) return` guard covers exclusion too.
+        this.userEnabled = true;
+        this.isExcluded = false;
+        this.excludedSites = [];
+        this.currentHostname = null;
+        this.hostnameResolved = false;
+
         // State
         this.isActiveMode = false; // "Lazy Focus": only show green ring after user actively navigates with arrows
         this.lastActiveElement = null;
@@ -78,7 +87,14 @@ class SpatialEngine {
         chrome.storage.onChanged.addListener((changes, namespace) => {
             if (namespace === 'local') {
                 if (changes.tuiEnabled) {
-                    this.isEnabled = changes.tuiEnabled.newValue !== false;
+                    this.userEnabled = changes.tuiEnabled.newValue !== false;
+                    this.applyEnabledState();
+                }
+                if (changes.tuiExcludedSites) {
+                    this.excludedSites = Array.isArray(changes.tuiExcludedSites.newValue)
+                        ? changes.tuiExcludedSites.newValue
+                        : [];
+                    this.refreshExclusion();
                 }
             }
             if (namespace === 'session') {
@@ -153,9 +169,108 @@ class SpatialEngine {
         }
     }
 
+    /**
+     * The hostname shown in the address bar, which is what the exclusion list is
+     * written against. Inside an iframe `location.hostname` is the frame's own
+     * host, so walk up to the top ancestor instead. Cross-origin frames cannot
+     * read window.top, but ancestorOrigins still exposes the chain in Chrome.
+     * Returns null when even that is unavailable, and the caller asks background.
+     */
+    getTopHostname() {
+        try {
+            if (window.top === window) return location.hostname || null;
+        } catch (e) {
+            // Cross-origin parent: the comparison itself can throw.
+        }
+
+        try {
+            const origins = location.ancestorOrigins;
+            if (origins && origins.length) {
+                const top = origins[origins.length - 1];
+                if (top && top !== 'null') return new URL(top).hostname || null;
+            }
+        } catch (e) {
+            // Fall through to the background lookup.
+        }
+
+        return null;
+    }
+
+    /** Background knows the real tab URL; used only when ancestorOrigins is not. */
+    async getTopHostnameFromBackground() {
+        try {
+            const response = await chrome.runtime.sendMessage({ type: 'GET_TAB_HOSTNAME' });
+            return (response && response.hostname) || null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /** Recomputes isEnabled from the two inputs and tidies up the ring if needed. */
+    applyEnabledState() {
+        const wasEnabled = this.isEnabled;
+        this.isEnabled = this.userEnabled && !this.isExcluded;
+
+        if (wasEnabled === this.isEnabled) return;
+
+        if (!this.isEnabled) {
+            // Turned off while the page is open: drop the ring immediately rather
+            // than leaving a stale highlight behind.
+            this.isActiveMode = false;
+            if (this.spotlight) this.spotlight.style.display = 'none';
+            if (this.isMenuOpen) this.closeMenu();
+        }
+
+        console.log(`[TUI] ${this.isEnabled ? 'Enabled' : 'Disabled'}` +
+            (this.isExcluded ? ' (site is on the excluded list)' : ''));
+
+        // Deliberately not broadcastStatus(): background counts every
+        // STATUS_UPDATE as a page load, and a settings flip is not one.
+        this.safeSendMessage({
+            type: 'STATUS_CHANGED',
+            payload: { supported: true, enabled: this.isEnabled }
+        });
+    }
+
+    /**
+     * The address-bar hostname, resolved once. It cannot change without the
+     * content script being torn down and re-injected, so caching it keeps the
+     * storage listener from making a background round-trip on every edit.
+     */
+    async resolveHostname() {
+        if (this.hostnameResolved) return this.currentHostname;
+
+        let hostname = this.getTopHostname();
+        if (!hostname) hostname = await this.getTopHostnameFromBackground();
+
+        this.currentHostname = hostname;
+        this.hostnameResolved = true;
+        return hostname;
+    }
+
+    async refreshExclusion() {
+        const hostname = await this.resolveHostname();
+
+        if (!window.TuiSiteRules) {
+            // site-rules.js is listed ahead of this file in the manifest, so this
+            // only happens if that entry is dropped. Fail open rather than silently
+            // ignoring the user's exclusions without a trace.
+            console.warn('[TUI] site-rules.js did not load; excluded sites are not applied.');
+            this.isExcluded = false;
+        } else {
+            this.isExcluded = window.TuiSiteRules.isExcluded(hostname, this.excludedSites);
+        }
+
+        this.applyEnabledState();
+    }
+
     async loadSettings() {
-        const localStorage = await chrome.storage.local.get(['tuiEnabled']);
-        this.isEnabled = localStorage.tuiEnabled !== false;
+        const localStorage = await chrome.storage.local.get(['tuiEnabled', 'tuiExcludedSites']);
+        this.userEnabled = localStorage.tuiEnabled !== false;
+        this.excludedSites = Array.isArray(localStorage.tuiExcludedSites)
+            ? localStorage.tuiExcludedSites
+            : [];
+        await this.refreshExclusion();
 
         try {
             const sessionStorage = await chrome.storage.session.get(['tuiAdminMode']);

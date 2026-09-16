@@ -17,6 +17,7 @@
         "<all_urls>"
       ],
       "js": [
+        "site-rules.js",
         "engine.js"
       ],
       "css": [
