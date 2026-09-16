@@ -49,6 +49,30 @@ On an excluded site the extension stops handling the arrow keys, hides the focus
 ring, and records no statistics. The list lives in `chrome.storage.local` under
 `tuiExcludedSites` and applies immediately to tabs that are already open.
 
+## Weekly recap
+
+Once a week the extension offers a short note about what you got through, and
+clicking it opens the dashboard. Turn it off in the popup under **Settings**, or
+with the **Not this** button on the notification itself.
+
+It only appears when all of these hold:
+
+-   It is Thursday, Friday or Saturday. Thursday is the intended day; the other
+    two are a grace window for a browser that was closed.
+-   It is past 10am, local time.
+-   At least seven days have passed since the extension was installed.
+-   Nothing was sent already this week (ISO week, Monday to Sunday).
+-   There was something to report: at least one navigation in the last seven days.
+
+The decision lives in `src/recap-rules.js` as a pure function, away from any
+Chrome API, so it can be tested against any date instead of waiting for Thursday.
+The **Config** tab has a test button that fires one immediately and a second that
+explains why one would not fire right now.
+
+On Windows the notification goes through the system notification centre. If Focus
+Assist is on, or Chrome notifications are off in Windows settings, it is dropped
+silently and the extension cannot tell.
+
 ## Icon
 
 The artwork lives in `assets/` as SVG and the PNGs are generated from it:

@@ -53,6 +53,19 @@
       <!-- Personal Settings Tab -->
       <div id="settings-tab" class="tab-content">
         <div class="card">
+          <h2>Weekly recap</h2>
+          <label class="setting-row">
+            <input id="recap-toggle" type="checkbox" checked>
+            <span>
+              Notify me on Thursdays
+              <small>A note with what you got through that week. Once a week at most,
+                and never in your first week.</small>
+            </span>
+          </label>
+          <p id="recap-status" class="config-status"></p>
+        </div>
+
+        <div class="card">
           <h2>This site</h2>
           <p id="current-site" class="current-site">—</p>
           <button id="toggle-site-btn" class="secondary-btn" type="button" disabled>
@@ -90,6 +103,15 @@
             <button id="download-logs-btn" class="secondary-btn">Download Logs</button>
             <p id="logs-status" class="config-status"></p>
           </div>
+          <div class="card">
+            <h2>Weekly Recap</h2>
+            <p class="config-hint">Fires the notification now, ignoring the day and the
+              once-a-week limit. Does not consume this week's real one.</p>
+            <button id="recap-test-btn" class="secondary-btn">Send Test Notification</button>
+            <button id="recap-dry-btn" class="secondary-btn">Why Won't It Fire?</button>
+            <p id="recap-test-status" class="config-status"></p>
+          </div>
+
           <div class="card">
             <h2>Page Capture</h2>
             <p class="config-hint">Saves the current active tab as a self-contained MHTML archive.</p>

@@ -215,6 +215,36 @@ kbd {
 }
 
 /* ── Personal settings ── */
+.setting-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.setting-row input {
+  flex: none;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.setting-row small {
+  display: block;
+  color: var(--text-dim);
+  font-size: 11.5px;
+  margin-top: 3px;
+}
+
+/* Two buttons stacked in one card need a gap; .secondary-btn is full width. */
+#recap-dry-btn {
+  margin-top: 6px;
+}
+
 .current-site {
   font-family: monospace;
   font-size: 13px;

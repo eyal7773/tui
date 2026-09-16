@@ -370,3 +370,81 @@ async function initSettingsTab() {
 }
 
 document.addEventListener('DOMContentLoaded', initSettingsTab);
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Weekly recap: the opt-out toggle and the admin test buttons.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+const RECAP_REASONS = {
+    disabled: 'Switched off above.',
+    'install-date-unknown': 'No install date recorded yet.',
+    'too-new': 'Still inside the first week after install.',
+    'wrong-day': 'Only Thursday to Saturday.',
+    'too-early': 'Not before 10am.',
+    'already-sent': 'Already sent this week.',
+    'no-activity': 'No navigation recorded in the last seven days.',
+    'blocked-by-system': 'Chrome refused it — check notifications in your OS settings.',
+    ok: 'Everything lines up; it would fire now.',
+    forced: 'Sent.'
+};
+
+function explainRecap(reason) {
+    return RECAP_REASONS[reason] || `Not sent (${reason}).`;
+}
+
+function initRecapSettings() {
+    const toggle = document.getElementById('recap-toggle');
+    if (!toggle) return;
+
+    chrome.storage.local.get(['weeklyRecapEnabled'], (result) => {
+        toggle.checked = result.weeklyRecapEnabled !== false;
+    });
+
+    toggle.addEventListener('change', () => {
+        chrome.storage.local.set({ weeklyRecapEnabled: toggle.checked }, () => {
+            setStatus('recap-status', toggle.checked
+                ? 'On. Expect a note on Thursday.'
+                : 'Off. Nothing will be sent.');
+        });
+    });
+
+    // The notification can turn itself off, so reflect that if it happens
+    // while the popup is open.
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+        if (namespace === 'local' && changes.weeklyRecapEnabled) {
+            toggle.checked = changes.weeklyRecapEnabled.newValue !== false;
+        }
+    });
+
+    // Admin-only buttons; absent from the DOM for everyone else is fine either way.
+    const testBtn = document.getElementById('recap-test-btn');
+    const dryBtn = document.getElementById('recap-dry-btn');
+
+    if (testBtn) {
+        testBtn.addEventListener('click', () => {
+            setStatus('recap-test-status', 'Sending…');
+            chrome.runtime.sendMessage({ type: 'RECAP_TEST', force: true }, (res) => {
+                if (chrome.runtime.lastError) {
+                    setStatus('recap-test-status', chrome.runtime.lastError.message, true);
+                    return;
+                }
+                setStatus('recap-test-status', explainRecap(res && res.reason), !(res && res.sent));
+            });
+        });
+    }
+
+    if (dryBtn) {
+        dryBtn.addEventListener('click', () => {
+            setStatus('recap-test-status', 'Checking…');
+            chrome.runtime.sendMessage({ type: 'RECAP_TEST', force: false }, (res) => {
+                if (chrome.runtime.lastError) {
+                    setStatus('recap-test-status', chrome.runtime.lastError.message, true);
+                    return;
+                }
+                setStatus('recap-test-status', explainRecap(res && res.reason), !(res && res.sent));
+            });
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initRecapSettings);

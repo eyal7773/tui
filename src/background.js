@@ -1,12 +1,19 @@
+// The recap decision lives in its own file so it can be tested without Chrome.
+importScripts('recap-rules.js');
+
 chrome.runtime.onInstalled.addListener(() => {
   console.log('TUI Navigator installed.');
   chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
   initStorage();
+  scheduleRecapAlarm();
 });
 
 // Also init on service worker startup (after browser restart)
 chrome.runtime.onStartup.addListener(() => {
   initStorage();
+  scheduleRecapAlarm();
+  // Catch the case where the browser was closed at every alarm time.
+  maybeSendRecap();
 });
 
 function initStorage() {
@@ -20,7 +27,13 @@ function initStorage() {
       sessionCount: 0,
       keySequences: {},
       hourlyActivity: {},
-      weekdayActivity: {}
+      weekdayActivity: {},
+      // Weekly recap. installedAt is set here rather than on the first action,
+      // because an install that is never used still ages. Anyone already running
+      // an older build gets today's date, so their first week starts now.
+      installedAt: new Date().toISOString().slice(0, 10),
+      lastRecapWeek: null,
+      weeklyRecapEnabled: true
     };
     const missing = {};
     for (const [key, val] of Object.entries(defaults)) {
@@ -55,6 +68,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     sendResponse({ hostname });
     return true; // keep the message channel open for the async reply
+  }
+
+  if (message.type === 'RECAP_TEST') {
+    // The popup's test button. force:true fires regardless of the rules;
+    // force:false reports what would happen right now without sending.
+    maybeSendRecap(message.force === true).then(sendResponse);
+    return true;
   }
 
   if (message.type === 'STATUS_CHANGED') {
@@ -227,3 +247,104 @@ function handleMetricEvent(payload) {
     weekdayActivity: localCache.weekdayActivity
   });
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Weekly recap notification.
+ *
+ * A periodic alarm asks TuiRecapRules whether this is the moment; the rules
+ * own every condition. The alarm deliberately runs more often than weekly so
+ * that a browser which was closed on Thursday still gets its chance inside the
+ * grace window, rather than the schedule drifting a day each time.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+const RECAP_ALARM = 'weekly-recap';
+const RECAP_NOTIFICATION = 'weekly-recap';
+const RECAP_CHECK_MINUTES = 360; // every six hours
+
+function scheduleRecapAlarm() {
+  // create() replaces an existing alarm of the same name, so this is safe to
+  // call on every startup.
+  chrome.alarms.create(RECAP_ALARM, {
+    delayInMinutes: 1,
+    periodInMinutes: RECAP_CHECK_MINUTES
+  });
+}
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === RECAP_ALARM) maybeSendRecap();
+});
+
+/**
+ * @param {boolean} force skip the rules and notify anyway (the test button).
+ * @returns {Promise<{sent: boolean, reason: string}>}
+ */
+function maybeSendRecap(force = false) {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(null, (stored) => {
+      const now = new Date();
+      const verdict = TuiRecapRules.shouldSendRecap(now, {
+        enabled: stored.weeklyRecapEnabled,
+        installedAt: stored.installedAt,
+        lastRecapWeek: stored.lastRecapWeek,
+        dailyActions: stored.dailyActions
+      });
+
+      if (!verdict.send && !force) {
+        resolve({ sent: false, reason: verdict.reason });
+        return;
+      }
+
+      const message = TuiRecapRules.describeWeek({
+        now,
+        dailyActions: stored.dailyActions,
+        pagesOpened: stored.pagesOpened,
+        keyBreakdown: stored.keyBreakdown
+      });
+
+      chrome.notifications.create(RECAP_NOTIFICATION, {
+        type: 'basic',
+        iconUrl: chrome.runtime.getURL('icons/icon192.png'),
+        title: 'Your week in TUI Navigator',
+        message,
+        buttons: [{ title: 'Open dashboard' }, { title: 'Not this' }],
+        priority: 1
+      }, () => {
+        if (chrome.runtime.lastError) {
+          // Windows swallows notifications when Focus Assist is on, and the
+          // create callback is the only place that surfaces it.
+          console.warn('[TUI] Notification refused:', chrome.runtime.lastError.message);
+          resolve({ sent: false, reason: 'blocked-by-system' });
+          return;
+        }
+
+        // Only a real send claims the week; a forced test must not silence the
+        // genuine notification later in the same week.
+        if (!force) chrome.storage.local.set({ lastRecapWeek: verdict.week });
+        resolve({ sent: true, reason: force ? 'forced' : verdict.reason });
+      });
+    });
+  });
+}
+
+function openDashboard() {
+  chrome.tabs.create({ url: chrome.runtime.getURL('stats/stats.html') });
+}
+
+chrome.notifications.onClicked.addListener((id) => {
+  if (id !== RECAP_NOTIFICATION) return;
+  openDashboard();
+  chrome.notifications.clear(id);
+});
+
+chrome.notifications.onButtonClicked.addListener((id, buttonIndex) => {
+  if (id !== RECAP_NOTIFICATION) return;
+
+  if (buttonIndex === 0) {
+    openDashboard();
+  } else {
+    // "Not this" - switch the recap off rather than make them hunt for it.
+    chrome.storage.local.set({ weeklyRecapEnabled: false });
+    console.log('[TUI] Weekly recap turned off from the notification.');
+  }
+  chrome.notifications.clear(id);
+});
