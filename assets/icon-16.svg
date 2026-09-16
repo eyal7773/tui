@@ -1,0 +1,17 @@
+<!--
+  TUI Navigator icon — 16px variant.
+
+  At 16 pixels the keycap outline and the chevron inside it collide: the stroke
+  lands on about one and a half pixels and antialiasing turns it to mush. This
+  version drops the keycap and promotes the chevron to the dark element, so the
+  toolbar gets two clean shapes instead of three muddy ones. Everything sits on
+  a 16-unit grid so the edges fall on whole pixels.
+
+  Used for icon16.png only. Every larger size comes from icon.svg.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <rect width="16" height="16" rx="3.5" fill="#22C55E"/>
+  <path d="M5.5 3.6 L10 8 L5.5 12.4"
+        fill="none" stroke="#0E1524" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -49,6 +49,21 @@ On an excluded site the extension stops handling the arrow keys, hides the focus
 ring, and records no statistics. The list lives in `chrome.storage.local` under
 `tuiExcludedSites` and applies immediately to tabs that are already open.
 
+## Icon
+
+The artwork lives in `assets/` as SVG and the PNGs are generated from it:
+
+```bash
+npm install --no-save sharp
+npm run build-icons
+```
+
+That writes every size the manifest asks for plus the favicon the site uses.
+`icon.svg` covers 32px and up. `icon-16.svg` is a separate, simpler drawing for
+the toolbar: at 16 pixels the keycap outline and the chevron inside it collapse
+into each other, so that size drops the keycap and promotes the chevron instead.
+Edit the SVG, re-run the build, commit the PNGs.
+
 ## Releases & Versioning
 
 Every push to `main` builds the extension and publishes it as a GitHub Release —

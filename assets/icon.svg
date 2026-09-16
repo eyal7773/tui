@@ -1,0 +1,22 @@
+<!--
+  TUI Navigator icon — source of truth.
+
+  A keycap with a chevron travelling right: one key, one direction, nothing else.
+  Everything is solid shapes with generous weights, because the size that matters
+  is 16px in the toolbar and thin strokes disappear there.
+
+  Regenerate the PNGs after editing:  npm run build-icons
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Plate. Fills the canvas so the icon holds its own in a busy toolbar. -->
+  <rect width="128" height="128" rx="28" fill="#22C55E"/>
+
+  <!-- Keycap. -->
+  <rect x="22" y="22" width="84" height="84" rx="20" fill="#111826"/>
+
+  <!-- Chevron, nudged left of centre so it reads as optically centred
+       rather than geometrically so. -->
+  <path d="M50 40 L74 64 L50 88"
+        fill="none" stroke="#22C55E" stroke-width="14"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -5,7 +5,8 @@
   "scripts": {
     "bump-version": "node scripts/bump-version.js",
     "sync-site-version": "node scripts/sync-site-version.js",
-    "test": "node scripts/run-tests.js"
+    "test": "node scripts/run-tests.js",
+    "build-icons": "node scripts/build-icons.js"
   },
   "private": true
 }
