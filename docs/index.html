@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TUI Navigator — arrow keys, on every website</title>
+  <meta name="description"
+    content="A Chrome extension that turns search results, tables and lists into a keyboard-navigable interface, with a focus ring you can actually see.">
+  <link rel="icon" href="icon.png">
+  <meta property="og:title" content="TUI Navigator">
+  <meta property="og:description" content="Arrow keys, on every website.">
+  <meta property="og:type" content="website">
+  <style>
+    :root {
+      --paper: #eaece9;
+      --panel: #f6f7f5;
+      --ink: #17181a;
+      --ink-dim: #5a635c;
+      --rule: #c9cec9;
+      --phosphor: #00893a;
+      --ring: #00a63f;
+      --ring-wash: rgba(0, 166, 63, 0.10);
+      --pulse-fade: rgba(0, 166, 63, 0);
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #14161a;
+        --panel: #1c1f24;
+        --ink: #dfe3df;
+        --ink-dim: #8b948c;
+        --rule: #333a36;
+        --phosphor: #00ff6a;
+        --ring: #00ff00;
+        --ring-wash: rgba(0, 255, 0, 0.12);
+        --pulse-fade: rgba(0, 255, 0, 0);
+      }
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap {
+      max-width: 54rem;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ---- top bar ---- */
+
+    .bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.5rem 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+
+    .bar .name {
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .bar .spacer {
+      flex: 1;
+    }
+
+    .bar a {
+      color: var(--ink-dim);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+
+    .bar a:hover {
+      color: var(--ink);
+      border-bottom-color: var(--rule);
+    }
+
+    .version {
+      color: var(--ink-dim);
+    }
+
+    /* ---- hero ---- */
+
+    .hero {
+      padding: 4.5rem 0 3rem;
+    }
+
+    h1 {
+      font-size: clamp(2.1rem, 6vw, 3.4rem);
+      line-height: 1.08;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      margin: 0 0 1.25rem;
+      max-width: 16ch;
+    }
+
+    .lede {
+      margin: 0;
+      max-width: 58ch;
+      color: var(--ink-dim);
+      font-size: 1.05rem;
+    }
+
+    /* ---- the demo ---- */
+
+    .demo {
+      margin: 2.75rem 0 0;
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      padding: 0.5rem;
+    }
+
+    .demo-chrome {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--ink-dim);
+      padding: 0.35rem 0.6rem 0.6rem;
+      border-bottom: 1px dashed var(--rule);
+      margin-bottom: 0.5rem;
+    }
+
+    .rows {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .row {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 0.7rem 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: var(--ink);
+      background: none;
+      border: none;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .row .meta {
+      display: block;
+      color: var(--ink-dim);
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem 0.25rem;
+    }
+
+    .chip {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      padding: 0.3rem 0.7rem;
+      border: 1px solid var(--rule);
+      background: transparent;
+      color: var(--ink-dim);
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* The one bold moment: the ring, ported from the extension's styles.css.
+       The extension paints its own indicator rather than leaning on native
+       focus, so the demo carries the state in a class the same way. */
+    .tui-on {
+      outline: 3px solid var(--ring);
+      outline-offset: 2px;
+      background-color: var(--ring-wash);
+      animation: tui-pulse 1.4s ease-out infinite;
+    }
+
+    @keyframes tui-pulse {
+      0% {
+        box-shadow: 0 0 0 0 var(--ring-wash);
+      }
+
+      70% {
+        box-shadow: 0 0 0 6px var(--pulse-fade);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 var(--pulse-fade);
+      }
+    }
+
+    .demo-hint {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-dim);
+      margin: 0.75rem 0 0;
+      padding: 0 0.75rem 0.4rem;
+      max-width: none;
+    }
+
+    .demo-hint b {
+      color: var(--phosphor);
+      font-weight: 600;
+    }
+
+    /* ---- sections ---- */
+
+    section {
+      padding: 3.5rem 0 0;
+    }
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--ink-dim);
+      margin: 0 0 1.5rem;
+    }
+
+    h2::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--rule);
+    }
+
+    p {
+      max-width: 64ch;
+    }
+
+    /* ---- install ---- */
+
+    ol.steps {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: step;
+      max-width: 62ch;
+    }
+
+    ol.steps li {
+      counter-increment: step;
+      position: relative;
+      padding: 0 0 1.1rem 2.4rem;
+    }
+
+    ol.steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0.15rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-dim);
+      border: 1px solid var(--rule);
+      width: 1.5rem;
+      height: 1.5rem;
+      display: grid;
+      place-items: center;
+    }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      padding: 0.05em 0.35em;
+      word-break: break-word;
+    }
+
+    .get {
+      display: inline-block;
+      margin-top: 0.5rem;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      text-decoration: none;
+      color: var(--paper);
+      background: var(--ink);
+      padding: 0.7rem 1.2rem;
+      border: 1px solid var(--ink);
+    }
+
+    .get:hover {
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .alt {
+      font-size: 0.95rem;
+      color: var(--ink-dim);
+      margin-top: 1.5rem;
+    }
+
+    /* ---- keys ---- */
+
+    dl.keys {
+      display: grid;
+      grid-template-columns: 9rem 1fr;
+      gap: 0;
+      margin: 0;
+      max-width: 46rem;
+      align-items: baseline;
+    }
+
+    dl.keys dt {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      padding: 0.5rem 1.5rem 0.5rem 0;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    dl.keys dd {
+      margin: 0;
+      padding: 0.5rem 0;
+      font-size: 0.95rem;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    kbd {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      border: 1px solid var(--rule);
+      background: var(--panel);
+      padding: 0.1rem 0.4rem;
+      display: inline-block;
+      min-width: 1.6rem;
+      text-align: center;
+    }
+
+    /* ---- footer ---- */
+
+    footer {
+      margin-top: 4.5rem;
+      padding: 1.25rem 0 3rem;
+      border-top: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-dim);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+    }
+
+    footer a {
+      color: var(--ink-dim);
+    }
+
+    footer a:hover {
+      color: var(--ink);
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid var(--ring);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .tui-on {
+        animation: none;
+      }
+    }
+
+    @media (max-width: 34rem) {
+      body {
+        font-size: 16px;
+      }
+
+      .hero {
+        padding: 3rem 0 2rem;
+      }
+
+      dl.keys {
+        grid-template-columns: 1fr;
+      }
+
+      dl.keys dt {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      dl.keys dd {
+        padding-top: 0.15rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="bar">
+      <span class="name">tui navigator</span>
+      <span class="version">v<span data-version>0.1.86</span></span>
+      <span class="spacer"></span>
+      <a href="https://github.com/eyal7773/tui">source</a>
+      <a href="https://github.com/eyal7773/tui/releases">releases</a>
+    </header>
+
+    <div class="hero">
+      <h1>Arrow keys, on every website.</h1>
+      <p class="lede">TUI Navigator is a Chrome extension that turns search results, tables and
+        lists into something you can move through from the keyboard — with a focus ring that is
+        hard to lose track of.</p>
+
+      <div class="demo">
+        <div class="demo-chrome">results for &ldquo;keyboard navigation&rdquo;</div>
+        <ul class="rows">
+          <li><button class="row" type="button">Keyboard-only browsing is faster than you think
+              <span class="meta">example.com — 4 min read</span></button></li>
+          <li><button class="row" type="button">Why focus indicators matter
+              <span class="meta">example.org — 7 min read</span></button></li>
+          <li><button class="row" type="button">A short history of text-based interfaces
+              <span class="meta">example.net — 12 min read</span></button></li>
+        </ul>
+        <div class="row-actions">
+          <button class="chip" type="button">Next page</button>
+          <button class="chip" type="button">Filter</button>
+        </div>
+        <p class="demo-hint" id="hint">A mock-up, not the extension — but the ring is the real
+          one. Click a row, then press <b>&darr; &uarr; &larr; &rarr;</b>.</p>
+      </div>
+    </div>
+
+    <section id="install">
+      <h2>install</h2>
+      <ol class="steps">
+        <li>Download <code>tui-navigator-v<span data-version>0.1.86</span>.zip</code> from the
+          releases page and unzip it anywhere.</li>
+        <li>Open <code>chrome://extensions/</code> and turn on <strong>Developer mode</strong>
+          (top right).</li>
+        <li>Click <strong>Load unpacked</strong> and pick the unzipped folder — the one containing
+          <code>manifest.json</code>.</li>
+      </ol>
+      <a class="get" href="https://github.com/eyal7773/tui/releases/latest">Download the latest
+        release</a>
+      <p class="alt">Working from a clone instead? Load unpacked and point Chrome at the
+        <code>src</code> folder, which is where <code>manifest.json</code> lives.</p>
+    </section>
+
+    <section>
+      <h2>keys</h2>
+      <dl class="keys">
+        <dt><kbd>&darr;</kbd> <kbd>&uarr;</kbd></dt>
+        <dd>Move to the element above or below.</dd>
+
+        <dt><kbd>&larr;</kbd> <kbd>&rarr;</kbd></dt>
+        <dd>Move across the row you are on.</dd>
+
+        <dt><kbd>Enter</kbd></dt>
+        <dd>Activate the focused element. On a text box or dropdown, it hands focus over so you
+          can type or pick.</dd>
+
+        <dt><kbd>Esc</kbd></dt>
+        <dd>Leave a text box and go back to navigating the page.</dd>
+
+        <dt><kbd>F10</kbd></dt>
+        <dd>Open the menu — duplicate the page, or go back. <kbd>Esc</kbd> closes it.</dd>
+      </dl>
+    </section>
+
+    <section>
+      <h2>how it works</h2>
+      <p>The extension reads the page, works out which elements are worth stopping on, and treats
+        them as a grid. Arrow keys move between them by position rather than by DOM order, so
+        moving right goes to the thing on the right, not to whatever happens to come next in the
+        markup.</p>
+      <p>Keystrokes are intercepted before the page sees them, so sites with their own arrow-key
+        handlers do not fight you for control. Text boxes, dropdowns and anything else that needs
+        arrow keys of its own are left alone until you hand focus over with <kbd>Enter</kbd>.</p>
+      <p>The toolbar popup keeps a running count of the actions you have taken and links to a
+        stats page. It also has a report button that bundles logs and a snapshot of the page into
+        a zip, which is the most useful thing to attach to a bug report.</p>
+    </section>
+
+    <footer>
+      <span>v<span data-version>0.1.86</span></span>
+      <a href="https://github.com/eyal7773/tui">github.com/eyal7773/tui</a>
+      <a href="https://github.com/eyal7773/tui/issues">report a problem</a>
+    </footer>
+
+  </div>
+
+  <script>
+    (function () {
+      var demo = document.querySelector('.demo');
+      if (!demo) return;
+
+      // Only the elements inside the demo take part. `current` is the one place
+      // the ring's position is stored; paint() is the only thing that writes it.
+      var items = Array.prototype.slice.call(demo.querySelectorAll('.row, .chip'));
+      var current = null;
+
+      function paint(el) {
+        items.forEach(function (i) { i.classList.toggle('tui-on', i === el); });
+        current = el;
+      }
+
+      // Nearest item in the direction travelled, which is the idea the
+      // extension applies to a real page. Distance along the direction comes
+      // from the centres; drift across it comes from the leading edges, so a
+      // narrow button under a full-width row still lines up with its start.
+      function next(from, dir) {
+        var box = from.getBoundingClientRect();
+        var vertical = (dir === 'ArrowUp' || dir === 'ArrowDown');
+        var best = null;
+        var bestScore = Infinity;
+
+        items.forEach(function (el) {
+          if (el === from) return;
+
+          var r = el.getBoundingClientRect();
+          var along, across;
+
+          if (vertical) {
+            along = (r.top + r.height / 2) - (box.top + box.height / 2);
+            if (dir === 'ArrowUp') along = -along;
+            across = Math.abs(r.left - box.left);
+          } else {
+            // Sideways moves stay on the band they started on, so they never
+            // hop between rows.
+            if (r.bottom <= box.top || r.top >= box.bottom) return;
+            along = (r.left + r.width / 2) - (box.left + box.width / 2);
+            if (dir === 'ArrowLeft') along = -along;
+            across = Math.abs(r.top - box.top);
+          }
+
+          if (along < 6) return;               // behind us, or level with us
+          var score = along + across * 2;      // prefer straight ahead
+          if (score < bestScore) { bestScore = score; best = el; }
+        });
+
+        return best;
+      }
+
+      // Starting the demo takes a deliberate click or tab into it.
+      items.forEach(function (el) {
+        el.addEventListener('click', function () { paint(el); });
+        el.addEventListener('focus', function () {
+          if (current !== el) paint(el);       // guard against a paint/focus loop
+        });
+      });
+
+      // Clicking anywhere else hands the arrow keys back to the page.
+      document.addEventListener('click', function (e) {
+        if (!demo.contains(e.target)) paint(null);
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (!current) return;                  // demo has not been started
+        if (e.key.indexOf('Arrow') !== 0) return;
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+        // Focus moved on to a real element elsewhere: stop intercepting.
+        var active = document.activeElement;
+        if (active && active !== document.body && !demo.contains(active)) {
+          paint(null);
+          return;
+        }
+
+        var target = next(current, e.key);
+        if (!target) return;
+
+        e.preventDefault();                    // do not scroll the page
+        paint(target);
+        target.focus({ preventScroll: true });
+      });
+    })();
+  </script>
+</body>
+
+</html>
