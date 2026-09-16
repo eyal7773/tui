@@ -27,8 +27,13 @@ class SpatialEngine {
         // page, and deliberately not persisted: a fresh load starts navigating.
         this.isSuspended = false;
 
-        // Ring colour, applied to the spotlight as custom properties.
+        // Ring appearance and motion, applied to the spotlight as custom
+        // properties. Motion also decides how scrolling behaves.
         this.ringColor = null;
+        this.ringWidth = null;
+        this.ringFill = true;
+        this.motion = null;
+        this.reducedMotionQuery = null;
 
         // State
         this.isActiveMode = false; // "Lazy Focus": only show green ring after user actively navigates with arrows
@@ -97,8 +102,12 @@ class SpatialEngine {
                     this.userEnabled = changes.tuiEnabled.newValue !== false;
                     this.applyEnabledState();
                 }
-                if (changes.tuiRingColor) {
-                    this.ringColor = changes.tuiRingColor.newValue || null;
+                if (changes.tuiRingColor || changes.tuiRingWidth ||
+                    changes.tuiRingFill || changes.tuiMotion) {
+                    if (changes.tuiRingColor) this.ringColor = changes.tuiRingColor.newValue || null;
+                    if (changes.tuiRingWidth) this.ringWidth = changes.tuiRingWidth.newValue ?? null;
+                    if (changes.tuiRingFill) this.ringFill = changes.tuiRingFill.newValue !== false;
+                    if (changes.tuiMotion) this.motion = changes.tuiMotion.newValue || null;
                     this.applyRingColor();
                 }
                 if (changes.tuiExcludedSites) {
@@ -159,17 +168,55 @@ class SpatialEngine {
     applyRingColor() {
         if (!this.spotlight) return;
 
-        if (!window.TuiRingColor) {
+        if (!window.TuiRingStyle) {
             // Listed ahead of this file in the manifest; only reachable if that
             // entry is dropped. The stylesheet fallback keeps the ring visible.
-            console.warn('[TUI] ring-color.js did not load; using the default ring colour.');
+            console.warn('[TUI] ring-style.js did not load; using the default ring style.');
             return;
         }
 
-        const vars = window.TuiRingColor.ringVariables(this.ringColor);
+        const vars = window.TuiRingStyle.ringVariables({
+            color: this.ringColor,
+            width: this.ringWidth,
+            fill: this.ringFill
+        });
+        vars['--tui-ring-transition'] = this.motionSettings().transition;
+
         for (const [name, value] of Object.entries(vars)) {
             this.spotlight.style.setProperty(name, value);
         }
+    }
+
+    /**
+     * Whether to animate, and how. 'auto' defers to the operating system, which
+     * the extension used to ignore: every scroll was smooth even for someone who
+     * had asked their machine to stop animating things.
+     */
+    motionSettings() {
+        if (!window.TuiRingStyle) {
+            // Literals on purpose: scrollBehavior() calls back into here, so
+            // anything else would recurse forever.
+            return { behavior: 'smooth', transition: 'all 0.1s ease-out' };
+        }
+        return window.TuiRingStyle.motionSettings(this.motion, this.prefersReducedMotion());
+    }
+
+    prefersReducedMotion() {
+        try {
+            if (!this.reducedMotionQuery) {
+                this.reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+                // Follow the system setting while the page is open.
+                this.reducedMotionQuery.addEventListener('change', () => this.applyRingColor());
+            }
+            return this.reducedMotionQuery.matches;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    /** The value every scroll in this file passes to the browser. */
+    scrollBehavior() {
+        return this.motionSettings().behavior;
     }
 
 
@@ -336,13 +383,17 @@ class SpatialEngine {
 
     async loadSettings() {
         const localStorage = await chrome.storage.local.get([
-            'tuiEnabled', 'tuiExcludedSites', 'tuiRingColor'
+            'tuiEnabled', 'tuiExcludedSites',
+            'tuiRingColor', 'tuiRingWidth', 'tuiRingFill', 'tuiMotion'
         ]);
         this.userEnabled = localStorage.tuiEnabled !== false;
         this.excludedSites = Array.isArray(localStorage.tuiExcludedSites)
             ? localStorage.tuiExcludedSites
             : [];
         this.ringColor = localStorage.tuiRingColor || null;
+        this.ringWidth = localStorage.tuiRingWidth ?? null;
+        this.ringFill = localStorage.tuiRingFill !== false;
+        this.motion = localStorage.tuiMotion || null;
         this.applyRingColor();
         await this.refreshExclusion();
 
@@ -1478,7 +1529,7 @@ class SpatialEngine {
             // We DO NOT call el.focus() because that surrenders control to the iframe.
             // Instead, we just highlight it and keep system focus on the body (or blur current).
             document.activeElement.blur();
-            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            el.scrollIntoView({ behavior: this.scrollBehavior(), block: 'nearest' });
             this.highlight(el);
             cleanupLogs();
             return true; // Success (Virtual)
@@ -1531,7 +1582,7 @@ class SpatialEngine {
                     if (this.debugMode) console.log('[TUI] After blur(), activeElement:', document.activeElement.tagName);
                 }
 
-                parent.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                parent.scrollIntoView({ behavior: this.scrollBehavior(), block: 'nearest' });
                 this.highlight(parent);
                 cleanupLogs();
                 return true; // Success
@@ -1581,7 +1632,7 @@ class SpatialEngine {
                 this.lastActiveElement = actualFocus;
 
                 // Highlight the INPUT (the actual focused element)
-                actualFocus.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                actualFocus.scrollIntoView({ behavior: this.scrollBehavior(), block: 'nearest' });
                 this.highlight(actualFocus);
 
                 cleanupLogs();
@@ -1598,7 +1649,7 @@ class SpatialEngine {
 
         // Focus succeeded as expected (actualFocus === el)
         this.lastActiveElement = el;
-        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        el.scrollIntoView({ behavior: this.scrollBehavior(), block: 'nearest' });
         this.highlight(el);
 
         cleanupLogs();
@@ -1607,8 +1658,8 @@ class SpatialEngine {
 
     handleOffScreen(key) {
         const scrollAmount = 300;
-        if (key === 'ArrowDown') window.scrollBy({ top: scrollAmount, behavior: 'smooth' });
-        if (key === 'ArrowUp') window.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+        if (key === 'ArrowDown') window.scrollBy({ top: scrollAmount, behavior: this.scrollBehavior() });
+        if (key === 'ArrowUp') window.scrollBy({ top: -scrollAmount, behavior: this.scrollBehavior() });
         // NOTE: A re-scan happens on the NEXT keypress because scroll creates a new geometric state.
     }
 

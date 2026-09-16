@@ -19,14 +19,15 @@
   z-index: 2147483647 !important;
 
   /* Visuals */
-  outline: 3px solid var(--tui-ring, #00ff00) !important;
+  outline: var(--tui-ring-width, 3px) solid var(--tui-ring, #00ff00) !important;
   outline-offset: 2px !important;
 
-  /* Background highlight */
+  /* Background highlight. Set to transparent when the fill is switched off. */
   background-color: var(--tui-ring-wash, rgba(0, 255, 0, 0.1)) !important;
 
-  /* Smooth movement */
-  transition: all 0.1s ease-out !important;
+  /* Movement. Becomes none when motion is reduced, whether because the user
+     asked for it here or because the operating system already says so. */
+  transition: var(--tui-ring-transition, all 0.1s ease-out) !important;
 
   /* Reset */
   border-radius: 2px !important;

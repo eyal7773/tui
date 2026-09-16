@@ -460,42 +460,78 @@ function initRingColor() {
     const swatchRow = document.getElementById('ring-swatches');
     if (!swatchRow) return;
 
-    if (!window.TuiRingColor) {
-        swatchRow.textContent = 'Unavailable: ring-color.js failed to load.';
+    if (!window.TuiRingStyle) {
+        swatchRow.textContent = 'Unavailable: ring-style.js failed to load.';
         return;
     }
 
-    const RC = window.TuiRingColor;
+    const RS = window.TuiRingStyle;
+    const KEYS = RS.KEYS;
+
     const customInput = document.getElementById('ring-custom-input');
+    const widthInput = document.getElementById('ring-width-input');
+    const widthValue = document.getElementById('ring-width-value');
+    const fillInput = document.getElementById('ring-fill-input');
+    const motionSelect = document.getElementById('motion-select');
     const previewBox = document.getElementById('ring-preview-box');
     const valueLabel = document.getElementById('ring-value');
-    let current = RC.DEFAULT;
 
-    function save(hex) {
-        const normalized = RC.normalizeHex(hex);
-        if (!normalized) return;                 // never store something unpaintable
-        chrome.storage.local.set({ [RC.STORAGE_KEY]: normalized });
+    widthInput.min = RS.MIN_WIDTH;
+    widthInput.max = RS.MAX_WIDTH;
+
+    function save(patch) {
+        chrome.storage.local.set(patch);
     }
 
-    function render(hex) {
-        current = RC.normalizeHex(hex) || RC.DEFAULT;
+    function describeMotion(mode) {
+        if (mode === 'smooth') return 'Always animated, whatever the system says.';
+        if (mode === 'instant') return 'No animation. Navigation feels quicker.';
 
-        // Same helper the engine uses, so the preview cannot drift from the ring.
-        const vars = RC.ringVariables(current);
+        // 'auto' is the only mode whose effect depends on the machine, so it is
+        // the only one worth spelling out.
+        const reduced = window.matchMedia
+            && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        return reduced
+            ? 'Your system asks for reduced motion, so scrolling is instant.'
+            : 'Your system allows motion, so scrolling is smooth.';
+    }
+
+    function render(state) {
+        const color = RS.normalizeHex(state[KEYS.color]) || RS.DEFAULT_COLOR;
+        const width = RS.normalizeWidth(state[KEYS.width]) || RS.DEFAULT_WIDTH;
+        const fill = state[KEYS.fill] !== false;
+        const motion = RS.normalizeMotion(state[KEYS.motion]) || RS.DEFAULT_MOTION;
+
+        // The same helper the engine uses, so the preview cannot drift from the
+        // real ring.
+        const vars = RS.ringVariables({ color, width, fill });
         for (const [name, value] of Object.entries(vars)) {
             previewBox.style.setProperty(name, value);
         }
 
-        valueLabel.textContent = current;
-        customInput.value = current;
+        valueLabel.textContent = color;
+        customInput.value = color;
+        widthInput.value = width;
+        widthValue.textContent = `${width}px`;
+        fillInput.checked = fill;
+        motionSelect.value = motion;
+        setStatus('motion-status', describeMotion(motion));
 
         swatchRow.querySelectorAll('.swatch').forEach((el) => {
-            el.classList.toggle('selected', el.dataset.hex === current);
-            el.setAttribute('aria-pressed', el.dataset.hex === current ? 'true' : 'false');
+            const selected = el.dataset.hex === color;
+            el.classList.toggle('selected', selected);
+            el.setAttribute('aria-pressed', selected ? 'true' : 'false');
         });
     }
 
-    RC.PRESETS.forEach((preset) => {
+    function readAndRender() {
+        chrome.storage.local.get(
+            [KEYS.color, KEYS.width, KEYS.fill, KEYS.motion],
+            (result) => render(result)
+        );
+    }
+
+    RS.PRESETS.forEach((preset) => {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'swatch';
@@ -503,22 +539,50 @@ function initRingColor() {
         button.style.backgroundColor = preset.hex;
         button.title = preset.name;
         button.setAttribute('aria-label', `${preset.name} ring`);
-        button.addEventListener('click', () => save(preset.hex));
+        button.addEventListener('click', () => save({ [KEYS.color]: preset.hex }));
         swatchRow.appendChild(button);
     });
 
-    // 'input' rather than 'change' so dragging in the picker updates live.
-    customInput.addEventListener('input', () => save(customInput.value));
-    document.getElementById('ring-reset-btn')
-        .addEventListener('click', () => save(RC.DEFAULT));
+    // 'input' rather than 'change' so dragging updates the page live.
+    customInput.addEventListener('input', () => {
+        const hex = RS.normalizeHex(customInput.value);
+        if (hex) save({ [KEYS.color]: hex });     // never store something unpaintable
+    });
 
-    chrome.storage.local.get([RC.STORAGE_KEY], (result) => render(result[RC.STORAGE_KEY]));
+    widthInput.addEventListener('input', () => {
+        const width = RS.normalizeWidth(widthInput.value);
+        if (width) save({ [KEYS.width]: width });
+    });
+
+    fillInput.addEventListener('change', () => save({ [KEYS.fill]: fillInput.checked }));
+
+    motionSelect.addEventListener('change', () => {
+        const mode = RS.normalizeMotion(motionSelect.value);
+        if (mode) save({ [KEYS.motion]: mode });
+    });
+
+    document.getElementById('ring-reset-btn').addEventListener('click', () => save({
+        [KEYS.color]: RS.DEFAULT_COLOR,
+        [KEYS.width]: RS.DEFAULT_WIDTH,
+        [KEYS.fill]: true,
+        [KEYS.motion]: RS.DEFAULT_MOTION
+    }));
+
+    readAndRender();
 
     chrome.storage.onChanged.addListener((changes, namespace) => {
-        if (namespace === 'local' && changes[RC.STORAGE_KEY]) {
-            render(changes[RC.STORAGE_KEY].newValue);
+        if (namespace !== 'local') return;
+        if (changes[KEYS.color] || changes[KEYS.width]
+            || changes[KEYS.fill] || changes[KEYS.motion]) {
+            readAndRender();
         }
     });
+
+    // 'Follow my system' changes meaning when the system does.
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-reduced-motion: reduce)')
+            .addEventListener('change', readAndRender);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', initRingColor);

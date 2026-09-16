@@ -66,10 +66,37 @@
             <button id="ring-reset-btn" class="link-btn" type="button">Reset</button>
           </div>
 
+          <div class="ring-row">
+            <label for="ring-width-input">Thickness</label>
+            <input id="ring-width-input" type="range" min="1" max="8" step="1" value="3">
+            <code id="ring-width-value">3px</code>
+          </div>
+
+          <label class="setting-row">
+            <input id="ring-fill-input" type="checkbox" checked>
+            <span>
+              Tint the inside
+              <small>Off leaves only the outline, which keeps dense text readable.</small>
+            </span>
+          </label>
+
           <div class="ring-preview">
             <div id="ring-preview-box" class="ring-preview-box">Sample</div>
             <code id="ring-value">#00ff00</code>
           </div>
+        </div>
+
+        <div class="card">
+          <h2>Motion</h2>
+          <div class="ring-row">
+            <label for="motion-select">Scrolling</label>
+            <select id="motion-select" class="select-input">
+              <option value="auto">Follow my system</option>
+              <option value="smooth">Always smooth</option>
+              <option value="instant">Always instant</option>
+            </select>
+          </div>
+          <p id="motion-status" class="config-status"></p>
         </div>
 
         <div class="card">
@@ -154,7 +181,7 @@
   </div>
   <script src="../lib/jszip.min.js"></script>
   <script src="../site-rules.js"></script>
-  <script src="../ring-color.js"></script>
+  <script src="../ring-style.js"></script>
   <script src="version_manager.js"></script>
   <script src="popup.js"></script>
 </body>

@@ -20,7 +20,7 @@
       ],
       "js": [
         "site-rules.js",
-        "ring-color.js",
+        "ring-style.js",
         "engine.js"
       ],
       "css": [
