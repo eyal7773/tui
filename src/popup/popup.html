@@ -54,6 +54,25 @@
       <!-- Personal Settings Tab -->
       <div id="settings-tab" class="tab-content">
         <div class="card">
+          <h2>Ring colour</h2>
+          <div id="ring-swatches" class="swatch-row"></div>
+
+          <div class="ring-custom">
+            <label class="ring-custom-label">
+              <input id="ring-custom-input" type="color" value="#00ff00"
+                aria-label="Custom ring colour">
+              <span>Custom</span>
+            </label>
+            <button id="ring-reset-btn" class="link-btn" type="button">Reset</button>
+          </div>
+
+          <div class="ring-preview">
+            <div id="ring-preview-box" class="ring-preview-box">Sample</div>
+            <code id="ring-value">#00ff00</code>
+          </div>
+        </div>
+
+        <div class="card">
           <h2>Weekly recap</h2>
           <label class="setting-row">
             <input id="recap-toggle" type="checkbox" checked>
@@ -135,6 +154,7 @@
   </div>
   <script src="../lib/jszip.min.js"></script>
   <script src="../site-rules.js"></script>
+  <script src="../ring-color.js"></script>
   <script src="version_manager.js"></script>
   <script src="popup.js"></script>
 </body>

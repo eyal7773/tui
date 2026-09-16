@@ -27,6 +27,9 @@ class SpatialEngine {
         // page, and deliberately not persisted: a fresh load starts navigating.
         this.isSuspended = false;
 
+        // Ring colour, applied to the spotlight as custom properties.
+        this.ringColor = null;
+
         // State
         this.isActiveMode = false; // "Lazy Focus": only show green ring after user actively navigates with arrows
         this.lastActiveElement = null;
@@ -94,6 +97,10 @@ class SpatialEngine {
                     this.userEnabled = changes.tuiEnabled.newValue !== false;
                     this.applyEnabledState();
                 }
+                if (changes.tuiRingColor) {
+                    this.ringColor = changes.tuiRingColor.newValue || null;
+                    this.applyRingColor();
+                }
                 if (changes.tuiExcludedSites) {
                     this.excludedSites = Array.isArray(changes.tuiExcludedSites.newValue)
                         ? changes.tuiExcludedSites.newValue
@@ -140,6 +147,29 @@ class SpatialEngine {
             document.body.appendChild(spot);
         }
         this.spotlight = spot;
+        this.applyRingColor();
+    }
+
+    /**
+     * Writes the ring colour onto the spotlight as custom properties. Inline
+     * custom properties win over the ones in styles.css, and because the rules
+     * there keep !important on the properties themselves, a page still cannot
+     * override the ring.
+     */
+    applyRingColor() {
+        if (!this.spotlight) return;
+
+        if (!window.TuiRingColor) {
+            // Listed ahead of this file in the manifest; only reachable if that
+            // entry is dropped. The stylesheet fallback keeps the ring visible.
+            console.warn('[TUI] ring-color.js did not load; using the default ring colour.');
+            return;
+        }
+
+        const vars = window.TuiRingColor.ringVariables(this.ringColor);
+        for (const [name, value] of Object.entries(vars)) {
+            this.spotlight.style.setProperty(name, value);
+        }
     }
 
 
@@ -305,11 +335,15 @@ class SpatialEngine {
     }
 
     async loadSettings() {
-        const localStorage = await chrome.storage.local.get(['tuiEnabled', 'tuiExcludedSites']);
+        const localStorage = await chrome.storage.local.get([
+            'tuiEnabled', 'tuiExcludedSites', 'tuiRingColor'
+        ]);
         this.userEnabled = localStorage.tuiEnabled !== false;
         this.excludedSites = Array.isArray(localStorage.tuiExcludedSites)
             ? localStorage.tuiExcludedSites
             : [];
+        this.ringColor = localStorage.tuiRingColor || null;
+        this.applyRingColor();
         await this.refreshExclusion();
 
         try {

@@ -34,6 +34,23 @@ Every push to `main` builds a new release automatically via GitHub Actions.
 -   You should see "TUI Navigator" in your list of extensions.
 -   The icon (terminal arrow) should appear in your browser toolbar.
 
+## Ring colour
+
+The popup **Settings** tab sets the colour of the ring: six swatches, a full
+picker for anything else, and Reset. It applies to every open tab immediately.
+
+This is less cosmetic than it sounds. Bright green is one of the hardest colours
+to pick out with red-green colour blindness, which is common enough to matter,
+and blue, orange and yellow stay distinguishable where green does not.
+
+The colour is stored as `tuiRingColor` and reaches the page as two custom
+properties, `--tui-ring` and `--tui-ring-wash`, written inline on the ring
+element. The rules in `styles.css` keep their `!important`, so a page still
+cannot restyle the ring away, and each `var()` carries the default green as a
+fallback: a missing or corrupt stored value leaves the ring green rather than
+unpainted. `src/ring-color.js` does the parsing for both the page and the
+popup, so the preview cannot drift from the real thing.
+
 ## Handing the keyboard back
 
 Spatial navigation works by moving real focus, and a site that routes its own

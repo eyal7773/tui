@@ -214,6 +214,105 @@ kbd {
   line-height: 1.4;
 }
 
+/* ── Ring colour ── */
+.swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px var(--border) inset;
+  cursor: pointer;
+  padding: 0;
+}
+
+.swatch:hover {
+  transform: scale(1.08);
+}
+
+/* The selected swatch is ringed in its own colour, which is also a preview. */
+.swatch.selected {
+  border-color: var(--card-bg);
+  box-shadow: 0 0 0 2px var(--text);
+}
+
+.swatch:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.ring-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ring-custom-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.ring-custom-label input[type="color"] {
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: none;
+  cursor: pointer;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text-dim);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  color: var(--text);
+}
+
+.ring-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Deliberately mirrors .tui-focus-indicator in styles.css, so what you see
+   here is what lands on the page. */
+.ring-preview-box {
+  flex: 1;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+  border-radius: 2px;
+  outline: 3px solid var(--tui-ring, #00ff00);
+  outline-offset: 2px;
+  background-color: var(--tui-ring-wash, rgba(0, 255, 0, 0.1));
+}
+
+.ring-preview code {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
 /* ── Personal settings ── */
 .setting-row {
   display: flex;

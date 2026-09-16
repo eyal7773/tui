@@ -448,3 +448,77 @@ function initRecapSettings() {
 }
 
 document.addEventListener('DOMContentLoaded', initRecapSettings);
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Ring colour.
+ *
+ * Storage is the source of truth and the engine reacts to it, so the popup
+ * only ever writes a colour and redraws itself from what came back.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+function initRingColor() {
+    const swatchRow = document.getElementById('ring-swatches');
+    if (!swatchRow) return;
+
+    if (!window.TuiRingColor) {
+        swatchRow.textContent = 'Unavailable: ring-color.js failed to load.';
+        return;
+    }
+
+    const RC = window.TuiRingColor;
+    const customInput = document.getElementById('ring-custom-input');
+    const previewBox = document.getElementById('ring-preview-box');
+    const valueLabel = document.getElementById('ring-value');
+    let current = RC.DEFAULT;
+
+    function save(hex) {
+        const normalized = RC.normalizeHex(hex);
+        if (!normalized) return;                 // never store something unpaintable
+        chrome.storage.local.set({ [RC.STORAGE_KEY]: normalized });
+    }
+
+    function render(hex) {
+        current = RC.normalizeHex(hex) || RC.DEFAULT;
+
+        // Same helper the engine uses, so the preview cannot drift from the ring.
+        const vars = RC.ringVariables(current);
+        for (const [name, value] of Object.entries(vars)) {
+            previewBox.style.setProperty(name, value);
+        }
+
+        valueLabel.textContent = current;
+        customInput.value = current;
+
+        swatchRow.querySelectorAll('.swatch').forEach((el) => {
+            el.classList.toggle('selected', el.dataset.hex === current);
+            el.setAttribute('aria-pressed', el.dataset.hex === current ? 'true' : 'false');
+        });
+    }
+
+    RC.PRESETS.forEach((preset) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'swatch';
+        button.dataset.hex = preset.hex;
+        button.style.backgroundColor = preset.hex;
+        button.title = preset.name;
+        button.setAttribute('aria-label', `${preset.name} ring`);
+        button.addEventListener('click', () => save(preset.hex));
+        swatchRow.appendChild(button);
+    });
+
+    // 'input' rather than 'change' so dragging in the picker updates live.
+    customInput.addEventListener('input', () => save(customInput.value));
+    document.getElementById('ring-reset-btn')
+        .addEventListener('click', () => save(RC.DEFAULT));
+
+    chrome.storage.local.get([RC.STORAGE_KEY], (result) => render(result[RC.STORAGE_KEY]));
+
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+        if (namespace === 'local' && changes[RC.STORAGE_KEY]) {
+            render(changes[RC.STORAGE_KEY].newValue);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initRingColor);
