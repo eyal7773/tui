@@ -307,6 +307,36 @@ body {
   line-height: 1.5;
 }
 
+.affiliate-price {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.affiliate-price-now {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.affiliate-price-was {
+  font-size: 14px;
+  color: #888888;
+}
+
+.affiliate-price-off {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 2px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .affiliate-cta {
   display: inline-block;
   background: var(--accent);
