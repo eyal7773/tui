@@ -543,22 +543,38 @@ class SpatialEngine {
         }
     }
 
-    simulateClick(el) {
-        if (this.debugMode) console.log('[TUI] Simulating Click on:', el);
+    /**
+     * A one-line description of an element for the debug log. Logging the
+     * element itself is useless in a downloaded report: the capture serialises
+     * a DOM node as "{}", which is what a click that went nowhere looks like.
+     */
+    describeElement(el) {
+        if (!el) return 'null';
+        const tag = el.tagName || '?';
+        const id = el.id ? `#${el.id}` : '';
+        const cls = (typeof el.className === 'string' && el.className.trim())
+            ? `.${el.className.trim().split(/\s+/).join('.')}` : '';
+        const href = (el.tagName === 'A' && el.getAttribute('href')) ? ` href=${el.getAttribute('href')}` : '';
+        return `${tag}${id}${cls}${href}`;
+    }
 
-        // SMART TARGETING: If this is a container element (gridcell, listitem), 
-        // try to find the actual interactive content inside.
-        // Many web apps put tabindex="0" on a wrapper for keyboard focus,
-        // but the actual click listener is on an inner div.
+    simulateClick(el) {
+        if (this.debugMode) console.log('[TUI] Simulating Click on:', this.describeElement(el));
+
+        // SMART TARGETING: the focused element is often not the element that
+        // does the work. A list row keeps the tabindex while the link inside it
+        // carries the href, and clicking the row does nothing at all.
+        // click-rules.js decides; _tui_activate is the element navigation was
+        // aiming at when the browser bounced focus up to this container.
         let target = el;
-        const role = el.getAttribute('role');
-        if (role === 'gridcell' || role === 'listitem' || role === 'row') {
-            // Strategy: Look for a div with classes (content wrapper) rather than empty wrapper divs
-            // This works for WhatsApp, Google, and other modern web apps
-            const innerContent = el.querySelector('div[class]:not([class=""])') || el.querySelector('div');
-            if (innerContent) {
-                if (this.debugMode) console.log('[TUI] Targeting inner content:', innerContent);
-                target = innerContent;
+        const intended = (el._tui_activate && document.body.contains(el._tui_activate))
+            ? el._tui_activate : null;
+
+        if (window.TuiClickRules) {
+            target = window.TuiClickRules.resolveClickTarget(el, intended) || el;
+            if (this.debugMode && target !== el) {
+                console.log('[TUI] Retargeting click to:', this.describeElement(target),
+                    intended === target ? '(intended by navigation)' : '(container action)');
             }
         }
 
@@ -1686,6 +1702,18 @@ class SpatialEngine {
                 return true;
             }
 
+            // SPECIAL CASE: focus bounced up to an ancestor.
+            // Lists do this: the row owns the tabindex and the link inside it is
+            // tab-unreachable, so focusing the link focuses the row. The row has
+            // no click handler, so Enter on it would do nothing - remember what
+            // we were actually aiming at so Enter can click that instead.
+            if (actualFocus.contains && actualFocus.contains(el)) {
+                if (this.debugMode) console.log('[TUI] Focus bounced to ancestor; Enter will activate', el.tagName, el.id || '(no id)');
+                actualFocus._tui_activate = el;
+            } else {
+                actualFocus._tui_activate = null;
+            }
+
             // Trust the browser focus (it moved somewhere valid)
             this.lastActiveElement = actualFocus;
             this.highlight(actualFocus);
@@ -1695,6 +1723,8 @@ class SpatialEngine {
         }
 
         // Focus succeeded as expected (actualFocus === el)
+        // Drop any stale aim from an earlier bounce: this element is the target now.
+        el._tui_activate = null;
         this.lastActiveElement = el;
         el.scrollIntoView({ behavior: this.scrollBehavior(), block: 'nearest' });
         this.highlight(el);

@@ -99,6 +99,26 @@ or end of the line.
 The geometry lives in `src/line-rules.js` as pure functions over rectangles, so
 the awkward cases can be tested against exact coordinates.
 
+## Enter on a list row
+
+**Enter activates the link in the row, not the row.** Lists are usually built
+the other way round from how they look: the `<li>` owns the `tabindex` and the
+link inside it is deliberately unreachable by tab, so focusing the link makes
+the browser move focus up to the row instead. A click on the row lands on
+nothing at all - the row has no handler, and the link never sees it - which
+looked exactly like Enter being ignored.
+
+So Enter clicks what the ring was aiming at when focus bounced up. With nothing
+to aim at, because focus arrived by mouse or by the page's own doing, the row's
+own action is used: the first link or button in it that carries readable text.
+The overflow menu, the select checkbox and the icon-only controls at the end of
+a row are skipped rather than clicked by mistake, and a row with no link or
+button at all still gets its content wrapper clicked, which is the shape chat
+lists use.
+
+`src/click-rules.js` holds the decision as pure functions over a tree, so the
+awkward rows can be tested without a page.
+
 ## Handing the keyboard back
 
 Spatial navigation works by moving real focus, and a site that routes its own
@@ -237,7 +257,7 @@ git pull --rebase
 | **Arrow Up** | Move focus to the item above |
 | **Arrow Left / Right** | Move across the current row |
 | **Home / End** | Jump to either end of the current line (see below) |
-| **Enter** | Activate the focused item |
+| **Enter** | Activate the focused item (see below) |
 | **Esc** | Leave a text box, or hand the keyboard back to the page |
 
 ### Management
