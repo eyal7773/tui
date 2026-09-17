@@ -254,13 +254,26 @@ for the very first release, when there is no tag yet.
 Nothing is committed back to `main`, so your local clone is never left behind after a
 release and pushes are never rejected as non-fast-forward.
 
-### Heads-up: the site shows a frozen version
+### How the site keeps up
 
-`docs/index.html` is served straight out of the repo by GitHub Pages, so the version it
-displays is whatever was last committed, not what was last released. The **download link
-is always current** — it points at `releases/latest/download/tui-navigator.zip` — but the
-number next to it is stale. Running `npm run sync-site-version` and committing fixes it
-until the next release.
+`docs/index.html` is served straight out of the repo by GitHub Pages, and releases no
+longer write anything back, so the number in the markup would freeze. The page therefore
+asks for the live one on load: it reads `tag_name` from
+
+```
+https://api.github.com/repos/eyal7773/tui/releases/latest
+```
+
+and fills every `<span data-version>`, caching the answer in `sessionStorage` so moving
+around the site costs one request rather than several. The API allows 60 an hour per
+address without a token.
+
+Every step is allowed to fail quietly — a blocked request, a rate limit or storage turned
+off leaves the committed number on the page. That number is the fallback, so it is worth
+keeping roughly current: `npm run sync-site-version` rewrites it from `src/manifest.json`.
+
+The download button does not depend on any of this. It points at
+`releases/latest/download/tui-navigator.zip`, which GitHub resolves on its own.
 
 ## Usage Guide
 

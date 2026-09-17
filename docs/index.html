@@ -516,6 +516,56 @@
   </div>
 
   <script>
+    // The version shown on this page.
+    //
+    // This file is served straight out of the repo, and releases no longer write
+    // anything back to it — the git tag is what names a release. So the number
+    // sitting in the markup is only a starting point, and the live one is asked
+    // for here and filled in.
+    //
+    // Every step is allowed to fail quietly: a blocked request, a rate limit
+    // (the API allows 60 an hour per address without a token) or storage turned
+    // off all leave the committed number on the page, which is stale but never
+    // wrong-looking.
+    (function () {
+      var spans = document.querySelectorAll('[data-version]');
+      if (!spans.length) return;
+
+      var LATEST = 'https://api.github.com/repos/eyal7773/tui/releases/latest';
+      var CACHE = 'tui-latest-version';
+
+      function show(version) {
+        if (!/^\d+\.\d+\.\d+$/.test(version || '')) return;
+        Array.prototype.forEach.call(spans, function (span) {
+          span.textContent = version;
+        });
+      }
+
+      // A version already seen this session, so moving around the site does not
+      // spend another request.
+      try {
+        var cached = sessionStorage.getItem(CACHE);
+        if (cached) {
+          show(cached);
+          return;
+        }
+      } catch (e) { /* storage unavailable; ask for it instead */ }
+
+      fetch(LATEST, { headers: { Accept: 'application/vnd.github+json' } })
+        .then(function (response) {
+          if (!response.ok) throw new Error(response.status);
+          return response.json();
+        })
+        .then(function (release) {
+          var version = String(release.tag_name || '').replace(/^v/, '');
+          if (!/^\d+\.\d+\.\d+$/.test(version)) return;
+
+          show(version);
+          try { sessionStorage.setItem(CACHE, version); } catch (e) { /* fine */ }
+        })
+        .catch(function () { /* leave the committed number in place */ });
+    })();
+
     (function () {
       var demo = document.querySelector('.demo');
       if (!demo) return;
