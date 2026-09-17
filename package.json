@@ -3,7 +3,6 @@
   "version": "0.1.100",
   "description": "Transform browsing into a Text-based User Interface navigation experience.",
   "scripts": {
-    "bump-version": "node scripts/bump-version.js",
     "sync-site-version": "node scripts/sync-site-version.js",
     "test": "node scripts/run-tests.js",
     "build-icons": "node scripts/build-icons.js"

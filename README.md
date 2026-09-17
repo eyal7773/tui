@@ -199,13 +199,18 @@ see [`.github/workflows/release.yml`](.github/workflows/release.yml).
 
 ### What each run does
 
-1.  Reads the version from `src/manifest.json`.
-2.  If that version was already released, bumps the patch number
-    (`npm run bump-version`) and commits it back to `main` as
-    `chore: release vX.Y.Z [skip ci]`.
+1.  Works out the next version from the **git tags** — see below.
+2.  Writes that number into `src/manifest.json` inside the runner
+    (`node scripts/stamp-version.js`). Nothing is committed back.
 3.  Zips the **contents of `src/`** — `manifest.json` ends up at the zip root, so the
     unzipped folder is directly loadable with **Load unpacked**.
-4.  Publishes the zip as release `vX.Y.Z`.
+4.  Publishes the zip as release `vX.Y.Z`, twice: once as `tui-navigator-vX.Y.Z.zip`
+    and once as `tui-navigator.zip`, which gives a permanent download link:
+
+    ```
+    https://github.com/eyal7773/tui/releases/latest/download/tui-navigator.zip
+    ```
+
 5.  Deletes releases older than the newest few (see below).
 
 ### Retention — only the newest 5 releases are kept
@@ -229,19 +234,33 @@ zip is always on the release.
 
 ### Controlling the version
 
-Run `npm run bump-version` locally (or edit `src/manifest.json`) before pushing, and the
-workflow will publish your number instead of bumping one of its own. It only bumps when
-the version in the manifest has already been released.
+**The git tags are the source of truth.** The workflow takes the newest `v*` tag and
+steps it according to the commit subjects since that tag, read as conventional commits:
 
-### Heads-up: pull after every push
+| Commits since the last tag | Step | `v0.1.99` becomes |
+| :--- | :--- | :--- |
+| `fix:`, `chore:`, `ci:`, anything else | patch | `v0.1.100` |
+| any `feat:` | minor | `v0.2.0` |
+| any `feat!:` / `fix!:`, or a `BREAKING CHANGE` trailer | major | `v1.0.0` |
 
-Because the workflow commits the version bump back to `main`, your local branch is one
-commit behind after each run. Pull before your next commit, or the push is rejected as
-a non-fast-forward:
+So the way to control the number is the way you word the commit. The logic lives in
+[`scripts/next-version.js`](scripts/next-version.js) and is covered by
+[`tests/next-version.test.js`](tests/next-version.test.js).
 
-```bash
-git pull --rebase
-```
+The `version` field sitting in `src/manifest.json` and `package.json` is **not**
+authoritative and will drift behind the releases. It is only read as a starting point
+for the very first release, when there is no tag yet.
+
+Nothing is committed back to `main`, so your local clone is never left behind after a
+release and pushes are never rejected as non-fast-forward.
+
+### Heads-up: the site shows a frozen version
+
+`docs/index.html` is served straight out of the repo by GitHub Pages, so the version it
+displays is whatever was last committed, not what was last released. The **download link
+is always current** — it points at `releases/latest/download/tui-navigator.zip` — but the
+number next to it is stale. Running `npm run sync-site-version` and committing fixes it
+until the next release.
 
 ## Usage Guide
 

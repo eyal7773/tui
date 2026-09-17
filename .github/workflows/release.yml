@@ -19,7 +19,8 @@ env:
 
 jobs:
   release:
-    # Skip the run triggered by our own version-bump commit.
+    # An escape hatch: nothing here pushes to the repo any more, so this only
+    # fires when a human deliberately asks for a commit not to be released.
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
 
@@ -43,53 +44,55 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          version=$(node -p "require('./src/manifest.json').version")
 
-          taken() {
-            git rev-parse -q --verify "refs/tags/v$1" >/dev/null 2>&1 \
-              || gh release view "v$1" >/dev/null 2>&1
-          }
+          # The tags are the source of truth. Nothing is read from the repo and
+          # nothing is written back to it, so main never moves on its own and a
+          # local clone is never left behind after a release.
+          latest=$(git tag --list 'v*' --sort=-v:refname | head -n 1 || true)
 
-          # Bump until the version is actually free. A single bump is not enough:
-          # if an earlier run tagged a release but could not push its bump back to
-          # main, the checked-out manifest still names a version that is already
-          # taken, and one step forward would land on another taken one.
-          for _ in $(seq 1 50); do
-            taken "$version" || break
-            echo "v$version already exists - bumping patch version"
-            npm run bump-version
-            version=$(node -p "require('./src/manifest.json').version")
-          done
-
-          if taken "$version"; then
-            echo "::error::Could not find a free version after 50 bumps; last tried v$version."
-            exit 1
+          if [ -n "$latest" ]; then
+            subjects=$(git log --format=%s "$latest..HEAD")
+            breaking=$(git log --format=%B "$latest..HEAD" | grep -c 'BREAKING CHANGE' || true)
+          else
+            subjects=$(git log --format=%s)
+            breaking=$(git log --format=%B | grep -c 'BREAKING CHANGE' || true)
           fi
 
-          # Keep the GitHub Pages site in docs/ showing the version being shipped.
-          node scripts/sync-site-version.js "$version"
+          # Pruning deletes old tags, so ask the releases too before claiming a
+          # number. Either list may be empty; neither is allowed to fail the run.
+          taken=$(
+            {
+              git tag --list 'v*'
+              gh release list --limit 200 --json tagName --jq '.[].tagName' || true
+            } | sort -u
+          )
 
-          # One commit covers both the version bump and the site update.
-          if ! git diff --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -am "chore: release v$version [skip ci]"
+          export LATEST="$latest"
+          export SUBJECTS="$subjects"
+          export TAKEN="$taken"
+          export BREAKING="$([ "${breaking:-0}" -gt 0 ] && echo 1 || echo 0)"
 
-            if ! git push origin HEAD:main; then
-              echo "::error::Pushing the v$version version bump to main was rejected."
-              echo "This usually means a ruleset or branch protection now guards main."
-              echo "Actions has to push this commit, so give it a bypass:"
-              echo "  Settings -> Rules -> Rulesets -> (the ruleset covering main)"
-              echo "  -> Bypass list -> Add bypass -> Repository admin / Deploy keys"
-              echo "     and the 'github-actions[bot]' app, then re-run this job."
-              echo "Nothing was released; the tag and the bump stay unclaimed until this is fixed."
-              exit 1
-            fi
-          fi
+          # Only used for the very first release, when there is no tag to read.
+          export FALLBACK="$(node -p "require('./src/manifest.json').version")"
+
+          version=$(node scripts/next-version.js)
+
+          echo "Previous tag: ${latest:-(none)}"
+          echo "Releasing v$version"
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          echo "Releasing v$version"
+
+      - name: Stamp the version into the build
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          # Written in the runner only. The committed manifest keeps whatever
+          # number it happens to hold; it is not what ships, and not what any
+          # of this reads.
+          node scripts/stamp-version.js "$VERSION"
 
       - name: Package extension
         env:
@@ -100,11 +103,18 @@ jobs:
           (cd src && zip -qr "../dist/tui-navigator-v$VERSION.zip" . -x '.DS_Store' '*/.DS_Store' 'Thumbs.db')
           unzip -l "dist/tui-navigator-v$VERSION.zip"
 
+          # A second copy under a name that never changes. It is what
+          # /releases/latest/download/tui-navigator.zip resolves to, which gives
+          # the site a download link that outlives every release.
+          cp "dist/tui-navigator-v$VERSION.zip" dist/tui-navigator.zip
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: tui-navigator-v${{ steps.version.outputs.version }}
-          path: dist/*.zip
+          # The versioned copy only; the stable-named one is the same bytes and
+          # artifacts count against the storage quota.
+          path: dist/tui-navigator-v${{ steps.version.outputs.version }}.zip
           # Short retention: the zip also lives on the release, and Actions
           # artifacts do count against the account storage quota.
           retention-days: 7
@@ -121,6 +131,7 @@ jobs:
             echo "**Install (Developer mode):**"
             echo
             echo "1. Download \`tui-navigator-v$VERSION.zip\` below and unzip it."
+            echo "   (\`tui-navigator.zip\` is the same build under a name that never changes.)"
             echo "2. Open \`chrome://extensions/\` and turn on **Developer mode**."
             echo "3. Click **Load unpacked** and pick the unzipped folder (the one containing \`manifest.json\`)."
             echo
@@ -135,7 +146,9 @@ jobs:
           SHA: ${{ steps.version.outputs.sha }}
         run: |
           set -euo pipefail
-          gh release create "v$VERSION" "dist/tui-navigator-v$VERSION.zip" \
+          gh release create "v$VERSION" \
+            "dist/tui-navigator-v$VERSION.zip" \
+            "dist/tui-navigator.zip" \
             --target "$SHA" \
             --title "TUI Navigator v$VERSION" \
             --notes-file dist/notes.md \
