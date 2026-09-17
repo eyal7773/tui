@@ -1023,8 +1023,16 @@ class SpatialEngine {
                 }
             }
 
-            // Is in viewport?
-            if (rect.bottom < 0 || rect.top > window.innerHeight || rect.right < 0 || rect.left > window.innerWidth) {
+            // Near enough to the screen to be worth navigating to?
+            // Not the viewport exactly: the next row down a column usually sits
+            // just past the bottom edge, and clipping it there made ArrowDown
+            // leave the column for whatever sidebar item happened to be visible.
+            // See view-rules.js for why the band reaches past top and bottom but
+            // not past the sides.
+            if (window.TuiViewRules) {
+                if (!window.TuiViewRules.withinReach(rect)) return false;
+            } else if (rect.bottom < 0 || rect.top > window.innerHeight ||
+                       rect.right < 0 || rect.left > window.innerWidth) {
                 return false;
             }
 
@@ -1038,15 +1046,6 @@ class SpatialEngine {
                 } else {
                     return false;  // Filter out other aria-hidden elements
                 }
-            }
-
-            // Exclude elements that are visually off-screen (e.g., skip links, hidden menus)
-            // But be careful not to exclude elements that are just barely off-screen (scrollable)
-            if (rect.right < 0 || rect.bottom < 0 ||
-                rect.left > window.innerWidth || rect.top > window.innerHeight) {
-                // Check if it's scrollable into view... for now, strict viewport check for candidates
-                // to avoid jumping to invisible footer items.
-                return false;
             }
 
             // Exclude "show-on-focus" skip links (accessibility pattern)
@@ -1202,7 +1201,12 @@ class SpatialEngine {
             // Corner case: No focus. Pick top-left most visible element or first one.
             // If we have no origin, we can't do directional relative navigation effectively.
             // Fallback: Pick the first candidate in the list (usually top-left in DOM order).
-            return this.candidates.length > 0 ? this.candidates[0] : null;
+            // Candidates now reach past the fold, so prefer one the user can see
+            // before falling back to the first of them.
+            const visible = window.TuiViewRules
+                ? this.candidates.find(c => window.TuiViewRules.onScreen(c.getBoundingClientRect()))
+                : null;
+            return visible || (this.candidates.length > 0 ? this.candidates[0] : null);
         }
 
         // Special case: ArrowDown from an open SUMMARY → enter popup in DOM order

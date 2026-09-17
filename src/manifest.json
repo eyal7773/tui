@@ -22,6 +22,7 @@
         "site-rules.js",
         "ring-style.js",
         "line-rules.js",
+        "view-rules.js",
         "click-rules.js",
         "engine.js"
       ],
