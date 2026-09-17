@@ -241,11 +241,25 @@ steps it according to the commit subjects since that tag, read as conventional c
 | :--- | :--- | :--- |
 | `fix:`, `chore:`, `ci:`, anything else | patch | `v0.1.100` |
 | any `feat:` | minor | `v0.2.0` |
-| any `feat!:` / `fix!:`, or a `BREAKING CHANGE` trailer | major | `v1.0.0` |
+| any `feat!:` / `fix!:`, or a breaking-change footer | major | `v1.0.0` |
 
 So the way to control the number is the way you word the commit. The logic lives in
 [`scripts/next-version.js`](scripts/next-version.js) and is covered by
 [`tests/next-version.test.js`](tests/next-version.test.js).
+
+### Two things a commit message can do by accident
+
+Both of these have already happened once, which is why they are written down.
+
+**`[skip ci]` anywhere in the message cancels the release.** GitHub reads the marker
+itself, before the workflow is consulted, and skips the whole run — including when the
+words appear deep in the body because you were quoting or explaining something. No run
+appears in the Actions tab at all, which makes it look like nothing was pushed.
+
+**A breaking-change footer bumps the major.** The marker counts only as a real footer:
+at the start of a line, with a colon after it, as the spec defines it. Mentioning the
+words mid-sentence is safe and deliberately so — the first version of this check was a
+plain substring search, and a commit whose body *described* the rule published a `v1.0.0`.
 
 The `version` field sitting in `src/manifest.json` and `package.json` is **not**
 authoritative and will drift behind the releases. It is only read as a starting point
