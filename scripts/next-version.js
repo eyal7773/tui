@@ -20,6 +20,14 @@ const VERSION = /^(\d+)\.(\d+)\.(\d+)$/;
 // type, optional (scope), optional ! meaning breaking, then the colon.
 const CONVENTIONAL = /^([a-zA-Z]+)(\([^)]*\))?(!)?:/;
 
+/**
+ * A breaking change is declared in a footer: its own line, at the start, with a
+ * colon after it. Matching the words anywhere in the body instead would read a
+ * commit that merely *mentions* them — a message describing this very rule, say
+ * — as a major release. That is not hypothetical; it shipped a v1.0.0.
+ */
+const BREAKING_FOOTER = /^BREAKING[ -]CHANGE:\s/m;
+
 const MAJOR = 'major';
 const MINOR = 'minor';
 const PATCH = 'patch';
@@ -48,6 +56,12 @@ function levelOf(subject) {
   return PATCH;
 }
 
+/** Does this text declare a breaking change in the way the spec means? */
+function hasBreakingFooter(text) {
+  if (typeof text !== 'string') return false;
+  return BREAKING_FOOTER.test(text);
+}
+
 /** The largest step any of these commits asks for. */
 function levelFor(subjects, breaking) {
   if (breaking) return MAJOR;
@@ -72,13 +86,17 @@ function bump(parts, level) {
  * @param {object} options
  * @param {string} [options.latest] the newest existing tag, e.g. 'v0.1.99'
  * @param {string[]} [options.subjects] commit subjects since that tag
- * @param {boolean} [options.breaking] a BREAKING CHANGE trailer appeared
+ * @param {string} [options.bodies] the full commit messages, scanned for a
+ *   breaking-change footer
+ * @param {boolean} [options.breaking] force a major, whatever the commits say
  * @param {string[]} [options.taken] versions or tags already claimed
  * @param {string} [options.fallback] the version to use when there is no tag yet
  * @returns {string} a version string that nothing has claimed
  */
 function nextVersion(options) {
-  const { latest, subjects, breaking, taken, fallback } = options || {};
+  const { latest, subjects, bodies, breaking, taken, fallback } = options || {};
+
+  const declaresBreaking = breaking === true || hasBreakingFooter(bodies);
 
   const claimed = new Set(
     (taken || [])
@@ -91,7 +109,7 @@ function nextVersion(options) {
 
   // No tag yet: the fallback is the first release, not something to bump past.
   let candidate = previous
-    ? bump(previous, levelFor(subjects, breaking))
+    ? bump(previous, levelFor(subjects, declaresBreaking))
     : parse(fallback) || [0, 1, 0];
 
   // A re-run, or a tag that pruning left behind, can already hold the number we
@@ -105,7 +123,9 @@ function nextVersion(options) {
   return format(candidate);
 }
 
-module.exports = { nextVersion, levelOf, levelFor, parse, MAJOR, MINOR, PATCH };
+module.exports = {
+  nextVersion, levelOf, levelFor, hasBreakingFooter, parse, MAJOR, MINOR, PATCH
+};
 
 /* ── CLI ────────────────────────────────────────────────────────────────── */
 
@@ -120,6 +140,7 @@ if (require.main === module) {
     nextVersion({
       latest: process.env.LATEST,
       subjects: lines(process.env.SUBJECTS),
+      bodies: process.env.BODIES,
       breaking: process.env.BREAKING === '1',
       taken: lines(process.env.TAKEN),
       fallback: process.env.FALLBACK

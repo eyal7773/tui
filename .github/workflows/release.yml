@@ -52,10 +52,10 @@ jobs:
 
           if [ -n "$latest" ]; then
             subjects=$(git log --format=%s "$latest..HEAD")
-            breaking=$(git log --format=%B "$latest..HEAD" | grep -c 'BREAKING CHANGE' || true)
+            bodies=$(git log --format=%B "$latest..HEAD")
           else
             subjects=$(git log --format=%s)
-            breaking=$(git log --format=%B | grep -c 'BREAKING CHANGE' || true)
+            bodies=$(git log --format=%B)
           fi
 
           # Pruning deletes old tags, so ask the releases too before claiming a
@@ -70,7 +70,12 @@ jobs:
           export LATEST="$latest"
           export SUBJECTS="$subjects"
           export TAKEN="$taken"
-          export BREAKING="$([ "${breaking:-0}" -gt 0 ] && echo 1 || echo 0)"
+
+          # Handed over whole. Deciding what counts as a breaking-change footer
+          # is the script's job, where it is covered by tests — a grep for the
+          # words anywhere in the body reads a commit that merely mentions them
+          # as a major release, which is how v1.0.0 escaped.
+          export BODIES="$bodies"
 
           # Only used for the very first release, when there is no tag to read.
           export FALLBACK="$(node -p "require('./src/manifest.json').version")"

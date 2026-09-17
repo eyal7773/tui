@@ -9,8 +9,13 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 
-const { nextVersion, levelOf, levelFor, parse, MAJOR, MINOR, PATCH } =
+const { nextVersion, levelOf, levelFor, hasBreakingFooter, parse, MAJOR, MINOR, PATCH } =
   require('../scripts/next-version.js');
+
+/** A commit message, written as lines so the footers are visible. */
+function message(...lines) {
+  return lines.join('\n');
+}
 
 /* ── reading a version ──────────────────────────────────────────────────── */
 
@@ -59,8 +64,77 @@ test('the largest step among the commits wins', () => {
   assert.equal(levelFor(undefined), PATCH);
 });
 
-test('a BREAKING CHANGE trailer earns a major on its own', () => {
+test('a breaking change forced by the caller earns a major on its own', () => {
   assert.equal(levelFor(['fix: a'], true), MAJOR);
+});
+
+/* ── what counts as declaring a breaking change ─────────────────────────── */
+
+test('a footer on its own line declares one', () => {
+  assert.equal(
+    hasBreakingFooter(message('fix: a thing', '', 'BREAKING CHANGE: the ring API moved.')),
+    true
+  );
+  assert.equal(hasBreakingFooter('BREAKING CHANGE: everything moved.'), true);
+});
+
+test('the hyphenated spelling counts too', () => {
+  assert.equal(
+    hasBreakingFooter(message('fix: a thing', '', 'BREAKING-CHANGE: it moved.')),
+    true
+  );
+});
+
+test('merely mentioning the words in prose does not', () => {
+  // The regression this rule exists for. A commit message explaining how the
+  // versioning works carried the words mid-sentence, the check was a substring
+  // grep, and the run shipped a v1.0.0 nobody asked for.
+  const body = message(
+    'ci: take the release version from the tags instead of committing it back',
+    '',
+    'read as conventional commits: feat: earns a minor, a ! or a BREAKING CHANGE',
+    'trailer earns a major, anything else a patch.'
+  );
+
+  assert.equal(hasBreakingFooter(body), false);
+  assert.equal(
+    nextVersion({
+      latest: 'v0.1.100',
+      subjects: ['ci: take the release version from the tags instead of committing it back'],
+      bodies: body
+    }),
+    '0.1.101'
+  );
+});
+
+test('the words without a colon after them do not declare one', () => {
+  assert.equal(
+    hasBreakingFooter(message('fix: a thing', '', 'BREAKING CHANGE ahead, watch out')),
+    false
+  );
+});
+
+test('the words buried mid-line do not declare one', () => {
+  assert.equal(
+    hasBreakingFooter(message('fix: a thing', '', 'see BREAKING CHANGE: below')),
+    false
+  );
+});
+
+test('nothing to scan is not a breaking change', () => {
+  assert.equal(hasBreakingFooter(undefined), false);
+  assert.equal(hasBreakingFooter(''), false);
+});
+
+test('a real footer still reaches the version', () => {
+  assert.equal(
+    nextVersion({
+      latest: 'v0.1.100',
+      subjects: ['fix: a thing'],
+      bodies: message('fix: a thing', '', 'BREAKING CHANGE: the ring API moved.')
+    }),
+    '1.0.0'
+  );
 });
 
 /* ── the number itself ──────────────────────────────────────────────────── */
