@@ -11,7 +11,9 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 
 require('../src/target-rules.js');
-const { isCustomElement, isGenericTag, isGridRow, hasInteractiveRole } = globalThis.TuiTargetRules;
+const {
+  isCustomElement, isGenericTag, isGridRow, hasInteractiveRole, focusOwner, ownedItemTarget
+} = globalThis.TuiTargetRules;
 
 /** Minimal stand-in for an element; wires parentElement on its children. */
 function el(tagName, attrs = {}, children = []) {
@@ -119,4 +121,67 @@ test('a role list is read by its first role', () => {
   const row = el('tr', { role: ' Row  button' });
   el('table', { role: 'grid' }, [row]);
   assert.equal(isGridRow(row), true);
+});
+
+/* ── items whose container owns focus ───────────────────────────────────── */
+
+/**
+ * Google Drive's sidebar from the bug report, trimmed to its structure: the
+ * tree holds the only tabindex, each item is a line (role="link") followed by
+ * a subtree (role="group"), and nothing inside carries a tabindex.
+ */
+function driveSidebar() {
+  const item = (id, children = []) => {
+    const line = el('div', { role: 'link', 'data-target': 'node' }, [el('span')]);
+    const subtree = el('div', { role: 'group' }, children);
+    return { node: el('div', { id, role: 'treeitem' }, [line, subtree]), line };
+  };
+  const shared = item('nt:Sh');
+  const home = item('nt:D');
+  const myDrive = item('nt:Dr', [shared.node]);
+  const tree = el('div', { role: 'tree', tabindex: '0' }, [home.node, myDrive.node]);
+  const nav = el('nav', { role: 'navigation', tabindex: '-1' }, [tree]);
+  return { nav, tree, home, myDrive, shared };
+}
+
+test('a Drive sidebar item is a target even though nothing in the tree has a tabindex', () => {
+  const { tree, home, myDrive, shared } = driveSidebar();
+  assert.equal(focusOwner(home.node), tree);
+  assert.equal(focusOwner(shared.node), tree, 'an item of a subtree belongs to the same tree');
+  // The ring stops on the line, not on the item, which wraps its whole subtree.
+  assert.equal(ownedItemTarget(home.node), home.line);
+  assert.equal(ownedItemTarget(myDrive.node), myDrive.line);
+  assert.equal(ownedItemTarget(shared.node), shared.line);
+});
+
+test('an item with no subtree is its own target', () => {
+  const option = el('div', { role: 'option' });
+  el('div', { role: 'listbox', tabindex: '0' }, [option]);
+  assert.equal(ownedItemTarget(option), option);
+});
+
+test('items are left alone when their container does not own focus', () => {
+  // The container is not focusable: the widget is broken or inert, not ours to fix.
+  const inert = el('div', { role: 'treeitem' });
+  el('div', { role: 'tree' }, [inert]);
+  assert.equal(ownedItemTarget(inert), null);
+
+  const hidden = el('div', { role: 'option' });
+  el('div', { role: 'listbox', tabindex: '-1' }, [hidden]);
+  assert.equal(ownedItemTarget(hidden), null);
+
+  // An item that has a tabindex is found by the ordinary search already.
+  const roving = el('div', { role: 'treeitem', tabindex: '-1' });
+  el('div', { role: 'tree', tabindex: '0' }, [roving]);
+  assert.equal(ownedItemTarget(roving), null);
+
+  // A stray role with no container of its kind above it.
+  const stray = el('div', { role: 'option' });
+  el('div', { role: 'dialog', tabindex: '0' }, [stray]);
+  assert.equal(ownedItemTarget(stray), null);
+});
+
+test('a tree item counts as interactive once it does carry a tabindex', () => {
+  assert.equal(hasInteractiveRole(el('div', { role: 'treeitem', tabindex: '-1' })), true);
+  assert.equal(hasInteractiveRole(el('div', { role: 'tree', tabindex: '0' })), false);
 });

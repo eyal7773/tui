@@ -915,6 +915,21 @@ class SpatialEngine {
         const selector = 'a, button, input, select, textarea, label, iframe, frame, object, embed, summary, [tabindex], [contenteditable]:not([contenteditable="false"])';
         let all = Array.from(document.querySelectorAll(selector));
 
+        // Items of a tree, listbox or menu whose container keeps the only
+        // tabindex (Google Drive's sidebar). They have no tabindex, so the
+        // search above misses them. focusElement gives them one on arrival.
+        const targetRules = window.TuiTargetRules;
+        if (targetRules) {
+            const known = new Set(all);
+            document.querySelectorAll(targetRules.OWNED_ITEM_SELECTOR).forEach(item => {
+                const target = targetRules.ownedItemTarget(item);
+                if (!target || known.has(target)) return;
+                target._tui_owned_item = true;
+                known.add(target);
+                all.push(target);
+            });
+        }
+
         // 2. Filter candidates
         this.candidates = all.filter(el => {
             // Visibility Check
@@ -1117,7 +1132,6 @@ class SpatialEngine {
             // Many web apps use tabindex on wrapper divs for focus management,
             // but these aren't actually clickable. We need to validate them.
             // Custom elements count as generic too (see target-rules.js).
-            const targetRules = window.TuiTargetRules;
             const isGenericElement = targetRules
                 ? targetRules.isGenericTag(el)
                 : ['DIV', 'SPAN', 'LI', 'TR', 'TD', 'UL', 'OL', 'NAV', 'SECTION', 'ARTICLE', 'ASIDE', 'HEADER', 'FOOTER'].includes(el.tagName);
@@ -1132,7 +1146,7 @@ class SpatialEngine {
                     // Includes a row of a grid, such as a file in Drive's list.
                     const hasInteractiveRole = targetRules
                         ? targetRules.hasInteractiveRole(el)
-                        : ['button', 'link', 'menuitem', 'tab', 'option', 'gridcell', 'listitem'].includes(el.getAttribute('role'));
+                        : ['button', 'link', 'menuitem', 'tab', 'option', 'treeitem', 'gridcell', 'listitem'].includes(el.getAttribute('role'));
                     const looksClickable = style.cursor === 'pointer';
 
                     // Exception: allow wrapper divs that contain a contenteditable (e.g. Telegram's
@@ -1601,6 +1615,11 @@ class SpatialEngine {
         }
 
         // 3. Normal Focus
+        // An item whose container owns focus has no tabindex, and focus() on it
+        // would do nothing. Give it one, the way the widget itself would.
+        if (el._tui_owned_item && !el.hasAttribute('tabindex')) {
+            el.setAttribute('tabindex', '-1');
+        }
         if (this.debugMode) console.log('[TUI] Using normal focus (no wrapper needed)');
         el.focus();
         if (this.debugMode) console.log('[TUI] After el.focus(), activeElement:', document.activeElement.tagName, document.activeElement.id || '(no id)');

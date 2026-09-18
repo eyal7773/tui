@@ -133,6 +133,15 @@ A `role="row"` counts as interactive when it sits in a `grid` or `treegrid`,
 unless it is a header row or its cells take focus themselves; rows of a plain
 table are still just layout.
 
+**The ring reaches items whose container keeps the only tabindex.** Google
+Drive's sidebar ("Home", "My Drive", ...) is a `role="tree"` with a `tabindex`,
+and its items have none at all, so they were never found: ArrowDown from
+"+ New" jumped over the sidebar to "Ask Gemini" in the main view. Items of a
+`tree`, `listbox`, `menu`, `menubar` or `tablist` are now targets when their
+container is focusable, and get a `tabindex="-1"` when the ring lands on them.
+A tree item that holds a subtree is reached by its own line, so the arrows can
+still step into the subtree below it.
+
 `src/target-rules.js` holds these decisions as pure functions over a tree.
 
 ## Handing the keyboard back
