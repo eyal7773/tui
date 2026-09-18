@@ -119,6 +119,22 @@ lists use.
 `src/click-rules.js` holds the decision as pure functions over a tree, so the
 awkward rows can be tested without a page.
 
+## Rows of a grid and whole-view containers
+
+**The ring stops on each row of a grid, not on the view around it.** A file
+list such as Google Drive's is a `<table role="grid">` whose rows carry the
+focus, wrapped in a custom element (`<c-wiz>`) that also takes a `tabindex` and
+fills most of the screen. ArrowDown used to land on that wrapper, which does
+nothing, instead of on the first file.
+
+Custom elements now get the same scrutiny as a `<div>`: with no interactive role
+and no pointer cursor they are not a target, and neither is anything that large.
+A `role="row"` counts as interactive when it sits in a `grid` or `treegrid`,
+unless it is a header row or its cells take focus themselves; rows of a plain
+table are still just layout.
+
+`src/target-rules.js` holds these decisions as pure functions over a tree.
+
 ## Handing the keyboard back
 
 Spatial navigation works by moving real focus, and a site that routes its own

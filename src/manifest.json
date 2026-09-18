@@ -24,6 +24,7 @@
         "line-rules.js",
         "view-rules.js",
         "click-rules.js",
+        "target-rules.js",
         "engine.js"
       ],
       "css": [

@@ -1116,7 +1116,11 @@ class SpatialEngine {
             // NEW: Interactive Validation for Generic Elements
             // Many web apps use tabindex on wrapper divs for focus management,
             // but these aren't actually clickable. We need to validate them.
-            const isGenericElement = ['DIV', 'SPAN', 'LI', 'TR', 'TD', 'UL', 'OL', 'NAV', 'SECTION', 'ARTICLE', 'ASIDE', 'HEADER', 'FOOTER'].includes(el.tagName);
+            // Custom elements count as generic too (see target-rules.js).
+            const targetRules = window.TuiTargetRules;
+            const isGenericElement = targetRules
+                ? targetRules.isGenericTag(el)
+                : ['DIV', 'SPAN', 'LI', 'TR', 'TD', 'UL', 'OL', 'NAV', 'SECTION', 'ARTICLE', 'ASIDE', 'HEADER', 'FOOTER'].includes(el.tagName);
 
             if (isGenericElement && el.hasAttribute('tabindex')) {
                 // If it's a semantic interactive element, always keep it
@@ -1125,7 +1129,10 @@ class SpatialEngine {
                 } else {
                     // It's a generic element with tabindex.
                     // Check if it LOOKS clickable or has interactive role
-                    const hasInteractiveRole = ['button', 'link', 'menuitem', 'tab', 'option', 'gridcell', 'listitem'].includes(el.getAttribute('role'));
+                    // Includes a row of a grid, such as a file in Drive's list.
+                    const hasInteractiveRole = targetRules
+                        ? targetRules.hasInteractiveRole(el)
+                        : ['button', 'link', 'menuitem', 'tab', 'option', 'gridcell', 'listitem'].includes(el.getAttribute('role'));
                     const looksClickable = style.cursor === 'pointer';
 
                     // Exception: allow wrapper divs that contain a contenteditable (e.g. Telegram's
