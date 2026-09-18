@@ -1,5 +1,5 @@
 /**
- * Geometry for Home and End.
+ * Geometry for Home and End, and for scoring a single arrow step.
  *
  * The last arrow pressed picks an axis. End then means "the furthest thing that
  * way on this line", and Home means the same in the opposite direction. On the
@@ -114,6 +114,45 @@
     }
   }
 
+  /**
+   * How far off the current line `rect` sits, across the direction of travel.
+   *
+   * Zero only when it is on the same line. A row that merely touches, or clips
+   * the current one by a sliver, is the next line over and scores at least 1.
+   * Grids are laid out edge to edge, so the row above ends exactly where the
+   * current row starts: counting that as "aligned" tied it with the neighbour
+   * on the same row, and whichever came first in the DOM won.
+   */
+  function crossGap(current, rect, axis) {
+    if (sameLine(current, rect, axis)) return 0;
+
+    const a = span(current, axis);
+    const b = span(rect, axis);
+    const separation = Math.max(b.start - a.end, a.start - b.end);
+    return Math.max(separation, 1);
+  }
+
+  /**
+   * Score for a single arrow step: lower is better. Distance along the
+   * direction, plus a penalty for leaving the line. Leaving the line costs far
+   * more sideways than up and down, because rows are short and a sideways step
+   * that changes row is almost never what was meant.
+   */
+  function stepScore(current, rect, direction) {
+    switch (direction) {
+      case 'ArrowUp':
+        return (current.top - rect.bottom) + crossGap(current, rect, VERTICAL) * 1.5;
+      case 'ArrowDown':
+        return (rect.top - current.bottom) + crossGap(current, rect, VERTICAL) * 1.5;
+      case 'ArrowLeft':
+        return (current.left - rect.right) + crossGap(current, rect, HORIZONTAL) * 30;
+      case 'ArrowRight':
+        return (rect.left - current.right) + crossGap(current, rect, HORIZONTAL) * 30;
+      default:
+        return Infinity;
+    }
+  }
+
   /** True when `rect` qualifies as a target for a Home/End jump. */
   function isLineCandidate(current, rect, direction) {
     const axis = axisOf(direction);
@@ -155,6 +194,8 @@
     isForward,
     isLineCandidate,
     findLineExtreme,
+    crossGap,
+    stepScore,
     reach,
     HORIZONTAL,
     VERTICAL,

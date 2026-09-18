@@ -1414,77 +1414,11 @@ class SpatialEngine {
     }
 
     getDistance(currentRect, targetRect, direction) {
-        // Edge-based distance calculation that handles different-sized elements correctly
-        // by measuring the shortest edge-to-edge distance and detecting overlap.
-
-        switch (direction) {
-            case 'ArrowUp':
-                // Primary: vertical gap (positive = target is above, negative = target is below/overlapping)
-                const verticalGapUp = currentRect.top - targetRect.bottom;
-
-                // Secondary: horizontal overlap/gap
-                const overlapLeftUp = Math.max(targetRect.left, currentRect.left);
-                const overlapRightUp = Math.min(targetRect.right, currentRect.right);
-                const horizontalGapUp = overlapLeftUp < overlapRightUp
-                    ? 0  // Elements overlap horizontally - perfect alignment
-                    : Math.min(
-                        Math.abs(targetRect.left - currentRect.right),
-                        Math.abs(targetRect.right - currentRect.left)
-                    );
-
-                return verticalGapUp + (horizontalGapUp * 1.5);
-
-            case 'ArrowDown':
-                // Primary: vertical gap (positive = target is below)
-                const verticalGapDown = targetRect.top - currentRect.bottom;
-
-                // Secondary: horizontal overlap/gap
-                const overlapLeftDown = Math.max(targetRect.left, currentRect.left);
-                const overlapRightDown = Math.min(targetRect.right, currentRect.right);
-                const horizontalGapDown = overlapLeftDown < overlapRightDown
-                    ? 0  // Elements overlap horizontally
-                    : Math.min(
-                        Math.abs(targetRect.left - currentRect.right),
-                        Math.abs(targetRect.right - currentRect.left)
-                    );
-
-                return verticalGapDown + (horizontalGapDown * 1.5);
-
-            case 'ArrowLeft':
-                // Primary: horizontal gap (positive = target is to the left)
-                const horizontalGapLeft = currentRect.left - targetRect.right;
-
-                // Secondary: vertical overlap/gap
-                const overlapTopLeft = Math.max(targetRect.top, currentRect.top);
-                const overlapBottomLeft = Math.min(targetRect.bottom, currentRect.bottom);
-                const verticalGapLeft = overlapTopLeft < overlapBottomLeft
-                    ? 0  // Elements overlap vertically
-                    : Math.min(
-                        Math.abs(targetRect.top - currentRect.bottom),
-                        Math.abs(targetRect.bottom - currentRect.top)
-                    );
-
-                return horizontalGapLeft + (verticalGapLeft * 30);
-
-            case 'ArrowRight':
-                // Primary: horizontal gap (positive = target is to the right)
-                const horizontalGapRight = targetRect.left - currentRect.right;
-
-                // Secondary: vertical overlap/gap
-                const overlapTopRight = Math.max(targetRect.top, currentRect.top);
-                const overlapBottomRight = Math.min(targetRect.bottom, currentRect.bottom);
-                const verticalGapRight = overlapTopRight < overlapBottomRight
-                    ? 0  // Elements overlap vertically
-                    : Math.min(
-                        Math.abs(targetRect.top - currentRect.bottom),
-                        Math.abs(targetRect.bottom - currentRect.top)
-                    );
-
-                return horizontalGapRight + (verticalGapRight * 30);
-
-            default:
-                return Infinity;
-        }
+        // Distance along the direction plus a penalty for leaving the current
+        // line. See stepScore in line-rules.js, which is tested against exact
+        // coordinates.
+        if (!window.TuiLineRules) return Infinity;
+        return window.TuiLineRules.stepScore(currentRect, targetRect, direction);
     }
 
     isTrapElement(el) {

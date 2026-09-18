@@ -12,6 +12,7 @@ const { test } = require('node:test');
 require('../src/line-rules.js');
 const {
   axisOf, directionFor, sameLine, isForward, isLineCandidate, findLineExtreme,
+  crossGap, stepScore,
   HORIZONTAL, VERTICAL, MIN_OVERLAP_RATIO
 } = globalThis.TuiLineRules;
 
@@ -232,4 +233,62 @@ test('a toolbar above a grid behaves the way it looks', () => {
 
   // From a toolbar button, End stays in the toolbar and never drops into the grid.
   assert.equal(findLineExtreme(toolbar[0], all, 'ArrowRight'), all.indexOf(toolbar[2]));
+});
+
+/* ── scoring a single arrow step ────────────────────────────────────────── */
+
+/** The candidate with the lowest step score, as the engine picks it. */
+function pick(current, rects, direction) {
+  let best = -1;
+  let bestScore = Infinity;
+  rects.forEach((rect, index) => {
+    const score = stepScore(current, rect, direction);
+    if (score < bestScore) { best = index; bestScore = score; }
+  });
+  return best;
+}
+
+test('a row that only touches the current one is not on it', () => {
+  const current = r(0, 100, 80, 60);               // top 100, bottom 160
+
+  assert.equal(crossGap(current, r(200, 100, 80, 60), HORIZONTAL), 0, 'same row');
+  assert.equal(crossGap(current, r(200, 40, 80, 60), HORIZONTAL), 1, 'row above, edge to edge');
+  assert.equal(crossGap(current, r(200, 160, 80, 60), HORIZONTAL), 1, 'row below, edge to edge');
+  assert.equal(crossGap(current, r(200, 0, 80, 60), HORIZONTAL), 40, 'a real gap is kept');
+});
+
+test('ArrowLeft in an edge-to-edge grid stays on the row (Google related searches, RTL)', () => {
+  // Exact rectangles from the bug report: two columns of chips with no gap
+  // between rows. From "Google website", ArrowLeft went to "Google wrapped"
+  // on the row above, because touching scored the same as aligned and it
+  // came first in the DOM. The chip beside it is "Download google".
+  const website = { left: 1365, right: 1659, top: 1893.625, bottom: 1953.625 };
+  const left = [
+    { left: 1031, right: 1325, top: 1713.625, bottom: 1773.625 },   // Google News
+    { left: 1031, right: 1325, top: 1773.625, bottom: 1833.625 },   // Google Maps
+    { left: 1031, right: 1325, top: 1833.625, bottom: 1893.625 },   // Google wrapped
+    { left: 1031, right: 1325, top: 1893.625, bottom: 1953.625 }    // Download google
+  ];
+
+  assert.equal(pick(website, left, 'ArrowLeft'), 3);
+});
+
+test('the same holds in every direction', () => {
+  const current = r(100, 100, 100, 50);
+
+  // Right: the neighbour on the row beats the one diagonally below it.
+  assert.equal(pick(current, [r(200, 150, 100, 50), r(200, 100, 100, 50)], 'ArrowRight'), 1);
+
+  // Down and up: the one straight below/above beats the diagonal that touches the column.
+  assert.equal(pick(current, [r(200, 150, 100, 50), r(100, 150, 100, 50)], 'ArrowDown'), 1);
+  assert.equal(pick(current, [r(0, 50, 100, 50), r(100, 50, 100, 50)], 'ArrowUp'), 1);
+});
+
+test('a nearer element on the row still wins over a further one', () => {
+  const current = r(300, 100, 80, 40);
+  assert.equal(pick(current, [r(0, 100, 80, 40), r(150, 100, 80, 40)], 'ArrowLeft'), 1);
+});
+
+test('stepScore rejects unknown directions', () => {
+  assert.equal(stepScore(r(0, 0, 10, 10), r(20, 0, 10, 10), 'Enter'), Infinity);
 });
