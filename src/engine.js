@@ -72,7 +72,11 @@ class SpatialEngine {
         // Use Capture Phase to intercept events before the page traps them
         document.addEventListener('keydown', (e) => this.handleKeydown(e), { capture: true });
         // NOTE: We keep scroll passive and bubbling as scroll doesn't usually get trapped like keys
-        window.addEventListener('scroll', () => this.handleScroll(), { passive: true });
+        // Captured on the document rather than heard on the window: scroll does
+        // not bubble, so a carousel scrolling its own box (BBC's "Recommended
+        // audio") never reached a window listener and the ring was left where
+        // the card had been until something else moved it.
+        document.addEventListener('scroll', () => this.handleScroll(), { passive: true, capture: true });
 
         // Passive interaction listeners to sync state without interference
         document.addEventListener('mousedown', (e) => this.handleInteraction(e), { passive: true });
