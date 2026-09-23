@@ -1,0 +1,8 @@
+{
+  "name": "tui-testenv",
+  "private": true,
+  "description": "Local harness that drives Chromium with the extension loaded. Not packaged.",
+  "dependencies": {
+    "playwright": "^1.63.0"
+  }
+}

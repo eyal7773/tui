@@ -1,0 +1,5 @@
+# Drive sidebar: ArrowDown from "+ New" went to "Ask Gemini" instead of "Home".
+../../examples/tui-report-2026-09-18T15-00-57-778Z.zip
+start:New
+key:ArrowDown
+expect:Home
