@@ -4,7 +4,11 @@
  */
 
 class SpatialEngine {
-    constructor() {
+    constructor(options = {}) {
+        // Running inside an iframe (see the start of the engine at the bottom
+        // of this file). The badge, the session count and the popup's log
+        // download belong to the top page, so a frame stays quiet about them.
+        this.isSubframe = !!options.subframe;
         this.candidates = [];
         this.candidatesDirty = true;
         this.isEnabled = true;
@@ -161,7 +165,7 @@ class SpatialEngine {
 
         // Listen for log download requests from the popup
         chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-            if (message.type === 'GET_DEBUG_LOGS') {
+            if (message.type === 'GET_DEBUG_LOGS' && !this.isSubframe) {
                 sendResponse({ logs: this.logBuffer.slice() });
                 return true;
             }
@@ -365,6 +369,7 @@ class SpatialEngine {
 
         // Deliberately not broadcastStatus(): background counts every
         // STATUS_UPDATE as a page load, and a settings flip is not one.
+        if (this.isSubframe) return;
         this.safeSendMessage({
             type: 'STATUS_CHANGED',
             payload: { supported: true, enabled: this.isEnabled }
@@ -1823,6 +1828,7 @@ class SpatialEngine {
     }
 
     broadcastStatus() {
+        if (this.isSubframe) return;
         this.safeSendMessage({
             type: 'STATUS_UPDATE',
             payload: { supported: true, enabled: this.isEnabled }
@@ -1954,5 +1960,38 @@ class SpatialEngine {
     }
 }
 
+/**
+ * Consent dialogs on news sites (The Guardian's Sourcepoint banner) live in a
+ * cross-origin iframe that takes focus on load. Keys then go to the frame, and
+ * with the engine running in the top page only, the arrows did nothing at all:
+ * no ring and no way to reach "Yes, I accept". So the engine runs in frames too.
+ *
+ * A page can hold dozens of frames, mostly ads, and keys only ever reach the
+ * one with focus. A frame therefore starts its engine on the first arrow key
+ * it receives rather than on load. A frame with a video is a player, whose
+ * arrows seek and change the volume, and is left alone.
+ */
+function isSubframe() {
+    try {
+        return window.top !== window;
+    } catch (e) {
+        return true; // A cross-origin parent can make the comparison throw.
+    }
+}
+
 // Start
-new SpatialEngine();
+if (!isSubframe()) {
+    new SpatialEngine();
+} else {
+    const ARROWS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+    const startOnFirstArrow = (e) => {
+        if (!ARROWS.has(e.key)) return;
+        document.removeEventListener('keydown', startOnFirstArrow, true);
+        if (document.querySelector('video')) return;
+
+        const engine = new SpatialEngine({ subframe: true });
+        // The engine's own listener was not there for this key yet.
+        if (engine.spotlight) engine.handleKeydown(e);
+    };
+    document.addEventListener('keydown', startOnFirstArrow, true);
+}

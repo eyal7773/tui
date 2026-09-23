@@ -18,6 +18,7 @@
       "matches": [
         "<all_urls>"
       ],
+      "all_frames": true,
       "js": [
         "site-rules.js",
         "ring-style.js",
