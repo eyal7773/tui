@@ -1511,6 +1511,16 @@ class SpatialEngine {
                 // If we are already in a sticky container (like Header), we should be able to move to other sticky containers (Sidebar) freely.
                 if (targetIsSticky && !currentIsSticky) {
                     score += 500;
+
+                    // A sideways step never leaves its row for a pinned bar. On
+                    // USA Today, ArrowRight from the end of a sidebar row went
+                    // 307px up into the masthead, because that was the only
+                    // thing further right on the page, penalty or not.
+                    const sideways = key === 'ArrowLeft' || key === 'ArrowRight';
+                    if (sideways && window.TuiLineRules &&
+                        !window.TuiLineRules.sameLine(currentRect, rect, window.TuiLineRules.axisOf(key))) {
+                        return;
+                    }
                 }
             }
 
