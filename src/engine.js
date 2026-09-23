@@ -86,12 +86,18 @@ class SpatialEngine {
 
         // Dynamic DOM Observer
         // Marks candidates dirty so we re-scan when DOM changes
-        this.observer = new MutationObserver(() => {
+        this.observer = new MutationObserver((records) => {
             this.candidatesDirty = true;
 
             // Sync with active element if it changed effectively during DOM updates
             // (e.g. "New Chat" clicked -> DOM updates -> input gets focus)
             this.monitorFocusChange(500);
+
+            // Content that moves without a scroll leaves the ring behind: on
+            // CNN an ad loads above the story after the ring is on it and
+            // pushes the story 300px down. Moving the ring writes its own
+            // style, so its records are ignored or this would never settle.
+            if (records.some(r => r.target !== this.spotlight)) this.scheduleRingUpdate();
         });
         this.observer.observe(document.body, {
             childList: true,
@@ -99,6 +105,13 @@ class SpatialEngine {
             attributes: true,
             attributeFilter: ['style', 'class', 'hidden', 'disabled']
         });
+
+        // An image that finishes loading shifts the page without any mutation;
+        // the body growing is the sign of it.
+        if (typeof ResizeObserver === 'function') {
+            this.bodyResizeObserver = new ResizeObserver(() => this.scheduleRingUpdate());
+            this.bodyResizeObserver.observe(document.body);
+        }
 
         // Listen for storage changes to update debug mode dynamically
         chrome.storage.onChanged.addListener((changes, namespace) => {
@@ -416,6 +429,11 @@ class SpatialEngine {
     }
 
     handleScroll() {
+        this.scheduleRingUpdate();
+    }
+
+    /** Puts the ring back on its element, at most once a frame. */
+    scheduleRingUpdate() {
         if (!this.isEnabled) return;
 
         // Throttled update using requestAnimationFrame to avoid performance hits during scroll
@@ -424,7 +442,8 @@ class SpatialEngine {
             requestAnimationFrame(() => {
                 this._scrollFrameLocked = false;
                 // Only update visual position if we are in "Active Mode" and have a target
-                if (this.isActiveMode && this.lastActiveElement) {
+                // that is still on the page (a removed one would put the ring at 0,0).
+                if (this.isActiveMode && this.lastActiveElement && this.lastActiveElement.isConnected) {
                     this.highlight(this.lastActiveElement);
                 }
             });
