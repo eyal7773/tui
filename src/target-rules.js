@@ -25,9 +25,14 @@
 (function (root) {
   'use strict';
 
+  // Yahoo's front page has <main tabindex="-1"> as a skip-link target, and
+  // with MAIN missing here the ring landed on the whole feed and scrolled it
+  // instead of stepping into the stories. Headings and paragraphs get the
+  // same tabindex="-1" when a single-page app moves focus after navigating.
   const GENERIC_TAGS = new Set([
     'DIV', 'SPAN', 'LI', 'TR', 'TD', 'UL', 'OL', 'NAV', 'SECTION', 'ARTICLE',
-    'ASIDE', 'HEADER', 'FOOTER'
+    'ASIDE', 'HEADER', 'FOOTER', 'MAIN', 'FORM', 'FIGURE', 'DIALOG', 'P',
+    'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'TABLE', 'TBODY', 'DL', 'DD', 'DT'
   ]);
 
   // Roles that make a generic element a target on their own. "row" is not

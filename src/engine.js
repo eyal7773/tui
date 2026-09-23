@@ -1134,7 +1134,7 @@ class SpatialEngine {
             // Custom elements count as generic too (see target-rules.js).
             const isGenericElement = targetRules
                 ? targetRules.isGenericTag(el)
-                : ['DIV', 'SPAN', 'LI', 'TR', 'TD', 'UL', 'OL', 'NAV', 'SECTION', 'ARTICLE', 'ASIDE', 'HEADER', 'FOOTER'].includes(el.tagName);
+                : ['DIV', 'SPAN', 'LI', 'TR', 'TD', 'UL', 'OL', 'NAV', 'SECTION', 'ARTICLE', 'ASIDE', 'HEADER', 'FOOTER', 'MAIN'].includes(el.tagName);
 
             if (isGenericElement && el.hasAttribute('tabindex')) {
                 // If it's a semantic interactive element, always keep it

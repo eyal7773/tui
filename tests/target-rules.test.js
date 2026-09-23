@@ -68,6 +68,14 @@ test('the old generic tags are still generic, and native controls are not', () =
   });
 });
 
+test('page landmarks and skip-link targets need proof of life too', () => {
+  // Yahoo's front page: <main tabindex="-1"> around the whole feed.
+  ['main', 'form', 'figure', 'dialog', 'h1', 'h2', 'p', 'table'].forEach((tag) => {
+    assert.equal(isGenericTag(el(tag)), true, tag);
+  });
+  assert.equal(hasInteractiveRole(el('main', { tabindex: '-1' })), false);
+});
+
 test('the roles that counted before still count', () => {
   ['button', 'link', 'menuitem', 'tab', 'option', 'gridcell', 'listitem'].forEach((role) => {
     assert.equal(hasInteractiveRole(el('div', { role })), true, role);
