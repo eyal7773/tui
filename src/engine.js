@@ -506,6 +506,32 @@ class SpatialEngine {
         return window.TuiViewRules.coveredEdges(window.innerHeight, bars);
     }
 
+    /**
+     * Is el inside a bar pinned along the top or bottom edge, such as a cookie
+     * strip, rather than in the page or in a dialog?
+     *
+     * ESPN's cookie banner focuses its "Cookie Policy" link on load, at the
+     * bottom of the window. The first ArrowDown started from there, so it went
+     * "below" it: halfway down the page to "Create Account", scrolling 483px.
+     * On the first press such a focus is not taken as the starting point and
+     * the ring starts at the top instead. A modal dialog does keep its focus:
+     * there the page means it. role="dialog" alone is not enough to tell,
+     * since OneTrust puts it on that same non-modal strip.
+     */
+    isInEdgeBar(el) {
+        const bar = this.pinnedAncestor(el);
+        if (!bar || !window.TuiViewRules) return false;
+        try {
+            if (this.composedClosest(el, 'dialog:modal, [aria-modal="true"]')) return false;
+        } catch (e) {
+            // :modal unsupported; the aria-modal half is checked on its own.
+            if (this.composedClosest(el, '[aria-modal="true"]')) return false;
+        }
+
+        const covered = window.TuiViewRules.coveredEdges(window.innerHeight, [bar.getBoundingClientRect()]);
+        return covered.top > 0 || covered.bottom > 0;
+    }
+
     /** The nearest ancestor-or-self that is position fixed or sticky, or null. */
     pinnedAncestor(node) {
         for (; node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
@@ -728,6 +754,7 @@ class SpatialEngine {
         // Disable "Active Mode" on mouse interaction so the green ring doesn't annoy mouse users
         if (e.type === 'mousedown' || e.type === 'click') {
             this.isActiveMode = false;
+            this.userHasActed = true;   // the focus is theirs now, see isInEdgeBar
             // Immediate update to hide the ring
             if (this.lastActiveElement) this.highlight(this.lastActiveElement);
         }
@@ -781,6 +808,9 @@ class SpatialEngine {
 
         // ENABLE Active Mode: The user clearly wants to use the plugin now.
         // This will allow highlight() to actually render the green ring.
+        // Before any click or arrow, focus is wherever the page put it.
+        const firstPress = !this.userHasActed;
+        this.userHasActed = true;
         this.isActiveMode = true;
 
         if (this.debugMode) {
@@ -832,7 +862,8 @@ class SpatialEngine {
             }
 
             let currentRect = null;
-            if (current && current !== document.body && !this.isLayoutWrapper(current)) {
+            if (current && current !== document.body && !this.isLayoutWrapper(current) &&
+                !(firstPress && this.isInEdgeBar(current))) {
                 currentRect = current.getBoundingClientRect();
             }
 
