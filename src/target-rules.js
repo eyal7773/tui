@@ -183,6 +183,27 @@
     return kids.find((kid) => roleOf(kid) !== 'group') || item;
   }
 
+  // Hosts that serve display ads into iframes. Google's slots also name the
+  // frame "google_ads_iframe_...", which covers them before src is set.
+  const AD_FRAME_HOSTS = /(^|\.)(googlesyndication\.com|doubleclick\.net|amazon-adsystem\.com|adnxs\.com|criteo\.com|pubmatic\.com|rubiconproject\.com|openx\.net|moatads\.com|adsafeprotected\.com)$/i;
+
+  /**
+   * An iframe that holds an ad. On CNN and Yahoo these sit above and between
+   * the stories, and the ring stopped on them although there is nothing to
+   * do there: the frame is cross-origin, so it never even takes focus. The
+   * aria-label ("Advertisement") is localised, so it is not read.
+   */
+  function isAdFrame(el) {
+    if (tagOf(el) !== 'IFRAME' || typeof el.getAttribute !== 'function') return false;
+    const id = el.getAttribute('id') || '';
+    const name = el.getAttribute('name') || '';
+    if (/^google_ads_iframe/i.test(id) || /^google_ads_iframe/i.test(name)) return true;
+
+    const src = el.getAttribute('src') || '';
+    const host = /^(?:https?:)?\/\/([^/:?#]+)/i.exec(src);
+    return !!host && AD_FRAME_HOSTS.test(host[1]);
+  }
+
   /** Does this role (or grid-row shape) make a generic element a target? */
   function hasInteractiveRole(el) {
     return INTERACTIVE_ROLES.has(roleOf(el)) || isGridRow(el);
@@ -195,6 +216,7 @@
     hasInteractiveRole: hasInteractiveRole,
     focusOwner: focusOwner,
     ownedItemTarget: ownedItemTarget,
+    isAdFrame: isAdFrame,
     OWNED_ITEM_SELECTOR: Array.from(ITEM_ROLES)
       .map((role) => '[role="' + role + '"]:not([tabindex])').join(', ')
   };

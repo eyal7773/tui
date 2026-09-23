@@ -1084,6 +1084,11 @@ class SpatialEngine {
                 return false;
             }
 
+            // Ad slots on news sites (see target-rules.js).
+            if (targetRules && targetRules.isAdFrame(el)) {
+                return false;
+            }
+
             // CRITICAL FIX: Stricter LABEL filtering
             // Labels are only interactive if:
             // 1. They have a tabindex (custom implementation)

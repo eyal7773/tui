@@ -76,6 +76,24 @@ test('page landmarks and skip-link targets need proof of life too', () => {
   assert.equal(hasInteractiveRole(el('main', { tabindex: '-1' })), false);
 });
 
+test('ad iframes are recognised by slot name or ad host, not by label', () => {
+  const { isAdFrame } = globalThis.TuiTargetRules;
+  // CNN: the slot's src is empty, only the id and name say what it is.
+  assert.equal(isAdFrame(el('iframe', {
+    id: 'google_ads_iframe_/8663477/CNNi/homepage/landing_0', src: '', 'aria-label': 'פרסומת'
+  })), true);
+  // Yahoo: a SafeFrame on a googlesyndication subdomain.
+  assert.equal(isAdFrame(el('iframe', {
+    src: 'https://4a45.safeframe.googlesyndication.com/safeframe/1-0-45/html/container.html'
+  })), true);
+  assert.equal(isAdFrame(el('iframe', { src: '//ad.doubleclick.net/x' })), true);
+  // Players and maps stay targets, as does a host that only contains an ad domain.
+  assert.equal(isAdFrame(el('iframe', { src: 'https://www.youtube.com/embed/abc' })), false);
+  assert.equal(isAdFrame(el('iframe', { src: 'https://s.yimg.com/rx/ev/builds/1.16.265/pframe.html' })), false);
+  assert.equal(isAdFrame(el('iframe', { src: 'https://notdoubleclick.net.example.com/' })), false);
+  assert.equal(isAdFrame(el('div', { id: 'google_ads_iframe_x' })), false);
+});
+
 test('the roles that counted before still count', () => {
   ['button', 'link', 'menuitem', 'tab', 'option', 'gridcell', 'listitem'].forEach((role) => {
     assert.equal(hasInteractiveRole(el('div', { role })), true, role);
