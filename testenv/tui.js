@@ -122,6 +122,9 @@ function pageRing() {
         return { el: `${el.tagName.toLowerCase()}${id}${role}`, text,
             rect: `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)}` };
     };
+    // The focused element inside any shadow roots, not the outer host.
+    let deep = document.activeElement;
+    while (deep && deep.shadowRoot && deep.shadowRoot.activeElement) deep = deep.shadowRoot.activeElement;
     const shown = spot && getComputedStyle(spot).display !== 'none';
     let ringed = null;
     if (shown) {
@@ -132,15 +135,14 @@ function pageRing() {
             return Math.abs(r.left - s.left) < 2 && Math.abs(r.top - s.top) < 2 &&
                 Math.abs(r.width - s.width) < 2 && Math.abs(r.height - s.height) < 2;
         };
-        const active = document.activeElement;
-        if (active && same(active)) ringed = active;
+        if (deep && same(deep)) ringed = deep;
         else {
             const hits = document.elementsFromPoint(s.left + s.width / 2, s.top + s.height / 2);
             ringed = hits.find((el) => el !== spot && same(el)) || null;
         }
     }
     return { ring: shown ? (describe(ringed) || { el: '(unmatched)', text: '' }) : null,
-        focus: describe(document.activeElement) };
+        focus: describe(deep) };
 }
 
 /**
