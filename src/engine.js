@@ -110,12 +110,13 @@ class SpatialEngine {
                 (r.target === this.lastActiveElement && r.attributeName === 'style');
             if (records.some(r => !ours(r))) this.scheduleRingUpdate(true);
         });
-        this.observer.observe(document.body, {
+        this.observerOptions = {
             childList: true,
             subtree: true,
             attributes: true,
             attributeFilter: ['style', 'class', 'hidden', 'disabled']
-        });
+        };
+        this.observer.observe(document.body, this.observerOptions);
 
         // An image that finishes loading shifts the page without any mutation;
         // the body growing is the sign of it.
@@ -325,7 +326,7 @@ class SpatialEngine {
     canToggleHandover() {
         if (!this.userEnabled || this.isExcluded) return false;
         if (this.isMenuOpen) return false;
-        return !this.shouldTrapArrows(document.activeElement);
+        return !this.shouldTrapArrows(this.deepActiveElement());
     }
 
     /**
@@ -341,7 +342,7 @@ class SpatialEngine {
             // Letting go of focus is the part that matters. Sites like YouTube
             // route their shortcuts by what is focused, so hiding the ring while
             // still holding a link would not give the page its keys back.
-            const active = document.activeElement;
+            const active = this.deepActiveElement();
             if (active && active !== document.body && typeof active.blur === 'function') {
                 active.blur();
             }
@@ -499,15 +500,15 @@ class SpatialEngine {
         const x = Math.min(Math.max(rect.left + rect.width / 2, 0), window.innerWidth - 1);
         const bars = [];
         for (const y of [1, window.innerHeight - 2]) {
-            const bar = this.pinnedAncestor(document.elementFromPoint(x, y));
-            if (bar && bar !== this.spotlight && !bar.contains(el)) bars.push(bar.getBoundingClientRect());
+            const bar = this.pinnedAncestor(this.deepElementFromPoint(x, y));
+            if (bar && bar !== this.spotlight && !this.composedContains(bar, el)) bars.push(bar.getBoundingClientRect());
         }
         return window.TuiViewRules.coveredEdges(window.innerHeight, bars);
     }
 
     /** The nearest ancestor-or-self that is position fixed or sticky, or null. */
     pinnedAncestor(node) {
-        for (; node && node !== document.body && node !== document.documentElement; node = node.parentElement) {
+        for (; node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
             const position = window.getComputedStyle(node).position;
             if (position === 'fixed' || position === 'sticky') return node;
         }
@@ -569,7 +570,7 @@ class SpatialEngine {
         }
 
         // Ignore if user is typing in an input
-        const active = document.activeElement;
+        const active = this.deepActiveElement();
 
         // BUG FIX: Only trap navigation if the input actually USES arrow keys (Text, Select, etc.)
         // Simple buttons (submit, reset, button) should NOT trap navigation.
@@ -609,7 +610,7 @@ class SpatialEngine {
             e.stopImmediatePropagation(); // CRITICAL: Stop the page from seeing this key
             this.navigate(e.key);
         } else if (e.key === 'Enter') {
-            const active = document.activeElement;
+            const active = this.deepActiveElement();
 
             // Check if we are on a wrapper that has a stashed input
             // CRITICAL: Also check lastActiveElement in case focus is on body (contenteditable fix)
@@ -676,7 +677,7 @@ class SpatialEngine {
         // click-rules.js decides; _tui_activate is the element navigation was
         // aiming at when the browser bounced focus up to this container.
         let target = el;
-        const intended = (el._tui_activate && document.body.contains(el._tui_activate))
+        const intended = (el._tui_activate && el._tui_activate.isConnected)
             ? el._tui_activate : null;
 
         if (window.TuiClickRules) {
@@ -755,7 +756,7 @@ class SpatialEngine {
                 return;
             }
 
-            const active = document.activeElement;
+            const active = this.deepActiveElement();
             // Check if focus has moved to a new meaningful element
             if (active && active !== this.lastActiveElement && active !== document.body) {
                 // Ignore large layout wrappers that just confuse the user (e.g. WhatsApp Web background)
@@ -783,7 +784,7 @@ class SpatialEngine {
         this.isActiveMode = true;
 
         if (this.debugMode) {
-            const active = this.lastActiveElement || document.activeElement;
+            const active = this.lastActiveElement || this.deepActiveElement();
             const tag = active ? active.tagName : 'NULL';
             const id = active && active.id ? `#${active.id}` : '';
             let cls = '';
@@ -818,16 +819,16 @@ class SpatialEngine {
                     '| _tui_input:', lae?._tui_input ? `${lae._tui_input.tagName}#${lae._tui_input.id}` : 'none');
             }
             let current = this.lastActiveElement;
-            if (!current || !document.body.contains(current)) {
-                current = document.activeElement;
+            if (!current || !current.isConnected) {
+                current = this.deepActiveElement();
             }
 
             // Clear stale wrapper state if the wrapper is no longer focused.
             // This handles popup close/reopen: _tui_input persists on the DOM node,
             // causing SELECT to be wrongly excluded on the next navigation.
-            if (current && current._tui_input && current !== document.activeElement) {
+            if (current && current._tui_input && current !== this.deepActiveElement()) {
                 current._tui_input = null;
-                current = document.activeElement;
+                current = this.deepActiveElement();
             }
 
             let currentRect = null;
@@ -910,9 +911,107 @@ class SpatialEngine {
             if (style.position === 'fixed' || style.position === 'sticky') {
                 return true;
             }
-            iter = iter.parentElement;
+            iter = this.composedParent(iter);
         }
         return false;
+    }
+
+    /*
+     * Shadow DOM. MSN builds its whole front page from web components: of 185
+     * links, none sits in the document itself, all are inside shadow roots. A
+     * search of the document found nothing, so the ring never appeared and the
+     * arrows only scrolled. The helpers below see through shadow roots where
+     * the plain DOM APIs stop at the host. On a page without shadow DOM each
+     * one behaves exactly like the API it replaces.
+     */
+
+    /** The shadow root hosted by el, open or closed, or null. */
+    shadowRootOf(el) {
+        if (el.shadowRoot) return el.shadowRoot;
+        try {
+            // Content scripts may read closed roots too (Cloudflare's
+            // challenge checkbox lives in one).
+            if (chrome.dom && typeof chrome.dom.openOrClosedShadowRoot === 'function') {
+                return chrome.dom.openOrClosedShadowRoot(el) || null;
+            }
+        } catch (e) {
+            // Not an element that can host one.
+        }
+        return null;
+    }
+
+    /** Starts watching shadow roots the observer does not cover yet. */
+    observeShadowRoots(scopes) {
+        if (!this.observer) return;
+        if (!this.observedRoots) this.observedRoots = new WeakSet();
+        scopes.forEach(scope => {
+            if (scope === document || this.observedRoots.has(scope)) return;
+            this.observedRoots.add(scope);
+            this.observer.observe(scope, this.observerOptions);
+        });
+    }
+
+    /** Every shadow root on the page, nested ones included. */
+    shadowRoots() {
+        const roots = [];
+        const visit = (scope) => {
+            scope.querySelectorAll('*').forEach(el => {
+                const root = this.shadowRootOf(el);
+                if (root) {
+                    roots.push(root);
+                    visit(root);
+                }
+            });
+        };
+        visit(document);
+        return roots;
+    }
+
+    /** The element that really has focus, inside whatever shadow roots hold it. */
+    deepActiveElement() {
+        let active = document.activeElement;
+        while (active) {
+            const root = this.shadowRootOf(active);
+            if (!root || !root.activeElement) break;
+            active = root.activeElement;
+        }
+        return active;
+    }
+
+    /** elementFromPoint that does not stop at a shadow host. */
+    deepElementFromPoint(x, y) {
+        let el = document.elementFromPoint(x, y);
+        while (el) {
+            const root = this.shadowRootOf(el);
+            const inner = root && typeof root.elementFromPoint === 'function' ? root.elementFromPoint(x, y) : null;
+            if (!inner || inner === el) break;
+            el = inner;
+        }
+        return el;
+    }
+
+    /** parentElement, stepping from a shadow root's top out to its host. */
+    composedParent(node) {
+        if (!node) return null;
+        if (node.parentElement) return node.parentElement;
+        const parent = node.parentNode;
+        return parent && parent.host ? parent.host : null;
+    }
+
+    /** a.contains(b), counting what sits in shadow roots under a. */
+    composedContains(a, b) {
+        for (let node = b; node; node = this.composedParent(node)) {
+            if (node === a) return true;
+        }
+        return false;
+    }
+
+    /** el.closest(selector), continuing past shadow roots. */
+    composedClosest(el, selector) {
+        for (let node = el; node; node = this.composedParent(node)) {
+            if (node.matches && node.matches(selector)) return node;
+        }
+        return null;
     }
 
     /**
@@ -1023,7 +1122,12 @@ class SpatialEngine {
         // on list items using roving tabindex, usually setting them to -1 when not active.
         // NOTE: We include 'label' because modern UIs use labels as interactive controls (dropdowns, custom checkboxes, toggles)
         const selector = 'a, button, input, select, textarea, label, iframe, frame, object, embed, summary, [tabindex], [contenteditable]:not([contenteditable="false"])';
-        let all = Array.from(document.querySelectorAll(selector));
+        // The document and every shadow root in it (see shadowRoots). The
+        // observer only watches the document, so each root is watched too,
+        // or a feed filling in inside a component would never mark us dirty.
+        const scopes = [document, ...this.shadowRoots()];
+        this.observeShadowRoots(scopes);
+        let all = scopes.flatMap(scope => Array.from(scope.querySelectorAll(selector)));
 
         // Items of a tree, listbox or menu whose container keeps the only
         // tabindex (Google Drive's sidebar). They have no tabindex, so the
@@ -1031,7 +1135,7 @@ class SpatialEngine {
         const targetRules = window.TuiTargetRules;
         if (targetRules) {
             const known = new Set(all);
-            document.querySelectorAll(targetRules.OWNED_ITEM_SELECTOR).forEach(item => {
+            scopes.flatMap(scope => Array.from(scope.querySelectorAll(targetRules.OWNED_ITEM_SELECTOR))).forEach(item => {
                 const target = targetRules.ownedItemTarget(item);
                 if (!target || known.has(target)) return;
                 target._tui_owned_item = true;
@@ -1053,7 +1157,7 @@ class SpatialEngine {
             // This excludes helper inputs used by libraries (e.g. Jira, React-Select)
             if (el.getAttribute('tabindex') === '-1') {
                 // Allow if currently focused (user is already there)
-                if (document.activeElement !== el) {
+                if (this.deepActiveElement() !== el) {
                     const tagName = el.tagName;
                     if (['INPUT', 'BUTTON', 'SELECT', 'TEXTAREA', 'A'].includes(tagName)) {
                         // Check for Roving Tabindex roles that SHOULD be reachable via arrow keys
@@ -1129,7 +1233,7 @@ class SpatialEngine {
             // FILTER: "Skip to Content" text check
             // If the element text explicitly says "Skip to", it's likely a hidden navigation aid.
             // These should only be candidates if they are ALREADY focused (i.e. user Tabbed to them).
-            if (document.activeElement !== el) {
+            if (this.deepActiveElement() !== el) {
                 const text = (el.textContent || '').toLowerCase().trim();
                 if (text.startsWith('skip to ') || text === 'skip navigation' || text === 'skip main navigation') {
                     return false;
@@ -1362,7 +1466,7 @@ class SpatialEngine {
         // Determine if we are currently starting from a sticky/fixed context (e.g. Header)
         // BUG FIX: Also treat semantic navigation regions (HEADER, NAV) as "Sticky/Anchor" regions.
         // This ensures that navigating FROM a header (even if not CSS sticky) to a sticky sidebar doesn't incur a penalty.
-        const currentIsSticky = currentEl ? (this.isSticky(currentEl) || !!currentEl.closest('header, nav, [role="banner"], [role="navigation"]')) : false;
+        const currentIsSticky = currentEl ? (this.isSticky(currentEl) || !!this.composedClosest(currentEl, 'header, nav, [role="banner"], [role="navigation"]')) : false;
 
         this.candidates.forEach(cand => {
             // Skip self - ENHANCED to prevent navigation loops
@@ -1373,7 +1477,7 @@ class SpatialEngine {
             }
 
             // 2. Don't select the actual DOM focused element
-            if (cand === document.activeElement) {
+            if (cand === this.deepActiveElement()) {
                 return;
             }
 
@@ -1393,7 +1497,7 @@ class SpatialEngine {
 
                 // CRITICAL FIX: Don't select ANCESTORS of the current element
                 // Navigating from Input -> Parent Div/Label is almost never desired and causes loops
-                if (cand.contains(currentEl)) return;
+                if (this.composedContains(cand, currentEl)) return;
 
                 // CRITICAL FIX: Don't select LABELs that control the current input
                 if (cand.tagName === 'LABEL' && cand.getAttribute('for') === currentEl.id) return;
@@ -1446,9 +1550,9 @@ class SpatialEngine {
             // Check for Overlapping Elements (Visual Obstruction)
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
-            const topEl = document.elementFromPoint(centerX, centerY);
+            const topEl = this.deepElementFromPoint(centerX, centerY);
 
-            if (topEl && !cand.contains(topEl) && !topEl.contains(cand)) {
+            if (topEl && !this.composedContains(cand, topEl) && !this.composedContains(topEl, cand)) {
                 // FIX: Allow Label <-> Input obstruction
                 // If the candidate is a label and it's obscured by its target input (or vice versa), that's fine.
                 // This happens with custom checkboxes/radios where the input is on top of the label.
@@ -1472,7 +1576,7 @@ class SpatialEngine {
                             isObstructingFixed = true;
                             break;
                         }
-                        obstacle = obstacle.parentElement;
+                        obstacle = this.composedParent(obstacle);
                     }
 
                     if (!isObstructingFixed) {
@@ -1675,7 +1779,7 @@ class SpatialEngine {
         if (this.isTrapElement(el)) {
             // We DO NOT call el.focus() because that surrenders control to the iframe.
             // Instead, we just highlight it and keep system focus on the body (or blur current).
-            document.activeElement.blur();
+            this.deepActiveElement().blur();
             this.scrollToReveal(el);
             this.highlight(el);
             cleanupLogs();
@@ -1707,13 +1811,13 @@ class SpatialEngine {
                 parent.focus();
 
                 if (this.debugMode) {
-                    console.log('[TUI] After parent.focus(), activeElement:', document.activeElement.tagName, document.activeElement.id || '(no id)');
-                    console.log('[TUI] Is contenteditable active?', document.activeElement === el);
+                    console.log('[TUI] After parent.focus(), activeElement:', this.deepActiveElement().tagName, this.deepActiveElement().id || '(no id)');
+                    console.log('[TUI] Is contenteditable active?', this.deepActiveElement() === el);
                 }
 
                 // CRITICAL FIX: Verify wrapper focus success
                 // If focus didn't move to parent (or inside it), it means parent refused focus.
-                if (document.activeElement !== parent && !parent.contains(document.activeElement)) {
+                if (this.deepActiveElement() !== parent && !parent.contains(this.deepActiveElement())) {
                     if (this.debugMode) console.log('[TUI] ⚠️ Wrapper focus FAILED. Parent is not focusable. Marking candidate as failed.');
                     this.failedFocusElements.add(el);
                     cleanupLogs();
@@ -1723,10 +1827,10 @@ class SpatialEngine {
                 // CRITICAL FIX: Ensure contenteditable elements don't auto-activate
                 // Some browsers/sites may still try to focus the contenteditable
                 // when its parent wrapper is focused. Explicitly blur it.
-                if (el.isContentEditable && document.activeElement === el) {
+                if (el.isContentEditable && this.deepActiveElement() === el) {
                     if (this.debugMode) console.log('[TUI] ⚠️ Contenteditable got focus! Blurring it...');
                     el.blur();
-                    if (this.debugMode) console.log('[TUI] After blur(), activeElement:', document.activeElement.tagName);
+                    if (this.debugMode) console.log('[TUI] After blur(), activeElement:', this.deepActiveElement().tagName);
                 }
 
                 this.scrollToReveal(parent);
@@ -1747,7 +1851,7 @@ class SpatialEngine {
         }
         if (this.debugMode) console.log('[TUI] Using normal focus (no wrapper needed)');
         el.focus();
-        if (this.debugMode) console.log('[TUI] After el.focus(), activeElement:', document.activeElement.tagName, document.activeElement.id || '(no id)');
+        if (this.debugMode) console.log('[TUI] After el.focus(), activeElement:', this.deepActiveElement().tagName, this.deepActiveElement().id || '(no id)');
 
         // CRITICAL FIX: Check if focusing this element caused a DIFFERENT element to get focus
         // This can happen with:
@@ -1756,7 +1860,7 @@ class SpatialEngine {
         // - Parent wrappers that intercept focus (GitHub autocomplete, etc.)
         // - Autocomplete widgets
         // - Custom focus management in web apps
-        const actualFocus = document.activeElement;
+        const actualFocus = this.deepActiveElement();
 
         // Simple check: did focus move at all?
         // Note: actualFocus could be body if focus failed completely
@@ -1796,7 +1900,7 @@ class SpatialEngine {
             // tab-unreachable, so focusing the link focuses the row. The row has
             // no click handler, so Enter on it would do nothing - remember what
             // we were actually aiming at so Enter can click that instead.
-            if (actualFocus.contains && actualFocus.contains(el)) {
+            if (this.composedContains(actualFocus, el)) {
                 if (this.debugMode) console.log('[TUI] Focus bounced to ancestor; Enter will activate', el.tagName, el.id || '(no id)');
                 actualFocus._tui_activate = el;
             } else {

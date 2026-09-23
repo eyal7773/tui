@@ -144,6 +144,20 @@ still step into the subtree below it.
 
 `src/target-rules.js` holds these decisions as pure functions over a tree.
 
+## Web components and frames
+
+**The ring reaches links inside shadow roots.** MSN's front page is built
+entirely from web components: none of its links sit in the document itself,
+so the extension used to find nothing there and the arrows only scrolled.
+Candidates are now gathered from every shadow root, open or closed, and focus,
+hit-testing and containment are read through them. A page without shadow DOM
+behaves exactly as before.
+
+**The keys work inside a frame that has taken focus**, such as The Guardian's
+cookie-consent dialog. The extension runs in every frame, but a frame only
+starts navigating on the first arrow key it receives, and a frame that holds a
+video keeps its own arrow keys for seeking.
+
 ## Handing the keyboard back
 
 Spatial navigation works by moving real focus, and a site that routes its own
