@@ -97,7 +97,7 @@ class SpatialEngine {
             // CNN an ad loads above the story after the ring is on it and
             // pushes the story 300px down. Moving the ring writes its own
             // style, so its records are ignored or this would never settle.
-            if (records.some(r => r.target !== this.spotlight)) this.scheduleRingUpdate();
+            if (records.some(r => r.target !== this.spotlight)) this.scheduleRingUpdate(true);
         });
         this.observer.observe(document.body, {
             childList: true,
@@ -109,7 +109,7 @@ class SpatialEngine {
         // An image that finishes loading shifts the page without any mutation;
         // the body growing is the sign of it.
         if (typeof ResizeObserver === 'function') {
-            this.bodyResizeObserver = new ResizeObserver(() => this.scheduleRingUpdate());
+            this.bodyResizeObserver = new ResizeObserver(() => this.scheduleRingUpdate(true));
             this.bodyResizeObserver.observe(document.body);
         }
 
@@ -432,8 +432,32 @@ class SpatialEngine {
         this.scheduleRingUpdate();
     }
 
-    /** Puts the ring back on its element, at most once a frame. */
-    scheduleRingUpdate() {
+    /**
+     * Scrolls the element back into view when the page pushed it out right
+     * after the ring arrived. On CNN an ad loads above a story a moment after
+     * ArrowDown lands on it and moves it below the fold, so the ring the user
+     * just moved is out of sight. Later shifts are left alone: by then the
+     * user may be scrolling with the mouse and pulling the page back would
+     * fight them.
+     */
+    keepArrivalInView(el) {
+        const ARRIVAL_WINDOW_MS = 2000;
+        if (!this.lastArrivalAt || Date.now() - this.lastArrivalAt > ARRIVAL_WINDOW_MS) return;
+
+        const rect = el.getBoundingClientRect();
+        const outOfView = rect.bottom > window.innerHeight || rect.top < 0;
+        // Taller than the window: it cannot fit, and 'nearest' would jitter.
+        if (!outOfView || rect.height > window.innerHeight) return;
+        el.scrollIntoView({ behavior: this.scrollBehavior(), block: 'nearest' });
+    }
+
+    /**
+     * Puts the ring back on its element, at most once a frame. layoutShifted
+     * is false for a scroll, which moves the ring but never re-scrolls:
+     * a smooth scroll in progress would otherwise be restarted every frame.
+     */
+    scheduleRingUpdate(layoutShifted = false) {
+        if (layoutShifted) this._layoutShifted = true;
         if (!this.isEnabled) return;
 
         // Throttled update using requestAnimationFrame to avoid performance hits during scroll
@@ -441,10 +465,13 @@ class SpatialEngine {
             this._scrollFrameLocked = true;
             requestAnimationFrame(() => {
                 this._scrollFrameLocked = false;
+                const shifted = this._layoutShifted;
+                this._layoutShifted = false;
                 // Only update visual position if we are in "Active Mode" and have a target
                 // that is still on the page (a removed one would put the ring at 0,0).
                 if (this.isActiveMode && this.lastActiveElement && this.lastActiveElement.isConnected) {
                     this.highlight(this.lastActiveElement);
+                    if (shifted) this.keepArrivalInView(this.lastActiveElement);
                 }
             });
         }
@@ -759,6 +786,7 @@ class SpatialEngine {
                     // Remember the axis for Home/End. A jump counts the same as a
                     // step: both leave the ring travelling in that direction.
                     this.lastDirection = key;
+                    this.lastArrivalAt = Date.now();
                     // Metric Tracking
                     this.safeSendMessage({
                         type: 'METRIC_EVENT',
