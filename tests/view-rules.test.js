@@ -111,3 +111,23 @@ test('with no window to measure against, nothing is filtered out', () => {
   // Better to offer a candidate than to silently drop every one of them.
   assert.equal(withinReach(r(100, 100, 200, 40), null), true);
 });
+
+test('a bar along the bottom edge is reserved (The Guardian support banner)', () => {
+  const { coveredEdges } = globalThis.TuiViewRules;
+  // Exact: the banner starts at 492 in a 900px window.
+  assert.deepEqual(coveredEdges(900, [{ top: 492, bottom: 900 }]), { top: 0, bottom: 408 });
+});
+
+test('a pinned header is reserved at the top, and the taller of two bars wins', () => {
+  const { coveredEdges } = globalThis.TuiViewRules;
+  assert.deepEqual(coveredEdges(900, [{ top: 0, bottom: 64 }, { top: 0, bottom: 40 }]), { top: 64, bottom: 0 });
+});
+
+test('full-screen dialogs and bars away from the edges reserve nothing', () => {
+  const { coveredEdges } = globalThis.TuiViewRules;
+  assert.deepEqual(coveredEdges(900, [{ top: 0, bottom: 900 }]), { top: 0, bottom: 0 }, 'covers both edges');
+  assert.deepEqual(coveredEdges(900, [{ top: 300, bottom: 900 }]), { top: 0, bottom: 0 }, 'two thirds of the window');
+  assert.deepEqual(coveredEdges(900, [{ top: 200, bottom: 300 }]), { top: 0, bottom: 0 }, 'floating mid-screen');
+  assert.deepEqual(coveredEdges(900, [{ top: 0, bottom: 0 }, null]), { top: 0, bottom: 0 }, 'empty');
+  assert.deepEqual(coveredEdges(undefined, [{ top: 0, bottom: 50 }]), { top: 0, bottom: 0 }, 'no window');
+});

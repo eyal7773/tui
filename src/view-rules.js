@@ -78,9 +78,52 @@
     return withinReach(rect, viewport, 0);
   }
 
+  /**
+   * An overlay taller than this share of the window is a dialog or a page of
+   * its own, not a bar along an edge: reserving room for it would leave no
+   * room at all. The Guardian's support banner takes 45%.
+   */
+  const MAX_EDGE_OVERLAY_RATIO = 0.6;
+
+  /**
+   * How much of the window's top and bottom edges fixed bars cover, given the
+   * rectangles of the fixed or sticky elements found along those edges.
+   *
+   * Scrolling a target "into view" only brought it inside the window, so on
+   * The Guardian the story the ring had just moved to sat half behind the
+   * sticky support banner along the bottom, and on sites with a pinned header
+   * a step up hid the target under it.
+   *
+   * @param {number} viewportHeight
+   * @param {Array<{top:number,bottom:number}>} overlays
+   * @returns {{top:number,bottom:number}} pixels covered from each edge
+   */
+  function coveredEdges(viewportHeight, overlays) {
+    const covered = { top: 0, bottom: 0 };
+    if (typeof viewportHeight !== 'number' || !Array.isArray(overlays)) return covered;
+
+    const maxHeight = viewportHeight * MAX_EDGE_OVERLAY_RATIO;
+    const EDGE = 2;   // a bar may stop a pixel short of the edge
+
+    overlays.forEach((rect) => {
+      if (!rect) return;
+      const height = rect.bottom - rect.top;
+      if (!(height > 0) || height > maxHeight) return;
+
+      const onTop = rect.top <= EDGE && rect.bottom > 0;
+      const onBottom = rect.bottom >= viewportHeight - EDGE && rect.top < viewportHeight;
+      if (onTop && !onBottom) covered.top = Math.max(covered.top, rect.bottom);
+      if (onBottom && !onTop) covered.bottom = Math.max(covered.bottom, viewportHeight - rect.top);
+    });
+
+    return covered;
+  }
+
   root.TuiViewRules = {
     withinReach,
     onScreen,
+    coveredEdges,
+    MAX_EDGE_OVERLAY_RATIO,
     bandFor,
     VERTICAL_REACH_RATIO
   };

@@ -105,7 +105,10 @@ class SpatialEngine {
             // CNN an ad loads above the story after the ring is on it and
             // pushes the story 300px down. Moving the ring writes its own
             // style, so its records are ignored or this would never settle.
-            if (records.some(r => r.target !== this.spotlight)) this.scheduleRingUpdate(true);
+            // scrollToReveal's scroll-margin on the target is ours as well.
+            const ours = (r) => r.target === this.spotlight ||
+                (r.target === this.lastActiveElement && r.attributeName === 'style');
+            if (records.some(r => !ours(r))) this.scheduleRingUpdate(true);
         });
         this.observer.observe(document.body, {
             childList: true,
@@ -454,10 +457,61 @@ class SpatialEngine {
         if (!this.lastArrivalAt || Date.now() - this.lastArrivalAt > ARRIVAL_WINDOW_MS) return;
 
         const rect = el.getBoundingClientRect();
-        const outOfView = rect.bottom > window.innerHeight || rect.top < 0;
-        // Taller than the window: it cannot fit, and 'nearest' would jitter.
-        if (!outOfView || rect.height > window.innerHeight) return;
+        const covered = this.coveredEdges(el);
+        const outOfView = rect.bottom > window.innerHeight - covered.bottom || rect.top < covered.top;
+        // Taller than the room left: it cannot fit, and 'nearest' would jitter.
+        if (!outOfView || rect.height > window.innerHeight - covered.top - covered.bottom) return;
+        this.scrollToReveal(el);
+    }
+
+    /**
+     * Scrolls el into the part of the window that fixed bars leave free. A
+     * plain scrollIntoView counts a sticky banner as visible space, so the
+     * target could land behind it. The room is reserved with scroll-margin,
+     * which the browser reads when the scroll starts, so it is set only for
+     * the call.
+     */
+    scrollToReveal(el) {
+        const covered = this.coveredEdges(el);
+        const style = el.style;
+        const saved = [style.scrollMarginTop, style.scrollMarginBottom];
+        if (covered.top) style.scrollMarginTop = `${covered.top}px`;
+        if (covered.bottom) style.scrollMarginBottom = `${covered.bottom}px`;
+
         el.scrollIntoView({ behavior: this.scrollBehavior(), block: 'nearest' });
+
+        if (covered.top || covered.bottom) {
+            style.scrollMarginTop = saved[0];
+            style.scrollMarginBottom = saved[1];
+        }
+    }
+
+    /**
+     * Pixels of the top and bottom edges that fixed or sticky bars cover in
+     * el's column, read from whatever is topmost there (see coveredEdges in
+     * view-rules.js). A bar that holds el is where el lives, not a cover.
+     */
+    coveredEdges(el) {
+        const none = { top: 0, bottom: 0 };
+        if (!window.TuiViewRules || typeof document.elementFromPoint !== 'function') return none;
+
+        const rect = el.getBoundingClientRect();
+        const x = Math.min(Math.max(rect.left + rect.width / 2, 0), window.innerWidth - 1);
+        const bars = [];
+        for (const y of [1, window.innerHeight - 2]) {
+            const bar = this.pinnedAncestor(document.elementFromPoint(x, y));
+            if (bar && bar !== this.spotlight && !bar.contains(el)) bars.push(bar.getBoundingClientRect());
+        }
+        return window.TuiViewRules.coveredEdges(window.innerHeight, bars);
+    }
+
+    /** The nearest ancestor-or-self that is position fixed or sticky, or null. */
+    pinnedAncestor(node) {
+        for (; node && node !== document.body && node !== document.documentElement; node = node.parentElement) {
+            const position = window.getComputedStyle(node).position;
+            if (position === 'fixed' || position === 'sticky') return node;
+        }
+        return null;
     }
 
     /**
@@ -1612,7 +1666,7 @@ class SpatialEngine {
             // We DO NOT call el.focus() because that surrenders control to the iframe.
             // Instead, we just highlight it and keep system focus on the body (or blur current).
             document.activeElement.blur();
-            el.scrollIntoView({ behavior: this.scrollBehavior(), block: 'nearest' });
+            this.scrollToReveal(el);
             this.highlight(el);
             cleanupLogs();
             return true; // Success (Virtual)
@@ -1665,7 +1719,7 @@ class SpatialEngine {
                     if (this.debugMode) console.log('[TUI] After blur(), activeElement:', document.activeElement.tagName);
                 }
 
-                parent.scrollIntoView({ behavior: this.scrollBehavior(), block: 'nearest' });
+                this.scrollToReveal(parent);
                 this.highlight(parent);
                 cleanupLogs();
                 return true; // Success
@@ -1720,7 +1774,7 @@ class SpatialEngine {
                 this.lastActiveElement = actualFocus;
 
                 // Highlight the INPUT (the actual focused element)
-                actualFocus.scrollIntoView({ behavior: this.scrollBehavior(), block: 'nearest' });
+                this.scrollToReveal(actualFocus);
                 this.highlight(actualFocus);
 
                 cleanupLogs();
@@ -1751,7 +1805,7 @@ class SpatialEngine {
         // Drop any stale aim from an earlier bounce: this element is the target now.
         el._tui_activate = null;
         this.lastActiveElement = el;
-        el.scrollIntoView({ behavior: this.scrollBehavior(), block: 'nearest' });
+        this.scrollToReveal(el);
         this.highlight(el);
 
         cleanupLogs();
