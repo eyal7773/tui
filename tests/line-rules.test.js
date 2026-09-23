@@ -284,6 +284,20 @@ test('the same holds in every direction', () => {
   assert.equal(pick(current, [r(0, 50, 100, 50), r(100, 50, 100, 50)], 'ArrowUp'), 1);
 });
 
+test('ArrowDown stays in its column past the air between stories (Fox News)', () => {
+  // Exact rectangles: from the "Sophie Cunningham" headline, ArrowDown went
+  // to a bullet link in the middle column instead of the next story's image.
+  const headline = { left: 24, right: 308.859375, top: 1106, bottom: 1152 };
+  const candidates = [
+    { left: 387.328125, right: 666.421875, top: 1213, bottom: 1250 },  // bullet, next column
+    { left: 24, right: 342.328125, top: 1348, bottom: 1527 }           // next story, same column
+  ];
+  assert.equal(pick(headline, candidates, 'ArrowDown'), 1);
+
+  // With nothing left in the column, the next column is still reached.
+  assert.equal(pick(headline, [candidates[0]], 'ArrowDown'), 0);
+});
+
 test('a nearer element on the row still wins over a further one', () => {
   const current = r(300, 100, 80, 40);
   assert.equal(pick(current, [r(0, 100, 80, 40), r(150, 100, 80, 40)], 'ArrowLeft'), 1);

@@ -138,12 +138,19 @@
    * more sideways than up and down, because rows are short and a sideways step
    * that changes row is almost never what was meant.
    */
+  // What each pixel of leaving the column costs on an up/down step. It was
+  // 1.5, and on Fox News a bullet link in the next column, 61px down and 78px
+  // across, beat the next story straight below, 196px down: ArrowDown hopped
+  // columns in the middle of a list. News grids leave that much air between
+  // stories, so staying in the column has to be worth more than that.
+  const COLUMN_PENALTY = 3;
+
   function stepScore(current, rect, direction) {
     switch (direction) {
       case 'ArrowUp':
-        return (current.top - rect.bottom) + crossGap(current, rect, VERTICAL) * 1.5;
+        return (current.top - rect.bottom) + crossGap(current, rect, VERTICAL) * COLUMN_PENALTY;
       case 'ArrowDown':
-        return (rect.top - current.bottom) + crossGap(current, rect, VERTICAL) * 1.5;
+        return (rect.top - current.bottom) + crossGap(current, rect, VERTICAL) * COLUMN_PENALTY;
       case 'ArrowLeft':
         return (current.left - rect.right) + crossGap(current, rect, HORIZONTAL) * 30;
       case 'ArrowRight':
