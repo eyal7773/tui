@@ -1599,9 +1599,19 @@ class SpatialEngine {
                 } else {
                     // BUG FIX: Allow navigation to elements obscured by fixed/sticky containers (headers/footers)
                     // We must traverse up the tree because elementFromPoint might return a child of the fixed element.
+                    // A hover card that says it is not there does not hide what
+                    // is under it either. Wikipedia's page previews stay open
+                    // over the next paragraph after focus has moved on, marked
+                    // aria-hidden, and every link under them was skipped.
                     let isObstructingFixed = false;
                     let obstacle = topEl;
                     while (obstacle && obstacle !== document.body) {
+                        const hidden = obstacle.getAttribute && obstacle.getAttribute('aria-hidden');
+                        if (hidden === '' || hidden === 'true' ||
+                            (obstacle.getAttribute && obstacle.getAttribute('role') === 'tooltip')) {
+                            isObstructingFixed = true;
+                            break;
+                        }
                         const style = window.getComputedStyle(obstacle);
                         if (style.position === 'fixed' || style.position === 'sticky') {
                             isObstructingFixed = true;

@@ -1,0 +1,5 @@
+# Wikipedia: a page preview left open over the next paragraph made ArrowDown skip every link in it.
+https://en.wikipedia.org/wiki/Albert_Einstein
+start:css=#mwNQ
+key:ArrowDown*5
+expect:Kingdom of Württemberg
