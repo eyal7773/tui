@@ -752,7 +752,10 @@ class SpatialEngine {
         if (!this.isEnabled) return;
 
         // Disable "Active Mode" on mouse interaction so the green ring doesn't annoy mouse users
-        if (e.type === 'mousedown' || e.type === 'click') {
+        // Only a real mouse. Enter clicks through simulateClick, whose events
+        // are untrusted, and picking a radio with Enter hid the ring it was
+        // pressed from.
+        if ((e.type === 'mousedown' || e.type === 'click') && e.isTrusted) {
             this.isActiveMode = false;
             this.userHasActed = true;   // the focus is theirs now, see isInEdgeBar
             // Immediate update to hide the ring
