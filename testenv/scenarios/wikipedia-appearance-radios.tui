@@ -1,0 +1,9 @@
+# Wikipedia: ArrowRight from the infobox went up to Donate past the sticky Appearance radios, and on a radio the arrows changed the theme.
+https://en.wikipedia.org/wiki/Albert_Einstein
+start:css=.infobox button
+key:ArrowRight
+expect:css=#skin-client-pref-skin-theme-value-night
+key:ArrowUp
+expect:css=#skin-client-pref-skin-theme-value-day
+key:Enter
+expect:css=#skin-client-pref-skin-theme-value-day

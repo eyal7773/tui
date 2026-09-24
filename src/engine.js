@@ -1061,10 +1061,14 @@ class SpatialEngine {
             const type = el.type ? el.type.toLowerCase() : 'text';
 
             // These types use arrows for internal logic (cursor movement, value change)
+            // Not radio: there an arrow picks the next option, so stepping onto
+            // Wikipedia's theme radios and pressing Up to leave switched the
+            // page to another theme, and the arrows never left the group.
+            // The ring steps between them instead, and Enter picks one.
             const trapTypes = [
                 'text', 'search', 'password', 'email', 'url', 'tel',
                 'number', 'date', 'month', 'week', 'time', 'datetime-local',
-                'color', 'range', 'radio'
+                'color', 'range'
             ];
 
             return trapTypes.includes(type);
