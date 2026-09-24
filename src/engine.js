@@ -1214,7 +1214,14 @@ class SpatialEngine {
             // Computed style check (expensive, maybe optimize later if slow)
             const style = window.getComputedStyle(el);
             const opacity = parseFloat(style.opacity);
-            if (style.display === 'none' || style.visibility === 'hidden' || opacity < 0.05) {
+            if (style.display === 'none' || style.visibility === 'hidden') {
+                return false;
+            }
+            // A see-through checkbox or radio is how custom ones are drawn:
+            // the real input sits invisible over or beside a styled box, and
+            // Tab reaches it. Wikipedia's Appearance menu is all of these, so
+            // ArrowRight from the article went past them up to Donate.
+            if (opacity < 0.05 && !(el.tagName === 'INPUT' && /^(checkbox|radio)$/i.test(el.type) && !el.disabled)) {
                 return false;
             }
 
@@ -1661,10 +1668,16 @@ class SpatialEngine {
                     // USA Today, ArrowRight from the end of a sidebar row went
                     // 307px up into the masthead, because that was the only
                     // thing further right on the page, penalty or not.
+                    // A pinned side column is still a column, though: on
+                    // Wikipedia the sticky Appearance menu is what lies to the
+                    // right of the article, and skipping it sent ArrowRight
+                    // 700px up to Donate. Only a bar across the page counts.
                     const sideways = key === 'ArrowLeft' || key === 'ArrowRight';
                     if (sideways && window.TuiLineRules &&
                         !window.TuiLineRules.sameLine(currentRect, rect, window.TuiLineRules.axisOf(key))) {
-                        return;
+                        const pinned = this.pinnedAncestor(cand);
+                        const across = pinned ? pinned.getBoundingClientRect().width >= window.innerWidth * 0.5 : true;
+                        if (across) return;
                     }
                 }
             }
