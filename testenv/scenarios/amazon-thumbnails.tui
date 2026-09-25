@@ -1,0 +1,5 @@
+# Amazon: every button is an input at opacity 0.01 over its look, so the product thumbnails could not be reached.
+https://www.amazon.com/dp/B09XSDMT4F
+start:css=#altImages li.itemNo1 input
+key:ArrowDown
+expect:css=#altImages li.itemNo2 input

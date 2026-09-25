@@ -1239,11 +1239,12 @@ class SpatialEngine {
             if (style.display === 'none' || style.visibility === 'hidden') {
                 return false;
             }
-            // A see-through checkbox or radio is how custom ones are drawn:
-            // the real input sits invisible over or beside a styled box, and
-            // Tab reaches it. Wikipedia's Appearance menu is all of these, so
-            // ArrowRight from the article went past them up to Donate.
-            if (opacity < 0.05 && !(el.tagName === 'INPUT' && /^(checkbox|radio)$/i.test(el.type) && !el.disabled)) {
+            // A see-through input is how custom controls are drawn: the real
+            // input sits invisible over or beside a styled box, and Tab
+            // reaches it. Wikipedia's Appearance radios are all of these, and
+            // Amazon draws every button that way, the product thumbnails and
+            // "Add to Cart" included, at opacity 0.01.
+            if (opacity < 0.05 && !(el.tagName === 'INPUT' && el.type !== 'hidden' && !el.disabled)) {
                 return false;
             }
 
