@@ -1017,10 +1017,20 @@ class SpatialEngine {
      */
     rectOf(el) {
         const rect = el.getBoundingClientRect();
-        if ((rect.width >= 4 && rect.height >= 4) || !el.children || !el.children.length || !window.TuiViewRules) return rect;
+        if (!el.children || !el.children.length || !window.TuiViewRules) return rect;
         const display = window.getComputedStyle(el).display;
         if (display !== 'inline' && display !== 'contents') return rect;
-        return window.TuiViewRules.unionRect(rect, Array.from(el.children, c => c.getBoundingClientRect()));
+        // Not only when the box is empty. ynet wraps each lead photo in an
+        // inline <a> whose own box is the 11px line under the block <img>,
+        // so the ring was a strip below the picture and the arrows measured
+        // from it. Children taken out of the flow are left out: a
+        // screen-reader label parked at -9999px would stretch the box.
+        const empty = rect.width < 4 || rect.height < 4;
+        const parts = Array.from(el.children)
+            .filter(c => !/absolute|fixed/.test(window.getComputedStyle(c).position))
+            .map(c => c.getBoundingClientRect());
+        if (!empty) parts.push(rect);
+        return window.TuiViewRules.unionRect(rect, parts);
     }
 
     /**

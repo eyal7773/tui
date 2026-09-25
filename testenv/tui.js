@@ -135,7 +135,10 @@ function pageRing() {
             return Math.abs(r.left - s.left) < 2 && Math.abs(r.top - s.top) < 2 &&
                 Math.abs(r.width - s.width) < 2 && Math.abs(r.height - s.height) < 2;
         };
-        if (deep && same(deep)) ringed = deep;
+        // An inline link is ringed around the block it wraps (see rectOf).
+        const holds = (el) => { const r = el.getBoundingClientRect();
+            return s.left - 2 <= r.left && s.top - 2 <= r.top && s.right + 2 >= r.right && s.bottom + 2 >= r.bottom; };
+        if (deep && (same(deep) || holds(deep))) ringed = deep;
         else {
             const hits = document.elementsFromPoint(s.left + s.width / 2, s.top + s.height / 2);
             ringed = hits.find((el) => el !== spot && same(el)) || null;

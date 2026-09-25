@@ -1,0 +1,7 @@
+# ynet: the lead photo is a block <img> in an inline <a> whose own box is the 11px line under it; the ring was a strip below the photo.
+https://www.ynet.co.il/
+wait:5000
+start:css=.slotView a:has(> img.SiteImageMedia)
+key:ArrowRight
+key:ArrowLeft
+eval:(() => { const h = document.getElementById('tui-spotlight').getBoundingClientRect().height; if (h < 100) throw new Error('ring is ' + h + 'px tall'); return h; })()
