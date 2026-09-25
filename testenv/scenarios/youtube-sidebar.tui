@@ -1,0 +1,5 @@
+# YouTube: sidebar entries are paper-items with tabindex=0 inside an <a tabindex=-1>, and were all dropped; ArrowDown went from the menu button to the footer.
+https://www.youtube.com/
+wait:3000
+key:ArrowDown*2
+expect:css=ytd-guide-entry-renderer tp-yt-paper-item

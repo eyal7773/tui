@@ -1318,6 +1318,11 @@ class SpatialEngine {
                 // parent._tui_input === el means we own this tabindex, so never filter it.
                 if (el.parentElement._tui_input === el) {
                     // allow through
+                } else if (el.getAttribute('tabindex') === '0') {
+                    // It put itself in the tab order, so it is no hidden
+                    // helper. YouTube's sidebar entries are paper-items with
+                    // tabindex=0 inside an <a tabindex=-1>, and every one was
+                    // dropped: ArrowDown went from the menu to the footer.
                 } else if (!el.isContentEditable) {
                     // Exception: contenteditable elements inside a tabindex=-1 wrapper are REAL
                     // interactive inputs (e.g. Telegram's message box). The wrapper uses tabindex=-1
