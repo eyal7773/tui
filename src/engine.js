@@ -1826,13 +1826,30 @@ class SpatialEngine {
                     // A pinned side column is still a column, though: on
                     // Wikipedia the sticky Appearance menu is what lies to the
                     // right of the article, and skipping it sent ArrowRight
-                    // 700px up to Donate. Only a bar across the page counts.
+                    // 700px up to Donate. A floating button is no column,
+                    // though: Microsoft's Back to Top, pinned in the corner,
+                    // took ArrowRight 420px down from a button mid-page.
                     const sideways = key === 'ArrowLeft' || key === 'ArrowRight';
                     if (sideways && window.TuiLineRules &&
                         !window.TuiLineRules.sameLine(currentRect, rect, window.TuiLineRules.axisOf(key))) {
                         const pinned = this.pinnedAncestor(cand);
-                        const across = pinned ? pinned.getBoundingClientRect().width >= window.innerWidth * 0.5 : true;
-                        if (across) return;
+                        const box = pinned ? pinned.getBoundingClientRect() : null;
+                        const column = !!box && box.height >= box.width * 1.5 && box.height >= window.innerHeight * 0.3;
+                        if (!column) return;
+                    }
+
+                    // A widget floating in a corner, neither a bar across the
+                    // page nor a column down it, costs more again. It is always
+                    // on screen, so it was always "near": ArrowDown on
+                    // Microsoft's home page left a panel for Back to Top rather
+                    // than the next panel's link. With nothing else that way it
+                    // is still reached.
+                    const floating = this.pinnedAncestor(cand);
+                    if (floating) {
+                        const fb = floating.getBoundingClientRect();
+                        const bar = fb.width >= window.innerWidth * 0.5;
+                        const col = fb.height >= fb.width * 1.5 && fb.height >= window.innerHeight * 0.3;
+                        if (!bar && !col) score += 1000;
                     }
                 }
             }

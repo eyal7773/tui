@@ -1,0 +1,10 @@
+# Microsoft: Back to Top floats in the corner; ArrowDown from a panel's button went to it instead of the next panel's link.
+https://www.microsoft.com/en-us
+wait:3000
+key:ArrowDown
+key:ArrowRight*3
+key:ArrowDown
+key:ArrowDown*2
+wait:800
+key:ArrowDown
+expect:Pre-order Surface Laptop for Business.
