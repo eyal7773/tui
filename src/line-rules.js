@@ -160,6 +160,34 @@
     }
   }
 
+  // How much steeper than sideways an off-row step may be. A left column whose
+  // links sit above the current row is still "to the left" (Wikipedia's pinned
+  // Appearance menu), so only a step that is almost straight up or down counts.
+  const SIDEWAYS_STEEPNESS = 8;
+
+  /**
+   * Is `rect` really above or below rather than to the side? On Hacker News,
+   * ArrowLeft from an upvote arrow, the leftmost thing on its row, went 420px
+   * up to the logo, which ends exactly where the arrow starts: the cone lets it
+   * through, and with nothing else to the left it won. A sideways step may
+   * leave its row by about a row's height, or when it travels sideways far
+   * more than it climbs; a target nearly straight up or down belongs to
+   * ArrowUp or ArrowDown, and the ring stays put.
+   */
+  function strays(current, rect, direction) {
+    if (axisOf(direction) !== HORIZONTAL || !current || !rect) return false;
+
+    const cross = crossGap(current, rect, HORIZONTAL);
+    if (cross === 0) return false;
+
+    const along = Math.max(0, direction === 'ArrowRight'
+      ? rect.left - current.right
+      : current.left - rect.right);
+    const rowHeight = Math.max(current.bottom - current.top, rect.bottom - rect.top);
+
+    return cross > Math.max(along * SIDEWAYS_STEEPNESS, rowHeight);
+  }
+
   /** True when `rect` qualifies as a target for a Home/End jump. */
   function isLineCandidate(current, rect, direction) {
     const axis = axisOf(direction);
@@ -203,6 +231,7 @@
     findLineExtreme,
     crossGap,
     stepScore,
+    strays,
     reach,
     HORIZONTAL,
     VERTICAL,

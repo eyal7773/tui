@@ -1809,6 +1809,9 @@ class SpatialEngine {
                 // should mean exactly that; a hidden weighting would make the
                 // key land somewhere the user cannot predict from the layout.
             } else {
+                // Nearly straight up or down is not left or right. See strays.
+                if (window.TuiLineRules && window.TuiLineRules.strays(currentRect, rect, key)) return;
+
                 // Step C: The Distance/Priority Formula
                 score = this.getDistance(currentRect, rect, key);
 

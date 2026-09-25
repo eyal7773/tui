@@ -12,7 +12,7 @@ const { test } = require('node:test');
 require('../src/line-rules.js');
 const {
   axisOf, directionFor, sameLine, isForward, isLineCandidate, findLineExtreme,
-  crossGap, stepScore,
+  crossGap, stepScore, strays,
   HORIZONTAL, VERTICAL, MIN_OVERLAP_RATIO
 } = globalThis.TuiLineRules;
 
@@ -305,4 +305,31 @@ test('a nearer element on the row still wins over a further one', () => {
 
 test('stepScore rejects unknown directions', () => {
   assert.equal(stepScore(r(0, 0, 10, 10), r(20, 0, 10, 10), 'Enter'), Infinity);
+});
+
+/* ── sideways steps that are really vertical ────────────────────────────── */
+
+test('a sideways step does not climb to something straight above', () => {
+  // Hacker News: the upvote arrow is leftmost on its row; the logo ends where
+  // the arrow starts, 420px up.
+  const upvote = r(134, 430, 14, 10);
+  const logo = r(114, 10, 20, 20);
+  assert.equal(strays(upvote, logo, 'ArrowLeft'), true);
+});
+
+test('a column to the side is reached even when its links sit higher', () => {
+  const article = r(200, 600, 600, 20);
+  const column = r(900, 300, 150, 20);
+  assert.equal(strays(article, column, 'ArrowRight'), false);
+});
+
+test('the next row just below still counts as a sideways step', () => {
+  const domain = r(512, 116, 58, 13);
+  const nextDomain = r(733, 151, 121, 13);
+  assert.equal(strays(domain, nextDomain, 'ArrowRight'), false);
+});
+
+test('on the same row nothing strays, and up/down steps are not judged', () => {
+  assert.equal(strays(r(0, 0, 10, 10), r(500, 2, 10, 10), 'ArrowRight'), false);
+  assert.equal(strays(r(0, 0, 10, 10), r(0, 800, 10, 10), 'ArrowDown'), false);
 });

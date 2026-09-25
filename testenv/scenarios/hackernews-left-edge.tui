@@ -1,0 +1,6 @@
+# Hacker News: ArrowLeft from an upvote arrow, leftmost on its row, went 420px up to the logo.
+https://news.ycombinator.com/
+wait:1500
+key:ArrowDown*4
+key:ArrowLeft
+expect:css=tr.athing ~ tr.athing ~ tr.athing a[id^=up_]
