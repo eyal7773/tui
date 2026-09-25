@@ -300,6 +300,13 @@ class SpatialEngine {
         }
         this.lastRingPlace = { el, left: rect.left + scrollX, top: rect.top + scrollY, width: rect.width, height: rect.height };
 
+        // The page may have thrown the ring away. weather.com's React render
+        // replaces what is in <body> after load, and the ring was never seen
+        // again: focus moved, nothing showed.
+        if (this.spotlight && !this.spotlight.isConnected && document.body) {
+            document.body.appendChild(this.spotlight);
+        }
+
         // Update Spotlight Position
         if (this.spotlight) {
             this.spotlight.style.width = `${rect.width}px`;
