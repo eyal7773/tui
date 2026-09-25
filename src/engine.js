@@ -74,7 +74,22 @@ class SpatialEngine {
         this.createSpotlight();
 
         // Use Capture Phase to intercept events before the page traps them
-        document.addEventListener('keydown', (e) => this.handleKeydown(e), { capture: true });
+        // A key whose press the engine took has its release taken too. The
+        // page never saw the keydown, so it must not act on the keyup either:
+        // Wikipedia toggles its menu checkbox on Enter's keyup, which undid the
+        // click Enter had just made, and the menu never opened.
+        this.swallowedKeys = new Set();
+        document.addEventListener('keydown', (e) => {
+            const wasPrevented = e.defaultPrevented;
+            this.handleKeydown(e);
+            if (!wasPrevented && e.defaultPrevented) this.swallowedKeys.add(e.key);
+        }, { capture: true });
+        document.addEventListener('keyup', (e) => {
+            if (!this.swallowedKeys.delete(e.key)) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            this.handleInteraction(e);
+        }, { capture: true });
         // NOTE: We keep scroll passive and bubbling as scroll doesn't usually get trapped like keys
         // Captured on the document rather than heard on the window: scroll does
         // not bubble, so a carousel scrolling its own box (BBC's "Recommended

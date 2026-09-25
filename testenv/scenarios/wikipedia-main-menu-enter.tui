@@ -1,0 +1,8 @@
+# Wikipedia: Enter on Main menu opened it, then the page's own Enter keyup closed it again.
+https://en.wikipedia.org/wiki/Python_(programming_language)
+key:ArrowDown
+expect:Main menu
+key:Enter
+wait:300
+key:ArrowDown
+expect:Main page
