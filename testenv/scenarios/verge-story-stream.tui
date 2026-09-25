@@ -1,0 +1,8 @@
+# The Verge: stream stories are stretched links (0x0 <a> with a covering ::after) and were dropped; ArrowDown from LATEST went to the privacy banner, and from a story it left the stream for the main column.
+https://www.theverge.com/
+wait:4000
+start:css=#storyStream-tab
+key:ArrowDown
+eval:(() => { const r = document.getElementById('tui-spotlight').getBoundingClientRect(); if (r.height < 100) throw new Error('not on a story: ring ' + Math.round(r.height) + 'px tall'); return Math.round(r.height); })()
+key:ArrowDown
+eval:(() => { const r = document.getElementById('tui-spotlight').getBoundingClientRect(); if (r.left < 900) throw new Error('left the stream: ring at x=' + Math.round(r.left)); return Math.round(r.left); })()

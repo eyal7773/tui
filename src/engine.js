@@ -956,7 +956,8 @@ class SpatialEngine {
             let target = this.findBestCandidate(currentRect, key, current, mode);
             if (target && mode !== 'extreme' && this.leavesColumnUnseen(currentRect, target, key)) {
                 const wider = this.withWiderReach(() => this.findBestCandidate(currentRect, key, current, mode));
-                if (wider && this.besideOrBefore(this.rectOf(wider), this.rectOf(target), key)) target = wider;
+                if (wider && (this.besideOrBefore(this.rectOf(wider), this.rectOf(target), key) ||
+                              this.sharesColumn(current, wider, target))) target = wider;
             }
 
             // 4. Action
@@ -1029,6 +1030,23 @@ class SpatialEngine {
     }
 
     /**
+     * Whether a and b sit in a container of their own that other is not in:
+     * a column in the markup as well as on screen. The Verge's story stream
+     * is one, down the right of the page, and its next card was further off
+     * than the main column's next story; ArrowDown left the stream for it.
+     * Microsoft's panels share nothing narrower than the page.
+     */
+    sharesColumn(a, b, other) {
+        if (!a || !b || !other) return false;
+        const around = new Set();
+        for (let node = a; node; node = this.composedParent(node)) around.add(node);
+        let common = b;
+        while (common && !around.has(common)) common = this.composedParent(common);
+        return !!common && common !== document.body && common !== document.documentElement &&
+            !this.composedContains(common, other);
+    }
+
+    /**
      * Runs a search over candidates gathered two windows past the edges
      * instead of half of one, then goes back to the usual reach. Used when the
      * usual reach offers only something out of sight in another column, so
@@ -1072,6 +1090,10 @@ class SpatialEngine {
      */
     rectOf(el) {
         const rect = el.getBoundingClientRect();
+        if (rect.width < 4 || rect.height < 4) {
+            const stretched = this.stretchedRect(el);
+            if (stretched) return stretched;
+        }
         if (!el.children || !el.children.length || !window.TuiViewRules) return rect;
         const display = window.getComputedStyle(el).display;
         if (display !== 'inline' && display !== 'contents') return rect;
@@ -1086,6 +1108,47 @@ class SpatialEngine {
             .map(c => c.getBoundingClientRect());
         if (!empty) parts.push(rect);
         return window.TuiViewRules.unionRect(rect, parts);
+    }
+
+    /**
+     * The box of an empty link that is clicked through a pseudo-element laid
+     * over something bigger: the "stretched link" (Bootstrap and many news
+     * sites). The Verge draws every story in its stream so, an empty <a>
+     * whose ::after covers the card, and with its own 0x0 box each was
+     * dropped as a 1px helper; ArrowDown from LATEST passed the whole stream
+     * for the privacy banner. The pseudo-element's offsets and size come
+     * resolved in pixels, relative to the padding box of its containing block.
+     */
+    stretchedRect(el) {
+        for (const which of ['::after', '::before']) {
+            const ps = window.getComputedStyle(el, which);
+            if (ps.content === 'none' || ps.content === 'normal' || ps.display === 'none') continue;
+            if (ps.position !== 'absolute' || ps.visibility === 'hidden' || ps.pointerEvents === 'none') continue;
+
+            const px = (v) => parseFloat(v) || 0;
+            let width = parseFloat(ps.width);
+            let height = parseFloat(ps.height);
+            const left = parseFloat(ps.left);
+            const top = parseFloat(ps.top);
+            if (!(width >= 4 && height >= 4) || isNaN(left) || isNaN(top)) continue;
+            if (ps.boxSizing !== 'border-box') {
+                width += px(ps.paddingLeft) + px(ps.paddingRight) + px(ps.borderLeftWidth) + px(ps.borderRightWidth);
+                height += px(ps.paddingTop) + px(ps.paddingBottom) + px(ps.borderTopWidth) + px(ps.borderBottomWidth);
+            }
+
+            // The nearest positioned box, the element itself included.
+            let block = el;
+            while (block && block !== document.documentElement && window.getComputedStyle(block).position === 'static') {
+                block = this.composedParent(block);
+            }
+            if (!block || block === document.documentElement) continue;
+
+            const box = block.getBoundingClientRect();
+            const x = box.left + block.clientLeft + left + px(ps.marginLeft);
+            const y = box.top + block.clientTop + top + px(ps.marginTop);
+            return { left: x, top: y, right: x + width, bottom: y + height, width, height, x, y };
+        }
+        return null;
     }
 
     /**

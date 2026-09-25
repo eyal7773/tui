@@ -1,0 +1,8 @@
+# A "stretched link": an empty <a> whose ::after covers the card (Bootstrap, The Verge's story stream). Its own box is 0x0, and it was dropped.
+pages/stretched-link.html
+key:ArrowDown
+expect:css=#top
+key:ArrowDown
+eval:(() => { const h = document.getElementById('tui-spotlight').getBoundingClientRect().height; if (document.activeElement.id !== 'one' || h < 40) throw new Error('ring ' + h + 'px on ' + document.activeElement.id); return h; })()
+key:ArrowDown
+eval:(() => { if (document.activeElement.id !== 'two') throw new Error('on ' + document.activeElement.id); return 'two'; })()

@@ -1,0 +1,14 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Stretched link</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  .card { position: relative; width: 300px; padding: 20px; margin-top: 30px; border: 1px solid #ccc; }
+  /* Bootstrap's .stretched-link: an empty link whose ::after covers the card. */
+  .stretched::after { content: ""; position: absolute; inset: 0; }
+</style></head>
+<body>
+  <!-- The link itself is 0x0; only its ::after can be clicked. -->
+  <button id="top">Top</button>
+  <div class="card"><p>Story one, told at some length.</p><a id="one" class="stretched" href="#one" aria-label="Story one"></a></div>
+  <div class="card"><p>Story two, told at some length.</p><a id="two" class="stretched" href="#two" aria-label="Story two"></a></div>
+</body></html>
