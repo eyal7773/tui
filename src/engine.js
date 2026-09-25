@@ -1775,6 +1775,15 @@ class SpatialEngine {
                             break;
                         }
                         const style = window.getComputedStyle(obstacle);
+                        // Nor does a cover that cannot be seen. eBay hides a
+                        // carousel's disabled back arrow at opacity 0, right
+                        // over the first chip, and ArrowDown passed the chip
+                        // for the sidebar. Only up to the box they share: a
+                        // transparent ancestor of both hides the candidate too.
+                        if (parseFloat(style.opacity) < 0.05 && !this.composedContains(obstacle, cand)) {
+                            isObstructingFixed = true;
+                            break;
+                        }
                         if (style.position === 'fixed' || style.position === 'sticky') {
                             isObstructingFixed = true;
                             break;

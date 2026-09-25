@@ -1,0 +1,7 @@
+# eBay: a disabled carousel arrow at opacity 0 covers the first Popular Filters chip; ArrowDown from "All" skipped it for the sidebar.
+# Live page: eBay sometimes serves a layout without the "All" tab, and the start step then fails.
+https://www.ebay.com/sch/i.html?_nkw=headphones
+wait:3000
+start:css=a[aria-current="page"]
+key:ArrowDown
+expect:css=.srp-carousel-list a
