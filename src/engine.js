@@ -481,6 +481,12 @@ class SpatialEngine {
     }
 
     handleScroll() {
+        // Candidates are chosen by how near the screen they are, so a scroll
+        // changes them even when the page does not. Only a DOM change used to
+        // mark them stale, and on a quiet page (NASA) ArrowDown scrolled on
+        // and on past links that had come into reach. The scan itself waits
+        // for the next key.
+        this.candidatesDirty = true;
         this.scheduleRingUpdate();
     }
 
@@ -947,7 +953,11 @@ class SpatialEngine {
 
             // 3. Find Best Candidate
             // Note: findBestCandidate automatically filters out elements in this.failedFocusElements
-            const target = this.findBestCandidate(currentRect, key, current, mode);
+            let target = this.findBestCandidate(currentRect, key, current, mode);
+            if (target && mode !== 'extreme' && this.leavesColumnUnseen(currentRect, target, key)) {
+                const wider = this.withWiderReach(() => this.findBestCandidate(currentRect, key, current, mode));
+                if (wider && this.besideOrBefore(this.rectOf(wider), this.rectOf(target), key)) target = wider;
+            }
 
             // 4. Action
             if (target) {
@@ -989,6 +999,51 @@ class SpatialEngine {
 
         // Reset lock
         requestAnimationFrame(() => this.isNavigating = false);
+    }
+
+    /**
+     * Whether an up/down step is about to leave the column for something out
+     * of sight. Candidates reach only half a window past the edge (see
+     * view-rules.js), so from a tall card the link straight below can be out
+     * of reach while a picture in the next column is in it: on NASA's home
+     * page ArrowDown left the Earth Observatory card for the Image of the Day,
+     * off-screen to the right, over Browse Image Archive below the card.
+     */
+    leavesColumnUnseen(currentRect, target, key) {
+        if ((key !== 'ArrowDown' && key !== 'ArrowUp') || !currentRect || !window.TuiLineRules) return false;
+        const rect = this.rectOf(target);
+        if (window.TuiLineRules.crossGap(currentRect, rect, window.TuiLineRules.VERTICAL) === 0) return false;
+        return key === 'ArrowDown' ? rect.top >= window.innerHeight : rect.bottom <= 0;
+    }
+
+    /**
+     * Whether the column's own next item, found further out, belongs before
+     * the unseen one in the other column: beside it, or nearer. On NASA the
+     * picture sits beside Browse Image Archive, in the same section, so the
+     * column wins. Microsoft stacks full-width panels with their text on
+     * alternate sides, and there the other column's panel comes first: the
+     * column's next item is a whole panel further, and it would skip one.
+     */
+    besideOrBefore(column, other, key) {
+        return key === 'ArrowDown' ? column.top < other.bottom : column.bottom > other.top;
+    }
+
+    /**
+     * Runs a search over candidates gathered two windows past the edges
+     * instead of half of one, then goes back to the usual reach. Used when the
+     * usual reach offers only something out of sight in another column, so
+     * the column's own next item can compete on the same score.
+     */
+    withWiderReach(search) {
+        this.reachRatio = 2;
+        this.candidatesDirty = true;
+        try {
+            this.refreshCandidates();
+            return search();
+        } finally {
+            this.reachRatio = undefined;
+            this.candidatesDirty = true;
+        }
     }
 
     /**
@@ -1456,7 +1511,7 @@ class SpatialEngine {
             // See view-rules.js for why the band reaches past top and bottom but
             // not past the sides.
             if (window.TuiViewRules) {
-                if (!window.TuiViewRules.withinReach(rect)) return false;
+                if (!window.TuiViewRules.withinReach(rect, undefined, this.reachRatio)) return false;
             } else if (rect.bottom < 0 || rect.top > window.innerHeight ||
                        rect.right < 0 || rect.left > window.innerWidth) {
                 return false;

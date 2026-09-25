@@ -1,0 +1,6 @@
+# NASA: from the tall Earth Observatory card, Browse Image Archive below it was out of reach and ArrowDown went to the Image of the Day, off-screen in the next column. Scrolling also never refreshed what was in reach.
+https://www.nasa.gov/
+wait:4000
+start:Earth Observatory
+key:ArrowDown*4
+expect:Browse Image Archive
