@@ -329,7 +329,21 @@ test('the next row just below still counts as a sideways step', () => {
   assert.equal(strays(domain, nextDomain, 'ArrowRight'), false);
 });
 
-test('on the same row nothing strays, and up/down steps are not judged', () => {
+test('on the same line nothing strays, and a far step up or down is fine', () => {
   assert.equal(strays(r(0, 0, 10, 10), r(500, 2, 10, 10), 'ArrowRight'), false);
   assert.equal(strays(r(0, 0, 10, 10), r(0, 800, 10, 10), 'ArrowDown'), false);
+  assert.equal(strays(r(0, 0, 10, 10), r(600, 800, 10, 10), 'ArrowDown'), false);
+});
+
+test('a neighbour that has not got ahead is beside, not below', () => {
+  // IKEA: the rating of the product to the left starts 3px above where this
+  // one ends.
+  const marius = r(462, 673, 187, 26);
+  const vihals = r(255, 696, 187, 26);
+  assert.equal(strays(marius, vihals, 'ArrowDown'), true);
+});
+
+test('touching counts as ahead, so edge-to-edge grids still step diagonally', () => {
+  assert.equal(strays(r(100, 0, 100, 50), r(0, 50, 100, 50), 'ArrowDown'), false);
+  assert.equal(strays(r(0, 0, 100, 50), r(100, 50, 100, 50), 'ArrowRight'), false);
 });

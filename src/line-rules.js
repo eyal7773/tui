@@ -173,19 +173,31 @@
    * leave its row by about a row's height, or when it travels sideways far
    * more than it climbs; a target nearly straight up or down belongs to
    * ArrowUp or ArrowDown, and the ring stays put.
+   *
+   * In any direction, something off the line that has not got ahead at all,
+   * only let in by the cone's slack, is beside rather than ahead. On IKEA,
+   * ArrowDown from a product's rating went to the rating of the product to
+   * its left, which starts 3px above where this one ends. Touching still
+   * counts as ahead: grids are laid out edge to edge.
    */
   function strays(current, rect, direction) {
-    if (axisOf(direction) !== HORIZONTAL || !current || !rect) return false;
+    const axis = axisOf(direction);
+    if (!axis || !current || !rect) return false;
 
-    const cross = crossGap(current, rect, HORIZONTAL);
+    const cross = crossGap(current, rect, axis);
     if (cross === 0) return false;
 
-    const along = Math.max(0, direction === 'ArrowRight'
-      ? rect.left - current.right
-      : current.left - rect.right);
-    const rowHeight = Math.max(current.bottom - current.top, rect.bottom - rect.top);
+    const ahead = {
+      ArrowRight: rect.left - current.right,
+      ArrowLeft: current.left - rect.right,
+      ArrowDown: rect.top - current.bottom,
+      ArrowUp: current.top - rect.bottom
+    }[direction];
+    if (ahead < 0) return true;
+    if (axis !== HORIZONTAL) return false;
 
-    return cross > Math.max(along * SIDEWAYS_STEEPNESS, rowHeight);
+    const rowHeight = Math.max(current.bottom - current.top, rect.bottom - rect.top);
+    return cross > Math.max(ahead * SIDEWAYS_STEEPNESS, rowHeight);
   }
 
   /** True when `rect` qualifies as a target for a Home/End jump. */
