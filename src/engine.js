@@ -279,9 +279,19 @@ class SpatialEngine {
         }
 
         // Calculate position
-        const rect = el.getBoundingClientRect();
+        const rect = this.rectOf(el);
         const scrollX = window.scrollX || window.pageXOffset;
         const scrollY = window.scrollY || window.pageYOffset;
+
+        // The element was hidden under the ring. Amazon's "Carousel next
+        // slide" goes display:none once Enter reaches the last slide, and the
+        // ring shrank to a dot in the corner. Hide it; the next arrow starts
+        // from where the element was last seen (see navigate).
+        if (rect.width === 0 && rect.height === 0) {
+            if (this.spotlight) this.spotlight.style.display = 'none';
+            return;
+        }
+        this.lastRingPlace = { el, left: rect.left + scrollX, top: rect.top + scrollY, width: rect.width, height: rect.height };
 
         // Update Spotlight Position
         if (this.spotlight) {
@@ -882,7 +892,19 @@ class SpatialEngine {
             let currentRect = null;
             if (current && current !== document.body && !this.isLayoutWrapper(current) &&
                 !(firstPress && this.isInEdgeBar(current))) {
-                currentRect = current.getBoundingClientRect();
+                currentRect = this.rectOf(current);
+            }
+
+            // The element under the ring was hidden or removed since it got
+            // there. Start from where it was drawn rather than from the corner
+            // of the page, or from the top as if nothing had been focused.
+            const place = this.lastRingPlace;
+            const emptyRect = !currentRect || (currentRect.width === 0 && currentRect.height === 0);
+            if (place && emptyRect && !firstPress &&
+                (!place.el.isConnected || place.el === current || current === document.body)) {
+                const left = place.left - (window.scrollX || 0);
+                const top = place.top - (window.scrollY || 0);
+                currentRect = { left, top, right: left + place.width, bottom: top + place.height, width: place.width, height: place.height };
             }
 
             // 3. Find Best Candidate
