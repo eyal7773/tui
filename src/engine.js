@@ -97,6 +97,9 @@ class SpatialEngine {
         // the card had been until something else moved it.
         document.addEventListener('scroll', () => this.handleScroll(), { passive: true, capture: true });
 
+        // A frame the ring stepped into hands the keyboard back (leaveFrame).
+        window.addEventListener('message', (e) => this.handleFrameExit(e));
+
         // Passive interaction listeners to sync state without interference
         document.addEventListener('mousedown', (e) => this.handleInteraction(e), { passive: true });
         document.addEventListener('click', (e) => this.handleInteraction(e), { passive: true });
@@ -670,6 +673,23 @@ class SpatialEngine {
             this.navigate(e.key);
         } else if (e.key === 'Enter') {
             const active = this.deepActiveElement();
+
+            // Enter steps into a frame. The ring only marks an iframe and
+            // keeps the keys up here (see focusElement), so without this
+            // there was no way in: on NYTimes a full-page bot check in a
+            // captcha-delivery frame was ringed, and Enter clicked <body>.
+            // Focused, the frame gets the keys and its own engine takes the
+            // next arrow.
+            const frame = this.lastActiveElement;
+            if (frame && frame.isConnected && this.isTrapElement(frame) && active !== frame) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                frame.focus();
+                // The frame draws its own ring; this one waits for the way back.
+                this.isActiveMode = false;
+                if (this.spotlight) this.spotlight.style.display = 'none';
+                return;
+            }
 
             // Check if we are on a wrapper that has a stashed input
             // CRITICAL: Also check lastActiveElement in case focus is on body (contenteditable fix)
@@ -2047,6 +2067,7 @@ class SpatialEngine {
     }
 
     handleOffScreen(key) {
+        if (this.isSubframe && this.leaveFrame(key)) return;
         const scrollAmount = 300;
         if (key === 'ArrowDown') window.scrollBy({ top: scrollAmount, behavior: this.scrollBehavior() });
         if (key === 'ArrowUp') window.scrollBy({ top: -scrollAmount, behavior: this.scrollBehavior() });
@@ -2054,6 +2075,50 @@ class SpatialEngine {
     }
 
 
+
+    /**
+     * Hands the keyboard back to the page around this frame when there is
+     * nothing further this way and nothing left to scroll. Enter steps into a
+     * frame (see handleKeydown), and without a way back out the arrows were
+     * shut inside it: MDN's live examples, a consent dialog, a bot check.
+     * The parent's engine hears the message, puts the ring on this frame and
+     * carries on in the same direction (see handleFrameExit).
+     */
+    leaveFrame(key) {
+        const doc = document.scrollingElement || document.documentElement;
+        const atEnd =
+            key === 'ArrowDown' ? window.scrollY + window.innerHeight >= doc.scrollHeight - 1 :
+            key === 'ArrowUp' ? window.scrollY <= 0 :
+            true;   // sideways never scrolls here
+        if (!atEnd) return false;
+
+        try {
+            window.parent.postMessage({ tuiFrameExit: key }, '*');
+            window.parent.focus();   // allowed across origins while a key is down
+        } catch (e) {
+            return false;
+        }
+        if (this.spotlight) this.spotlight.style.display = 'none';
+        this.isActiveMode = false;
+        return true;
+    }
+
+    /** The parent's half of leaveFrame: the frame that sent it takes the ring, then the step goes on. */
+    handleFrameExit(e) {
+        const key = e.data && e.data.tuiFrameExit;
+        if (!this.isEnabled || !/^Arrow(Up|Down|Left|Right)$/.test(key || '')) return;
+
+        const scopes = [document, ...this.shadowRoots()];
+        const frame = scopes.flatMap(s => Array.from(s.querySelectorAll('iframe, frame')))
+            .find(f => f.contentWindow === e.source);
+        if (!frame) return;
+
+        const active = this.deepActiveElement();
+        if (active === frame) frame.blur();
+        this.lastActiveElement = frame;
+        this.userHasActed = true;
+        this.navigate(key);
+    }
 
     _startLogCapture() {
         if (this._originalConsoleLog) return; // Already capturing
