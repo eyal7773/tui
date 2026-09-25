@@ -1,0 +1,5 @@
+# Stack Overflow: OneTrust's floating cookie box takes focus on load, 16px above the bottom edge, and the first ArrowDown went 1000px down to a Copy button.
+https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-processing-an-unsorted-array
+wait:1000
+key:ArrowDown
+expect:Stack Overflow Home

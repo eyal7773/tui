@@ -553,7 +553,11 @@ class SpatialEngine {
             if (this.composedClosest(el, '[aria-modal="true"]')) return false;
         }
 
-        const covered = window.TuiViewRules.coveredEdges(window.innerHeight, [bar.getBoundingClientRect()]);
+        // A floating card counts too. Stack Overflow's OneTrust box sits 16px
+        // above the bottom edge, and the first ArrowDown from its focus went
+        // 1000px down the question to a code block's Copy button.
+        const FLOATING_SLACK = 40;
+        const covered = window.TuiViewRules.coveredEdges(window.innerHeight, [bar.getBoundingClientRect()], FLOATING_SLACK);
         return covered.top > 0 || covered.bottom > 0;
     }
 

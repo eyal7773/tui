@@ -96,14 +96,16 @@
    *
    * @param {number} viewportHeight
    * @param {Array<{top:number,bottom:number}>} overlays
+   * @param {number} [slack] how far from the edge a bar may stop and still
+   *   count as on it; a pixel or two by default
    * @returns {{top:number,bottom:number}} pixels covered from each edge
    */
-  function coveredEdges(viewportHeight, overlays) {
+  function coveredEdges(viewportHeight, overlays, slack) {
     const covered = { top: 0, bottom: 0 };
     if (typeof viewportHeight !== 'number' || !Array.isArray(overlays)) return covered;
 
     const maxHeight = viewportHeight * MAX_EDGE_OVERLAY_RATIO;
-    const EDGE = 2;   // a bar may stop a pixel short of the edge
+    const EDGE = typeof slack === 'number' ? slack : 2;   // a bar may stop a pixel short of the edge
 
     overlays.forEach((rect) => {
       if (!rect) return;

@@ -132,6 +132,14 @@ test('full-screen dialogs and bars away from the edges reserve nothing', () => {
   assert.deepEqual(coveredEdges(undefined, [{ top: 0, bottom: 50 }]), { top: 0, bottom: 0 }, 'no window');
 });
 
+test('a card floating a margin above the edge counts only when slack allows it (Stack Overflow cookies)', () => {
+  const { coveredEdges } = globalThis.TuiViewRules;
+  const card = { top: 705, bottom: 884 };
+  assert.deepEqual(coveredEdges(900, [card]), { top: 0, bottom: 0 });
+  assert.deepEqual(coveredEdges(900, [card], 40), { top: 0, bottom: 195 });
+  assert.deepEqual(coveredEdges(900, [{ top: 200, bottom: 300 }], 40), { top: 0, bottom: 0 }, 'still not mid-screen');
+});
+
 /* ── an empty box around drawn content ──────────────────────────────────── */
 
 test('an empty inline link is as big as the swatch it holds', () => {
