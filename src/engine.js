@@ -848,7 +848,10 @@ class SpatialEngine {
 
             const active = this.deepActiveElement();
             // Check if focus has moved to a new meaningful element
-            if (active && active !== this.lastActiveElement && active !== document.body) {
+            // A label that stands in for its own tiny control (see the label
+            // redirect in focusElement) is where the ring belongs.
+            const standIn = this.lastActiveElement && this.lastActiveElement.control === active;
+            if (active && active !== this.lastActiveElement && active !== document.body && !standIn) {
                 // Ignore large layout wrappers that just confuse the user (e.g. WhatsApp Web background)
                 if (this.isLayoutWrapper(active)) {
                     return;
@@ -2099,12 +2102,18 @@ class SpatialEngine {
                 (actualFocus.tagName === 'INPUT' || actualFocus.tagName === 'TEXTAREA' || actualFocus.tagName === 'SELECT'));
 
             if (isLabelRedirect) {
-                // Track the INPUT as lastActiveElement so we can navigate back to it
-                this.lastActiveElement = actualFocus;
+                // Track the INPUT as lastActiveElement so we can navigate back to it,
+                // unless it is too small to see. Booking.com's "travelling for
+                // work" checkbox is a 1x1 input behind its label, and the ring
+                // shrank to a dot: the label is what the user sees, so it keeps
+                // the ring while the input keeps focus for Enter.
+                const inputRect = actualFocus.getBoundingClientRect();
+                const shown = (inputRect.width < 4 || inputRect.height < 4) ? el : actualFocus;
+                this.lastActiveElement = shown;
 
                 // Highlight the INPUT (the actual focused element)
-                this.scrollToReveal(actualFocus);
-                this.highlight(actualFocus);
+                this.scrollToReveal(shown);
+                this.highlight(shown);
 
                 cleanupLogs();
                 return true;
