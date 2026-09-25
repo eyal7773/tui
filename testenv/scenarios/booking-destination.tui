@@ -1,0 +1,9 @@
+# Booking.com: the destination field's label led back into the field, so ArrowUp never left it (and before, the label put the arrows inside the text box).
+https://www.booking.com/
+wait:3000
+key:ArrowDown
+key:ArrowDown
+key:ArrowDown
+wait:700
+key:ArrowUp
+expect:css=#flights

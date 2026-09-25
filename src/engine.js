@@ -1678,6 +1678,10 @@ class SpatialEngine {
 
                 // CRITICAL FIX: Don't select LABELs that control the current input
                 if (cand.tagName === 'LABEL' && cand.getAttribute('for') === currentEl.id) return;
+                // Nor, on a wrapper, the label of the input it holds: it leads
+                // straight back to the same field (Booking.com's destination).
+                if (cand.tagName === 'LABEL' && cand.control &&
+                    (cand.control === currentEl || cand.control === currentEl._tui_input)) return;
             }
 
             // 5. Skip elements that recently failed to receive focus
@@ -1922,6 +1926,15 @@ class SpatialEngine {
     }
 
     focusElement(el, attempt = 1) {
+        // A label passes focus to its control. For a text box that put the
+        // arrows inside it without Enter: on Booking.com ArrowDown reached
+        // the destination field's label, and from then on every arrow moved
+        // the caret. Such a label is reached the way its control is: the
+        // wrapper takes the ring, and Enter goes in.
+        if (el.tagName === 'LABEL' && el.control && el.control !== el && this.shouldTrapArrows(el.control)) {
+            return this.focusElement(el.control, attempt);
+        }
+
         // DEBUG: Log what element we're trying to focus
         if (this.debugMode) {
             const tag = el.tagName;
