@@ -198,6 +198,10 @@ class SpatialEngine {
             spot = document.createElement('div');
             spot.id = 'tui-spotlight';
             spot.className = 'tui-focus-indicator';
+            // Hidden until it has somewhere to be. Shown at once it had no
+            // size yet, and its outline sat as a green square wherever the
+            // body put it: MDN's top-left corner before any key was pressed.
+            spot.style.display = 'none';
             document.body.appendChild(spot);
         }
         this.spotlight = spot;
