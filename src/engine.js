@@ -472,7 +472,7 @@ class SpatialEngine {
         const ARRIVAL_WINDOW_MS = 2000;
         if (!this.lastArrivalAt || Date.now() - this.lastArrivalAt > ARRIVAL_WINDOW_MS) return;
 
-        const rect = el.getBoundingClientRect();
+        const rect = this.rectOf(el);
         const covered = this.coveredEdges(el);
         const outOfView = rect.bottom > window.innerHeight - covered.bottom || rect.top < covered.top;
         // Taller than the room left: it cannot fit, and 'nearest' would jitter.
@@ -951,6 +951,19 @@ class SpatialEngine {
     }
 
     /**
+     * Where el is drawn. Usually its own box; for an inline element whose box
+     * collapsed around block children, the box of those children (see
+     * unionRect in view-rules.js).
+     */
+    rectOf(el) {
+        const rect = el.getBoundingClientRect();
+        if ((rect.width >= 4 && rect.height >= 4) || !el.children || !el.children.length || !window.TuiViewRules) return rect;
+        const display = window.getComputedStyle(el).display;
+        if (display !== 'inline' && display !== 'contents') return rect;
+        return window.TuiViewRules.unionRect(rect, Array.from(el.children, c => c.getBoundingClientRect()));
+    }
+
+    /**
      * Checks if an element or its ancestors are fixed/sticky.
      */
     isSticky(el) {
@@ -1204,7 +1217,7 @@ class SpatialEngine {
                 return false; // Hidden parent
             }
 
-            const rect = el.getBoundingClientRect();
+            const rect = this.rectOf(el);
 
             // FILTER: Negative Tabindex on native controls (unless part of a widget)
             // This excludes helper inputs used by libraries (e.g. Jira, React-Select)
@@ -1505,7 +1518,7 @@ class SpatialEngine {
             // Candidates now reach past the fold, so prefer one the user can see
             // before falling back to the first of them.
             const visible = window.TuiViewRules
-                ? this.candidates.find(c => window.TuiViewRules.onScreen(c.getBoundingClientRect()))
+                ? this.candidates.find(c => window.TuiViewRules.onScreen(this.rectOf(c)))
                 : null;
             return visible || (this.candidates.length > 0 ? this.candidates[0] : null);
         }
@@ -1570,7 +1583,7 @@ class SpatialEngine {
                 return;
             }
 
-            const rect = cand.getBoundingClientRect();
+            const rect = this.rectOf(cand);
 
             // Step B: Spatial Filtering (Cone of Vision / Quarter Plane)
             let isValid = false;

@@ -119,7 +119,31 @@
     return covered;
   }
 
+  /**
+   * The box an element is drawn in, when its own box is empty.
+   *
+   * An inline link wrapped around block content measures 0x0 where the line
+   * would have been, while its content is drawn below it: Amazon's colour
+   * swatches are <a> elements around 17px squares, and the size filter threw
+   * every one away. Such an element is as big as what it holds.
+   *
+   * @param {{left:number,top:number,right:number,bottom:number}} own
+   * @param {Array<{left:number,top:number,right:number,bottom:number}>} parts
+   *   the rectangles of its children
+   * @returns the union of the parts that have any area, or own when none do
+   */
+  function unionRect(own, parts) {
+    const drawn = (parts || []).filter(p => p && p.right - p.left > 0 && p.bottom - p.top > 0);
+    if (!drawn.length) return own;
+    const left = Math.min(...drawn.map(p => p.left));
+    const top = Math.min(...drawn.map(p => p.top));
+    const right = Math.max(...drawn.map(p => p.right));
+    const bottom = Math.max(...drawn.map(p => p.bottom));
+    return { left, top, right, bottom, width: right - left, height: bottom - top, x: left, y: top };
+  }
+
   root.TuiViewRules = {
+    unionRect,
     withinReach,
     onScreen,
     coveredEdges,

@@ -131,3 +131,26 @@ test('full-screen dialogs and bars away from the edges reserve nothing', () => {
   assert.deepEqual(coveredEdges(900, [{ top: 0, bottom: 0 }, null]), { top: 0, bottom: 0 }, 'empty');
   assert.deepEqual(coveredEdges(undefined, [{ top: 0, bottom: 50 }]), { top: 0, bottom: 0 }, 'no window');
 });
+
+/* ── an empty box around drawn content ──────────────────────────────────── */
+
+test('an empty inline link is as big as the swatch it holds', () => {
+  const { unionRect } = globalThis.TuiViewRules;
+  const own = r(750, 403, 0, 0);
+  assert.deepEqual(
+    [unionRect(own, [r(752, 405, 17, 17)]).width, unionRect(own, [r(752, 405, 17, 17)]).top],
+    [17, 405]);
+});
+
+test('several children make one box around all of them', () => {
+  const { unionRect } = globalThis.TuiViewRules;
+  const u = unionRect(r(0, 0, 0, 0), [r(10, 10, 20, 20), r(40, 5, 10, 10)]);
+  assert.deepEqual([u.left, u.top, u.right, u.bottom], [10, 5, 50, 30]);
+});
+
+test('children with no area leave the element as it was', () => {
+  const { unionRect } = globalThis.TuiViewRules;
+  const own = r(5, 5, 0, 0);
+  assert.equal(unionRect(own, [r(1, 1, 0, 0)]), own);
+  assert.equal(unionRect(own, []), own);
+});
