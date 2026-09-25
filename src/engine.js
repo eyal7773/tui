@@ -1228,7 +1228,10 @@ class SpatialEngine {
         // BUG FIX: Semantic interactive elements should NEVER be treated as auxiliary,
         // even if they contain classes like "ripple" or "focus-indicator".
         // This fixes issues where buttons with visual effects (e.g. Gemini New Chat) were ignored.
-        const semanticInteractive = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'SUMMARY'];
+        // A frame always looks empty from outside: what it holds is another
+        // document. Target's bot check, a fixed frame placed after a link, was
+        // taken for a touch target over that link.
+        const semanticInteractive = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'SUMMARY', 'IFRAME', 'FRAME'];
         if (semanticInteractive.includes(el.tagName)) {
             return false;
         }
@@ -1324,8 +1327,12 @@ class SpatialEngine {
         // 2. Filter candidates
         this.candidates = all.filter(el => {
             // Visibility Check
-            if (el.offsetParent === null) {
-                return false; // Hidden parent
+            // Hidden parent. A fixed element has no offsetParent either,
+            // however visible: Target's full-window bot check is a fixed
+            // <iframe>, and with it dropped there was no way to reach it.
+            // Whether it is really shown is checked below.
+            if (el.offsetParent === null && window.getComputedStyle(el).position !== 'fixed') {
+                return false;
             }
 
             const rect = this.rectOf(el);
@@ -1633,10 +1640,18 @@ class SpatialEngine {
             // Fallback: Pick the first candidate in the list (usually top-left in DOM order).
             // Candidates now reach past the fold, so prefer one the user can see
             // before falling back to the first of them.
-            const visible = window.TuiViewRules
-                ? this.candidates.find(c => window.TuiViewRules.onScreen(this.rectOf(c)))
-                : null;
-            return visible || (this.candidates.length > 0 ? this.candidates[0] : null);
+            // And one nothing lies over: with a dialog or a bot check over
+            // the page (Target), the first press went to the page's first
+            // button, out of sight behind it.
+            const onScreen = window.TuiViewRules
+                ? this.candidates.filter(c => window.TuiViewRules.onScreen(this.rectOf(c)))
+                : [];
+            const uncovered = onScreen.find(c => {
+                const r = this.rectOf(c);
+                const hit = this.deepElementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+                return !hit || hit === c || this.composedContains(c, hit) || this.composedContains(hit, c);
+            });
+            return uncovered || onScreen[0] || (this.candidates.length > 0 ? this.candidates[0] : null);
         }
 
         // Special case: ArrowDown from an open SUMMARY → enter popup in DOM order
@@ -1795,7 +1810,15 @@ class SpatialEngine {
                             break;
                         }
                         if (style.position === 'fixed' || style.position === 'sticky') {
-                            isObstructingFixed = true;
+                            // A bar or banner, which the page scrolls out from
+                            // under. Not a cover over most of the window: on
+                            // Target a bot check fills it, and ArrowDown went
+                            // to a button behind it. Taller than an edge bar
+                            // can be (see coveredEdges), it hides what it
+                            // covers, unless the candidate is inside it.
+                            const box = obstacle.getBoundingClientRect();
+                            const maxBar = window.innerHeight * (window.TuiViewRules ? window.TuiViewRules.MAX_EDGE_OVERLAY_RATIO : 0.6);
+                            isObstructingFixed = box.height <= maxBar || this.composedContains(obstacle, cand);
                             break;
                         }
                         obstacle = this.composedParent(obstacle);

@@ -1,0 +1,4 @@
+# A fixed <iframe> over the whole window (Target's bot check) was no candidate: fixed elements have no offsetParent, and an empty-looking frame after a link was taken for a touch target.
+pages/fixed-frame-over-page.html
+key:ArrowDown
+expect:css=#check

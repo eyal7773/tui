@@ -1,0 +1,7 @@
+# A dialog on a fixed cover over the whole window: the arrows went to the links behind it (Target's bot check, cookie dialogs).
+pages/modal-over-page.html
+key:ArrowDown
+expect:css=#accept
+key:ArrowRight
+key:ArrowDown
+expect:css=#reject
