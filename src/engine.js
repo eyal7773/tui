@@ -1021,6 +1021,47 @@ class SpatialEngine {
     }
 
     /**
+     * Whether a box around el that hides or scrolls its overflow keeps el out
+     * of sight: 'clipped' when it is drawn nowhere the ring could go,
+     * 'scrollable' when it is out of view inside a box the ring is also in,
+     * and 'visible' otherwise.
+     *
+     * A box that hides its overflow clips for good. A box that scrolls clips
+     * only for a ring outside it: from inside, the next card of a carousel
+     * that scrolls its own box is one step away and scrolls in (BBC, and
+     * weather.com's hourly forecast); from outside, those hours scrolled off
+     * to the left pulled ArrowLeft 700px up from a daily row. A scrollable
+     * one is not "covered" by what the window shows at its place either,
+     * which on weather.com was the column beside the carousel.
+     */
+    clipState(el, rect, currentEl) {
+        // A sliver at the edge is not something to step to.
+        const SLIVER = 8;
+        const hides = /hidden|clip/;
+        const scrolls = /auto|scroll/;
+        for (let node = this.composedParent(el); node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
+            if (node.nodeType !== 1) continue;
+            const style = window.getComputedStyle(node);
+            const inside = !!currentEl && this.composedContains(node, currentEl);
+            const clipsX = hides.test(style.overflowX) || scrolls.test(style.overflowX);
+            const clipsY = hides.test(style.overflowY) || scrolls.test(style.overflowY);
+            if (!clipsX && !clipsY) continue;
+
+            const box = node.getBoundingClientRect();
+            const out = (clipsX && Math.min(rect.right, box.right) - Math.max(rect.left, box.left) < SLIVER) ||
+                        (clipsY && Math.min(rect.bottom, box.bottom) - Math.max(rect.top, box.top) < SLIVER);
+            const scrollable = scrolls.test(style.overflowX + ' ' + style.overflowY);
+
+            if (scrollable && inside) {
+                // Scrolling this box brings el in, whatever hides past it.
+                return out ? 'scrollable' : 'visible';
+            }
+            if (out) return 'clipped';
+        }
+        return 'visible';
+    }
+
+    /**
      * Checks if an element or its ancestors are fixed/sticky.
      */
     isSticky(el) {
@@ -1688,7 +1729,16 @@ class SpatialEngine {
             const centerY = rect.top + rect.height / 2;
             const topEl = this.deepElementFromPoint(centerX, centerY);
 
-            if (topEl && !this.composedContains(cand, topEl) && !this.composedContains(topEl, cand)) {
+            // The hit missed the candidate: it may have been cut away by a box
+            // that hides its overflow. weather.com parks its hourly carousel's
+            // back button just outside the carousel, where it cannot be seen,
+            // and ArrowLeft from a daily row went 660px up to it. See
+            // clipState. Nothing is hit when the middle is off the window.
+            const hitSelf = topEl && (topEl === cand || this.composedContains(cand, topEl));
+            const clip = hitSelf ? 'visible' : this.clipState(cand, rect, currentEl);
+            if (clip === 'clipped') return;
+
+            if (clip !== 'scrollable' && topEl && !this.composedContains(cand, topEl) && !this.composedContains(topEl, cand)) {
                 // FIX: Allow Label <-> Input obstruction
                 // If the candidate is a label and it's obscured by its target input (or vice versa), that's fine.
                 // This happens with custom checkboxes/radios where the input is on top of the label.

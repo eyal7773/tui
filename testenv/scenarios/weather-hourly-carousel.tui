@@ -1,0 +1,6 @@
+# weather.com: the hourly carousel scrolls its own box inside one that hides its overflow; ArrowLeft has to step to the next hour, which is out of view beside the carousel, over the next column.
+https://weather.com/
+wait:3000
+start:css=a.absolute.rounded-xl[aria-label^='21:00']
+key:ArrowLeft
+expect:css=a.absolute.rounded-xl[aria-label^='20:00']
