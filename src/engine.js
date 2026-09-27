@@ -913,7 +913,18 @@ class SpatialEngine {
         const hint = document.createElement('div');
         hint.id = 'tui-hint';
         hint.setAttribute('role', 'status');
-        hint.textContent = 'Press Enter twice to double-click';
+        // A picture rather than a sentence: an Enter key pressed twice, and
+        // "x2" beside it. The words stay for screen readers.
+        hint.setAttribute('aria-label', 'Press Enter twice to double-click');
+        const key = document.createElement('span');
+        key.className = 'tui-hint-key';
+        key.textContent = 'Enter ↵';
+        const times = document.createElement('span');
+        times.className = 'tui-hint-times';
+        times.textContent = '×2';
+        key.setAttribute('aria-hidden', 'true');
+        times.setAttribute('aria-hidden', 'true');
+        hint.append(key, times);
         document.body.appendChild(hint);
         this.hint = hint;
 

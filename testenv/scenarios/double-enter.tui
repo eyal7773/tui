@@ -5,7 +5,7 @@ start:css=#file1
 key:Enter
 eval:(() => { if (document.getElementById('opened').textContent !== 'nothing opened') throw new Error('one Enter opened it'); if (document.getElementById('file1').getAttribute('aria-selected') !== 'true') throw new Error('not selected'); return 'selected'; })()
 wait:900
-eval:(() => { const h = document.getElementById('tui-hint'); if (!h || !/Enter twice/.test(h.textContent)) throw new Error('no hint'); return h.textContent; })()
+eval:(() => { const h = document.getElementById('tui-hint'); if (!h || !/Enter twice/.test(h.getAttribute('aria-label'))) throw new Error('no hint'); return h.getAttribute('aria-label'); })()
 shot:double-enter-hint
 key:Enter
 key:Enter

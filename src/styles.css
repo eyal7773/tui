@@ -110,17 +110,21 @@
 }
 
 /* "Press Enter twice to double-click", beside the ring after an Enter that
-   did nothing (see showDoubleClickHint). It never takes the mouse. */
+   did nothing (see showDoubleClickHint): an Enter key pressed twice, and x2.
+   It never takes the mouse. */
 #tui-hint {
   position: absolute;
   z-index: 2147483647;
-  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
   background-color: #2d2d2d;
   color: #ffffff;
   border: 1px solid #444;
-  border-radius: 6px;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  font: 13px/1.4 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font: 13px/1 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
@@ -131,4 +135,28 @@
 
 #tui-hint.tui-hint-visible {
   opacity: 1;
+}
+
+/* A keycap: light face, a darker edge under it that the press pushes into. */
+#tui-hint .tui-hint-key {
+  display: inline-block;
+  padding: 5px 10px;
+  background: linear-gradient(#fafafa, #e4e4e4);
+  color: #222;
+  border: 1px solid #999;
+  border-radius: 5px;
+  box-shadow: 0 3px 0 #777;
+  font-weight: 600;
+  animation: tui-hint-press 1.2s ease-in-out infinite;
+}
+
+#tui-hint .tui-hint-times {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Two quick presses, then a pause, so it reads as "twice". */
+@keyframes tui-hint-press {
+  0%, 10%, 30%, 100% { transform: translateY(0); box-shadow: 0 3px 0 #777; }
+  5%, 25% { transform: translateY(3px); box-shadow: 0 0 0 #777; }
 }
