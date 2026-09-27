@@ -6,7 +6,10 @@
   td { padding: 6px 12px; }
 </style></head>
 <body>
-  <!-- Drive's file list: a click selects a row, a double-click opens it. -->
+  <!-- Drive's file list: a click selects a row, a double-click opens it. Like
+       Drive, the dblclick counts only when the click before it said detail 2,
+       which native click() never does. -->
+
   <p id="opened">nothing opened</p>
   <table role="grid">
     <tr role="row" tabindex="0" id="file1" aria-selected="false"><td>Report.docx</td></tr>
@@ -16,7 +19,8 @@
   </table>
   <script>
     document.querySelectorAll('tr').forEach((row) => {
-      row.addEventListener('click', () => {
+      row.addEventListener('click', (e) => {
+        row.lastDetail = e.detail;
         document.querySelectorAll('tr').forEach((r) => r.setAttribute('aria-selected', String(r === row)));
         if (row.id === 'details') {
           const d = document.createElement('div');
@@ -26,6 +30,7 @@
         }
       });
       row.addEventListener('dblclick', (e) => {
+        if (row.lastDetail !== 2) return;
         document.getElementById('opened').textContent = 'opened ' + row.id + ' detail=' + e.detail;
       });
     });

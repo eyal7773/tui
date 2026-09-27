@@ -853,10 +853,20 @@ class SpatialEngine {
         target.dispatchEvent(new PointerEvent('pointerup', options));
         target.dispatchEvent(new MouseEvent('mouseup', options));
 
+        // A mouse puts the second click of a pair, and the dblclick after it,
+        // at the middle of the element.
+        const r = clickCount === 2 ? target.getBoundingClientRect() : null;
+        const pair = r ? { ...options, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 } : null;
+
         // 2. Perform the Click
-        // Use native click() if available as it effectively triggers the 'click' event 
+        // Use native click() if available as it effectively triggers the 'click' event
         // AND handles default behaviors (like navigation for <a> tags).
-        if (typeof target.click === 'function') {
+        // Not for the second click of a pair: native click() always has
+        // detail 0, and Drive opens a file only when that click says 2.
+        if (pair) {
+            if (this.debugMode) console.log('[TUI] Dispatching second click of a double-click');
+            target.dispatchEvent(new MouseEvent('click', pair));
+        } else if (typeof target.click === 'function') {
             if (this.debugMode) console.log('[TUI] Calling native .click()');
             target.click();
         } else {
@@ -865,16 +875,8 @@ class SpatialEngine {
             target.dispatchEvent(new MouseEvent('click', options));
         }
 
-        // 3. The second click of a pair is followed by dblclick, at the
-        // middle of the element, where a mouse would have been.
-        if (clickCount === 2) {
-            const r = target.getBoundingClientRect();
-            target.dispatchEvent(new MouseEvent('dblclick', {
-                ...options,
-                clientX: r.left + r.width / 2,
-                clientY: r.top + r.height / 2
-            }));
-        }
+        // 3. The second click of a pair is followed by dblclick.
+        if (pair) target.dispatchEvent(new MouseEvent('dblclick', pair));
 
         if (this.debugMode) console.log('[TUI] Click simulation complete.');
     }
