@@ -137,8 +137,16 @@
   opacity: 1;
 }
 
-/* A keycap: light face, a darker edge under it that the press pushes into. */
-#tui-hint .tui-hint-key {
+/* A keycap: light face, a darker edge under it that the press pushes into.
+   Drawn in the hint and in text mode's badge. */
+#tui-hint .tui-hint-chord,
+#tui-text-badge .tui-hint-chord {
+  display: inline-flex;
+  gap: 3px;
+}
+
+#tui-hint .tui-hint-key,
+#tui-text-badge .tui-hint-key {
   display: inline-block;
   padding: 5px 10px;
   background: linear-gradient(#fafafa, #e4e4e4);
@@ -147,10 +155,13 @@
   border-radius: 5px;
   box-shadow: 0 3px 0 #777;
   font-weight: 600;
+}
+
+#tui-hint .tui-hint-press {
   animation: tui-hint-press 1.2s ease-in-out infinite;
 }
 
-#tui-hint .tui-hint-times {
+#tui-hint .tui-hint-mark {
   font-size: 18px;
   font-weight: 700;
 }
@@ -159,4 +170,61 @@
 @keyframes tui-hint-press {
   0%, 10%, 30%, 100% { transform: translateY(0); box-shadow: 0 3px 0 #777; }
   5%, 25% { transform: translateY(3px); box-shadow: 0 0 0 #777; }
+}
+
+/* Text mode's caret, in the ring's colour (see updateCaret). It blinks as a
+   caret does, and holds still while an anchor is down. */
+#tui-caret {
+  position: absolute;
+  z-index: 2147483647;
+  width: 3px;
+  background-color: var(--tui-ring, #00ff00);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  animation: tui-caret-blink 1s steps(1) infinite;
+}
+
+#tui-caret.tui-caret-marking {
+  animation: none;
+}
+
+@keyframes tui-caret-blink {
+  50% { opacity: 0; }
+}
+
+/* Text mode's sign, in the corner: TEXT and its keys, drawn as keys. */
+#tui-text-badge {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 12px;
+  background-color: #2d2d2d;
+  color: #ffffff;
+  border: 1px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  font: 13px/1 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+#tui-text-badge .tui-text-title {
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+#tui-text-badge.tui-text-marking .tui-text-title {
+  color: #ffcc00;
+}
+
+#tui-text-badge .tui-text-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }

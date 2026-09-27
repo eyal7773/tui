@@ -119,6 +119,46 @@ lists use.
 `src/click-rules.js` holds the decision as pure functions over a tree, so the
 awkward rows can be tested without a page.
 
+## Enter twice is a double-click
+
+**Some rows only open on a double-click.** In Google Drive a click selects a
+file and a double-click opens it, so Enter alone could never open one. A second
+Enter on the same element within half a second completes a mouse double-click:
+a second click, then `dblclick`. The first click goes out at once, so nothing
+waits on a timer.
+
+When a single Enter on something that is not a link, button or form control
+does nothing that shows - no navigation, no focus move, no dialog or menu,
+nothing expanded or toggled - a small picture beside the ring says so: the
+Enter key pressing twice, and ×2. A row that only got selected counts as
+nothing.
+
+## Selecting text
+
+**Shift+arrow selects text.** It starts text mode from the text under the ring
+(or, with no ring, from the page's main content), and the arrows move a caret
+through the text instead of the ring between controls:
+
+| Key | In text mode |
+| :--- | :--- |
+| **← / →** | A character (**Ctrl**: a word) |
+| **↑ / ↓** | A line (**Ctrl**: a paragraph) |
+| **Home / End** | The start or end of the line |
+| **Shift** + any of these | Extend the selection |
+| **Enter** | Copy what is selected; with nothing selected, drop an anchor so the plain arrows select |
+| **Ctrl+C** | Copy, as anywhere |
+| **Esc** | Leave; the ring comes back on the control nearest the caret |
+| **Tab** | Leave, and move focus as usual |
+
+The selection is the page's own, so everything that works on a selection works
+on it. Enter as an anchor is for anyone who cannot hold two keys at once. A
+badge in the corner shows the mode and its keys, and a copy shows a tick beside
+the caret. **Select text** in the F10 menu starts it too. Text marked
+`user-select: none` cannot be selected, and the caret follows the page's order,
+so in a table or beside a sidebar a line step may go somewhere unexpected.
+
+`src/text-rules.js` holds what each key means, as pure functions.
+
 ## Rows of a grid and whole-view containers
 
 **The ring stops on each row of a grid, not on the view around it.** A file
@@ -175,7 +215,8 @@ It lasts until the page is reloaded and is never saved; a fresh page always
 starts out navigable. Inside a text box Escape keeps its existing meaning of
 leaving the box, so the handover needs a second press there.
 
-Escape is never swallowed: the page receives it either way.
+Escape is never swallowed: the page receives it either way. The one exception
+is text mode (see Selecting text), where Escape only leaves the mode.
 
 ## Excluded sites
 
@@ -342,7 +383,8 @@ The download button does not depend on any of this. It points at
 | **Arrow Up** | Move focus to the item above |
 | **Arrow Left / Right** | Move across the current row |
 | **Home / End** | Jump to either end of the current line (see below) |
-| **Enter** | Activate the focused item (see below) |
+| **Enter** | Activate the focused item (see below); twice for a double-click |
+| **Shift + Arrows** | Select text (see below) |
 | **Esc** | Leave a text box, or hand the keyboard back to the page |
 
 ### Management

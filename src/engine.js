@@ -107,7 +107,8 @@ class SpatialEngine {
 
         // Handle window resize to update spotlight position if needed
         window.addEventListener('resize', () => {
-            if (this.lastActiveElement) this.highlight(this.lastActiveElement);
+            if (this.textMode) this.updateCaret();
+            else if (this.lastActiveElement) this.highlight(this.lastActiveElement);
         });
 
         // Dynamic DOM Observer
@@ -276,6 +277,13 @@ class SpatialEngine {
     highlight(el) {
         this.lastActiveElement = el; // Track what we are highlighting
 
+        // In text mode the caret stands in for the ring.
+        if (this.textMode) {
+            if (this.spotlight) this.spotlight.style.display = 'none';
+            this.updateCaret();
+            return;
+        }
+
         // FEATURE: Lazy Focus
         // If the user hasn't started using arrow keys yet (isActiveMode is false),
         // we track the element internally but DO NOT show the intrusive green UI.
@@ -405,6 +413,7 @@ class SpatialEngine {
             this.isActiveMode = false;
             if (this.spotlight) this.spotlight.style.display = 'none';
             if (this.isMenuOpen) this.closeMenu();
+            this.exitTextMode(false);
         }
 
         console.log(`[TUI] ${this.isEnabled ? 'Enabled' : 'Disabled'}` +
@@ -606,6 +615,13 @@ class SpatialEngine {
                 this._scrollFrameLocked = false;
                 const shifted = this._layoutShifted;
                 this._layoutShifted = false;
+                // The caret stands in for the ring, and there may be no ring
+                // at all (text mode started from the menu). Nor is the page
+                // pulled back to the ring's element under the caret.
+                if (this.textMode) {
+                    this.updateCaret();
+                    return;
+                }
                 // Only update visual position if we are in "Active Mode" and have a target
                 // that is still on the page (a removed one would put the ring at 0,0).
                 if (this.isActiveMode && this.lastActiveElement && this.lastActiveElement.isConnected) {
@@ -617,6 +633,13 @@ class SpatialEngine {
     }
 
     handleKeydown(e) {
+        // Text mode takes the keys it has a use for, Escape among them: there
+        // it leaves the mode rather than handing the keyboard over.
+        if (this.textMode) {
+            this.handleTextKey(e);
+            return;
+        }
+
         // Escape hands the keyboard back to the page, and takes it again. Read
         // before the enabled check, because once the keyboard is handed over the
         // engine is disabled and would otherwise have no way to hear the key that
@@ -681,6 +704,15 @@ class SpatialEngine {
             e.preventDefault();
             e.stopImmediatePropagation();
             this.navigate(direction, 'extreme');
+            return;
+        }
+
+        // Shift+arrow selects, as it does in any editor: it starts text mode
+        // from the text under the ring. Inside a text box it never gets here.
+        if (window.TuiTextRules && window.TuiTextRules.startsTextMode(e)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            this.enterTextMode(e);
             return;
         }
 
@@ -904,27 +936,35 @@ class SpatialEngine {
         if (stop) stop();
     }
 
-    /** A note beside the ring, under it, or above when there is no room below. */
+    /** Enter twice as a picture: the key pressing down twice, and x2. */
     showDoubleClickHint(el) {
-        this.hideHint();
         const rect = this.rectOf(el);
-        if (!document.body || (rect.width === 0 && rect.height === 0)) return;
+        if (rect.width === 0 && rect.height === 0) return;
+        this.showKeyHint(rect, 'Press Enter twice to double-click', [['Enter \u21B5']], '\u00D72', true);
+    }
+
+    /**
+     * A note beside rect, under it or above when there is no room below: key
+     * caps, then a mark such as x2. A picture rather than a sentence, so
+     * there is nothing to read; label keeps the words for screen readers.
+     * keys is a list of chords, each a list of keys drawn joined.
+     */
+    showKeyHint(rect, label, keys, mark, press = false) {
+        this.hideHint();
+        if (!document.body) return;
 
         const hint = document.createElement('div');
         hint.id = 'tui-hint';
         hint.setAttribute('role', 'status');
-        // A picture rather than a sentence: an Enter key pressed twice, and
-        // "x2" beside it. The words stay for screen readers.
-        hint.setAttribute('aria-label', 'Press Enter twice to double-click');
-        const key = document.createElement('span');
-        key.className = 'tui-hint-key';
-        key.textContent = 'Enter ↵';
-        const times = document.createElement('span');
-        times.className = 'tui-hint-times';
-        times.textContent = '×2';
-        key.setAttribute('aria-hidden', 'true');
-        times.setAttribute('aria-hidden', 'true');
-        hint.append(key, times);
+        hint.setAttribute('aria-label', label);
+        keys.forEach(chord => hint.appendChild(this.keyChord(chord, press)));
+        if (mark) {
+            const tail = document.createElement('span');
+            tail.className = 'tui-hint-mark';
+            tail.setAttribute('aria-hidden', 'true');
+            tail.textContent = mark;
+            hint.appendChild(tail);
+        }
         document.body.appendChild(hint);
         this.hint = hint;
 
@@ -939,10 +979,360 @@ class SpatialEngine {
         this.hintTimer = setTimeout(() => this.hideHint(), 3000);
     }
 
+    /** Key caps side by side, as a chord such as Ctrl C is drawn. */
+    keyChord(keys, press = false) {
+        const chord = document.createElement('span');
+        chord.className = 'tui-hint-chord';
+        chord.setAttribute('aria-hidden', 'true');
+        keys.forEach(name => {
+            const key = document.createElement('span');
+            key.className = press ? 'tui-hint-key tui-hint-press' : 'tui-hint-key';
+            key.textContent = name;
+            chord.appendChild(key);
+        });
+        return chord;
+    }
+
     hideHint() {
         clearTimeout(this.hintTimer);
         if (this.hint) this.hint.remove();
         this.hint = null;
+    }
+
+    /*
+     * TEXT MODE (see text-rules.js)
+     *
+     * The arrows move a caret through the page's text rather than the ring
+     * between controls. The selection is the page's own, made with
+     * Selection.modify, so Ctrl+C and everything else that works on a
+     * selection works on it too.
+     */
+    enterTextMode(e) {
+        const rules = window.TuiTextRules;
+        const sel = window.getSelection();
+        if (!rules || !sel || !document.body) return;
+        this.endClickWatch();
+        this.hideHint();
+
+        const start = this.textStartPoint();
+        if (start) {
+            try {
+                sel.collapse(start.node, start.offset);
+            } catch (err) {
+                sel.removeAllRanges();
+            }
+        }
+        if (!start || !sel.rangeCount) {
+            // Nothing on screen can be selected (a page of pictures, or text
+            // marked user-select: none).
+            const at = this.lastActiveElement && this.lastActiveElement.isConnected
+                ? this.rectOf(this.lastActiveElement)
+                : { left: 16, top: 16, right: 16, bottom: 16, width: 0, height: 0 };
+            this.showKeyHint(at, 'There is no text here to select', [['\u21E7', '\u2190\u2192']], '\u2715');
+            return;
+        }
+
+        this.textMode = { marking: false };
+        this.isActiveMode = true;
+        this.userHasActed = true;
+        if (this.spotlight) this.spotlight.style.display = 'none';
+        this.onTextCopy = () => this.showCopied();
+        document.addEventListener('copy', this.onTextCopy, true);
+        this.showTextBadge();
+
+        // The Shift+arrow that started it counts: it selects its first step.
+        const action = e ? rules.textAction(e, false) : null;
+        if (action && action.type === 'move') {
+            this.moveCaret(action);
+        } else {
+            this.updateCaret(true);
+        }
+    }
+
+    /** Leaves text mode; ringBack puts the ring on the control nearest the caret. */
+    exitTextMode(ringBack) {
+        if (!this.textMode) return;
+        const sel = window.getSelection();
+        const at = sel && sel.rangeCount ? this.caretRect(sel.focusNode, sel.focusOffset) : null;
+
+        this.textMode = null;
+        document.removeEventListener('copy', this.onTextCopy, true);
+        this.onTextCopy = null;
+        if (this.caret) this.caret.remove();
+        this.caret = null;
+        if (this.textBadge) this.textBadge.remove();
+        this.textBadge = null;
+        this.hideHint();
+        if (sel) sel.removeAllRanges();
+
+        if (ringBack) this.ringNear(at);
+    }
+
+    handleTextKey(e) {
+        this.hideHint();
+        const action = window.TuiTextRules.textAction(e, this.textMode.marking);
+        // Not ours: the page has it. Ctrl+C copies the selection that way.
+        if (!action) return;
+        // Tab moves focus, and the ring should follow it rather than a caret
+        // stay behind; the page still gets the key.
+        if (action.type === 'leave') {
+            this.exitTextMode(false);
+            return;
+        }
+
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (action.type === 'exit') {
+            this.exitTextMode(true);
+        } else if (action.type === 'mark') {
+            this.markText();
+        } else {
+            this.moveCaret(action);
+        }
+    }
+
+    moveCaret(action) {
+        const sel = window.getSelection();
+        if (!sel || !sel.rangeCount) {
+            this.exitTextMode(true);
+            return;
+        }
+        sel.modify(action.alter, action.direction, action.granularity);
+        this.updateCaret(true);
+    }
+
+    /**
+     * Enter: with something selected, copies it and lets go of the anchor.
+     * With nothing selected, drops an anchor, so the plain arrows select
+     * from here as if Shift were held; Enter again without having moved
+     * picks it up.
+     */
+    markText() {
+        const sel = window.getSelection();
+        if (!sel || !sel.rangeCount) return;
+        if (!sel.isCollapsed) {
+            this.textMode.marking = false;
+            this.copySelection(sel);
+        } else {
+            this.textMode.marking = !this.textMode.marking;
+        }
+        this.updateTextBadge();
+        this.updateCaret();
+    }
+
+    copySelection(sel) {
+        // execCommand runs inside the key press, which is what lets a page
+        // copy, and fires the copy event that shows the tick (onTextCopy).
+        let copied = false;
+        try {
+            copied = document.execCommand('copy');
+        } catch (err) {
+            copied = false;
+        }
+        if (!copied && navigator.clipboard) {
+            navigator.clipboard.writeText(sel.toString()).then(() => this.showCopied(), () => {});
+        }
+    }
+
+    showCopied() {
+        const sel = window.getSelection();
+        const at = sel && sel.rangeCount ? this.caretRect(sel.focusNode, sel.focusOffset) : null;
+        if (!at) return;
+        this.showKeyHint(at, 'Copied', [['Ctrl', 'C']], '\u2713');
+    }
+
+    /**
+     * Where the caret starts: the first text under the ring, otherwise the
+     * first text on screen from the ring's top down (from the top of the
+     * window when there is no ring).
+     */
+    textStartPoint() {
+        const rules = window.TuiTextRules;
+        const ring = this.lastActiveElement && this.lastActiveElement.isConnected &&
+            this.lastActiveElement !== document.body ? this.lastActiveElement : null;
+        const point = (node) => node ? { node, offset: rules.firstCharOffset(node) } : null;
+
+        if (ring) {
+            const inside = this.firstText(ring, () => true);
+            if (inside) return point(inside);
+        }
+        const top = ring ? Math.max(0, this.rectOf(ring).top) : 0;
+        const onScreen = (r) =>
+            r.bottom > top && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth;
+        // With no ring, the page's main content rather than whatever is first
+        // on screen: on Wikipedia that was the search button, and the caret
+        // then went down the contents sidebar, which comes first in the page.
+        const main = !ring && document.querySelector('main, [role="main"]');
+        const inMain = main ? this.firstText(main, onScreen) : null;
+        return point(inMain || this.firstText(document.body, onScreen));
+    }
+
+    /** The first text node under root that can be selected, is drawn, and whose box passes where. */
+    firstText(root, where) {
+        const rules = window.TuiTextRules;
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        const range = document.createRange();
+        const MAX_NODES = 20000;
+        for (let i = 0, node = walker.nextNode(); node && i < MAX_NODES; i++, node = walker.nextNode()) {
+            if (!rules.isReadableText(node)) continue;
+            const style = window.getComputedStyle(node.parentElement);
+            if (style.userSelect === 'none' || style.visibility === 'hidden') continue;
+            range.selectNodeContents(node);
+            const rect = range.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0 && where(rect)) return node;
+        }
+        return null;
+    }
+
+    /**
+     * The box of a caret at (node, offset), in the window. A collapsed range
+     * often has no box at the edge of a line, so the character beside it is
+     * measured instead.
+     */
+    caretRect(node, offset) {
+        if (!node) return null;
+        const range = document.createRange();
+        const box = (r, x) => ({ left: x, right: x, top: r.top, bottom: r.bottom, width: 0, height: r.height });
+        try {
+            range.setStart(node, offset);
+            range.collapse(true);
+            const own = range.getClientRects()[0];
+            if (own && own.height > 0) return box(own, own.left);
+
+            if (node.nodeType === Node.TEXT_NODE) {
+                const length = node.nodeValue.length;
+                if (offset < length) {
+                    range.setEnd(node, offset + 1);
+                    const next = range.getClientRects()[0];
+                    if (next && next.height > 0) return box(next, next.left);
+                }
+                if (offset > 0) {
+                    range.setStart(node, offset - 1);
+                    range.setEnd(node, offset);
+                    const prev = range.getClientRects()[0];
+                    if (prev && prev.height > 0) return box(prev, prev.right);
+                }
+            } else if (node.getBoundingClientRect) {
+                const r = node.getBoundingClientRect();
+                if (r.height > 0) return box(r, r.left);
+            }
+        } catch (err) {
+            return null;
+        }
+        return null;
+    }
+
+    /** Draws the caret where the selection's moving end is; scroll brings it into view. */
+    updateCaret(scroll = false) {
+        const sel = window.getSelection();
+        if (!this.textMode || !sel || !sel.rangeCount) {
+            if (this.caret) this.caret.style.display = 'none';
+            return;
+        }
+
+        let rect = this.caretRect(sel.focusNode, sel.focusOffset);
+        const outOfView = (r) => r.top < 0 || r.bottom > window.innerHeight;
+        if (scroll && rect && outOfView(rect)) {
+            // Its own box first, in case it scrolls inside one; then the page.
+            const holder = sel.focusNode.nodeType === Node.ELEMENT_NODE ? sel.focusNode : sel.focusNode.parentElement;
+            if (holder) holder.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            rect = this.caretRect(sel.focusNode, sel.focusOffset);
+            if (rect && outOfView(rect)) {
+                window.scrollBy(0, rect.top - window.innerHeight / 2);
+                rect = this.caretRect(sel.focusNode, sel.focusOffset);
+            }
+        }
+
+        if (!this.caret || !this.caret.isConnected) {
+            this.caret = document.createElement('div');
+            this.caret.id = 'tui-caret';
+            document.body.appendChild(this.caret);
+        }
+        if (!rect) {
+            this.caret.style.display = 'none';
+            return;
+        }
+        const color = this.spotlight && this.spotlight.style.getPropertyValue('--tui-ring');
+        if (color) this.caret.style.setProperty('--tui-ring', color);
+        this.caret.classList.toggle('tui-caret-marking', this.textMode.marking);
+        this.caret.style.left = `${rect.left + (window.scrollX || 0) - 1}px`;
+        this.caret.style.top = `${rect.top + (window.scrollY || 0)}px`;
+        this.caret.style.height = `${rect.height}px`;
+        this.caret.style.display = 'block';
+    }
+
+    /** The mode's sign in the corner, which is also its key list, drawn as keys. */
+    showTextBadge() {
+        if (!this.textBadge || !this.textBadge.isConnected) {
+            this.textBadge = document.createElement('div');
+            this.textBadge.id = 'tui-text-badge';
+            this.textBadge.setAttribute('role', 'status');
+            document.body.appendChild(this.textBadge);
+        }
+        this.updateTextBadge();
+    }
+
+    updateTextBadge() {
+        const badge = this.textBadge;
+        if (!badge || !this.textMode) return;
+        const marking = this.textMode.marking;
+        badge.textContent = '';
+        badge.classList.toggle('tui-text-marking', marking);
+        badge.setAttribute('aria-label', marking
+            ? 'Text mode, selecting: arrows select, Enter copies, Escape leaves'
+            : 'Text mode: Shift and arrows select, Enter starts selecting, Ctrl C copies, Escape leaves');
+
+        const title = document.createElement('span');
+        title.className = 'tui-text-title';
+        title.setAttribute('aria-hidden', 'true');
+        title.textContent = marking ? '\u25CF TEXT' : 'TEXT';
+        badge.appendChild(title);
+
+        const item = (keys, what) => {
+            const group = document.createElement('span');
+            group.className = 'tui-text-item';
+            group.appendChild(this.keyChord(keys));
+            const label = document.createElement('span');
+            label.setAttribute('aria-hidden', 'true');
+            label.textContent = what;
+            group.appendChild(label);
+            badge.appendChild(group);
+        };
+        if (marking) {
+            item(['\u2190\u2191\u2193\u2192'], 'select');
+            item(['Enter \u21B5'], 'copy');
+        } else {
+            item(['\u21E7', '\u2190\u2192'], 'select');
+            item(['Enter \u21B5'], 'mark');
+            item(['Ctrl', 'C'], 'copy');
+        }
+        item(['Esc'], 'exit');
+    }
+
+    /** Back from text mode: the ring goes on the control on screen nearest to where the caret was. */
+    ringNear(at) {
+        this.candidatesDirty = true;
+        this.refreshCandidates();
+        let target = null;
+        if (at) {
+            let best = Infinity;
+            this.candidates.forEach(c => {
+                const r = this.rectOf(c);
+                if (window.TuiViewRules && !window.TuiViewRules.onScreen(r)) return;
+                const dx = Math.max(r.left - at.left, 0, at.left - r.right);
+                const dy = Math.max(r.top - at.bottom, 0, at.top - r.bottom);
+                const d = dx * dx + dy * dy;
+                if (d < best) {
+                    best = d;
+                    target = c;
+                }
+            });
+        }
+        if (!target && this.lastActiveElement && this.lastActiveElement.isConnected) {
+            target = this.lastActiveElement;
+        }
+        this.isActiveMode = true;
+        if (target) this.focusElement(target);
     }
 
     handleInteraction(e) {
@@ -954,6 +1344,9 @@ class SpatialEngine {
         // are untrusted, and picking a radio with Enter hid the ring it was
         // pressed from.
         if ((e.type === 'mousedown' || e.type === 'click') && e.isTrusted) {
+            // The mouse selects for itself; a caret left behind would only
+            // fight it.
+            this.exitTextMode(false);
             this.isActiveMode = false;
             this.userHasActed = true;   // the focus is theirs now, see isInEdgeBar
             // Immediate update to hide the ring
@@ -2749,6 +3142,8 @@ class SpatialEngine {
             window.open(window.location.href, '_blank');
         } else if (action === 'back') {
             window.history.back();
+        } else if (action === 'select-text') {
+            this.enterTextMode(null);
         }
     }
 }

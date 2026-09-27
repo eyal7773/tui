@@ -1,0 +1,12 @@
+# Select text from the F10 menu, before any ring: the caret starts in <main>, not the header,
+# keeps up with a scroll, and Tab leaves text mode.
+pages/select-text.html
+key:F10
+key:ArrowDown*2
+key:Enter
+eval:(() => { const n = getSelection().focusNode; if (!document.getElementById('tui-text-badge')) throw new Error('not in text mode'); if (!n || n.parentElement.id !== 'title') throw new Error('caret in ' + (n && n.parentElement.id)); return 'in #title'; })()
+eval:(() => { window.scrollBy(0, 30); return scrollY; })()
+wait:200
+eval:(() => { const c = document.getElementById('tui-caret').getBoundingClientRect(); const r = document.getElementById('title').getBoundingClientRect(); if (Math.abs(c.top - r.top) > 4) throw new Error('caret at ' + c.top + ', text at ' + r.top); return 'caret kept up'; })()
+key:Tab
+eval:(() => { if (document.getElementById('tui-text-badge') || document.getElementById('tui-caret')) throw new Error('still in text mode'); return 'left'; })()

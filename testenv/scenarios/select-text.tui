@@ -1,0 +1,23 @@
+# Selecting and copying text from the keyboard: Shift+arrow starts text mode at the ring.
+# A word step takes the space after it, as Windows editors do.
+pages/select-text.html
+start:css=#title
+key:Shift+ArrowRight
+eval:(() => { const s = String(getSelection()); if (s !== 'G') throw new Error('selected "' + s + '"'); if (!document.getElementById('tui-text-badge') || !document.getElementById('tui-caret')) throw new Error('no badge or caret'); if (document.getElementById('tui-spotlight').style.display !== 'none') throw new Error('ring still up'); return s; })()
+key:Shift+Control+ArrowRight
+eval:(() => { const s = String(getSelection()); if (s !== 'Getting ') throw new Error('selected "' + s + '"'); return s; })()
+shot:select-text-word
+key:Enter
+eval:(() => { if (window.copied !== 'Getting ') throw new Error('copied ' + window.copied); if (!document.getElementById('tui-hint')) throw new Error('no copied tick'); return window.copied; })()
+shot:select-text-copied
+key:ArrowLeft
+key:Enter
+key:ArrowRight*3
+eval:(() => { const s = String(getSelection()); if (s !== 'Get') throw new Error('anchor: selected "' + s + '"'); return s; })()
+key:Enter
+eval:(() => { if (window.copied !== 'Get') throw new Error('copied ' + window.copied); return window.copied; })()
+key:Escape
+eval:(() => { if (document.getElementById('tui-text-badge') || document.getElementById('tui-caret')) throw new Error('text mode left behind'); if (String(getSelection())) throw new Error('selection left'); return 'out'; })()
+expect:css=#title
+key:ArrowDown
+expect:css=#after
