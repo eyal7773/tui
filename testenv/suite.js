@@ -28,9 +28,11 @@ for (const file of files) {
     const lines = fs.readFileSync(file, 'utf8').split(/\r?\n/).map((l) => l.trim())
         .filter((l) => l && !l.startsWith('#'));
     let [target, ...steps] = lines;
-    if (!/^[a-z]+:/i.test(target)) target = path.resolve(path.dirname(file), target);
+    // A URL has a scheme of two letters or more; C: is a Windows drive.
+    const isUrl = (t) => /^[a-z][a-z0-9+.-]+:/i.test(t);
+    if (!isUrl(target)) target = path.resolve(path.dirname(file), target);
     const name = path.basename(file, '.tui');
-    if (!/^[a-z]+:/i.test(target) && !fs.existsSync(target)) {
+    if (!isUrl(target) && !fs.existsSync(target)) {
         console.log(`\n=== ${name}: SKIP, ${target} is not on this machine`);
         results.push([name, 'SKIP']);
         continue;
