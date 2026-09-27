@@ -1095,6 +1095,8 @@ class SpatialEngine {
             if (stretched) return stretched;
         }
         if (!el.children || !el.children.length || !window.TuiViewRules) return rect;
+        const head = this.cellHeadRect(el, rect);
+        if (head) return head;
         const display = window.getComputedStyle(el).display;
         if (display !== 'inline' && display !== 'contents') return rect;
         // Not only when the box is empty. ynet wraps each lead photo in an
@@ -1108,6 +1110,24 @@ class SpatialEngine {
             .map(c => c.getBoundingClientRect());
         if (!empty) parts.push(rect);
         return window.TuiViewRules.unionRect(rect, parts);
+    }
+
+    /**
+     * A grid cell with controls of its own below its content is drawn as
+     * that content alone. GitHub's diff puts a review thread in the cell of
+     * the line it is on: the cell grew around it, the ring took in the whole
+     * thread, and ArrowDown, measured from the cell's bottom, jumped past
+     * the replies and "Write a reply" to the next line.
+     */
+    cellHeadRect(el, rect) {
+        if (el.getAttribute('role') !== 'gridcell') return null;
+        const flow = Array.from(el.children)
+            .filter(c => !/absolute|fixed/.test(window.getComputedStyle(c).position));
+        const i = flow.findIndex(c => c.querySelector('a, button, input, select, textarea, [contenteditable]:not([contenteditable="false"])'));
+        if (i < 1) return null;
+        const bottom = flow[i].getBoundingClientRect().top;
+        if (bottom - rect.top < 4) return null;
+        return { left: rect.left, top: rect.top, right: rect.right, bottom, width: rect.width, height: bottom - rect.top, x: rect.x, y: rect.y };
     }
 
     /**
@@ -1509,6 +1529,8 @@ class SpatialEngine {
                     // helper. YouTube's sidebar entries are paper-items with
                     // tabindex=0 inside an <a tabindex=-1>, and every one was
                     // dropped: ArrowDown went from the menu to the footer.
+                } else if (this.isGridCellControl(el)) {
+                    // The wrapper's -1 is the grid's doing.
                 } else if (!el.isContentEditable) {
                     // Exception: contenteditable elements inside a tabindex=-1 wrapper are REAL
                     // interactive inputs (e.g. Telegram's message box). The wrapper uses tabindex=-1
@@ -1587,6 +1609,9 @@ class SpatialEngine {
                 // Labels with 'for' attribute are functional, not decorative
                 if (el.tagName === 'LABEL' && el.hasAttribute('for')) {
                     // Keep this label - it controls an input
+                } else if (this.isGridCellControl(el)) {
+                    // GitHub hides a review thread's buttons from screen
+                    // readers, not from the eye or the mouse.
                 } else {
                     return false;  // Filter out other aria-hidden elements
                 }
@@ -1657,7 +1682,7 @@ class SpatialEngine {
 
             // FILTER: Elements that are explicitly aria-hidden
             // (Unless they are labels, which we handled above)
-            if (el.getAttribute('aria-hidden') === 'true') {
+            if (el.getAttribute('aria-hidden') === 'true' && !this.isGridCellControl(el)) {
                 return false;
             }
 
@@ -2073,6 +2098,12 @@ class SpatialEngine {
      * This allows TUI to include those children as spatial navigation candidates.
      */
     isRovingTabindexMember(el) {
+        // A grid takes every control inside its cells out of the tab order
+        // until the cell is entered. GitHub's diff does this, so a review
+        // thread's "Write a reply" and the comments' buttons, many levels
+        // below the cell, were never reached: ArrowDown skipped the thread.
+        if (this.isInGridCell(el)) return true;
+
         // Walk up ancestors (limit depth to avoid perf issues)
         let ancestor = el.parentElement;
         let depth = 0;
@@ -2106,6 +2137,19 @@ class SpatialEngine {
         }
 
         return false;
+    }
+
+    isInGridCell(el) {
+        return !!(el.parentElement && el.parentElement.closest('[role="gridcell"]'));
+    }
+
+    /**
+     * A control inside a grid cell, which the grid has hidden from Tab and
+     * from screen readers (tabindex=-1 and aria-hidden on it or on its
+     * wrapper) while it is drawn and clickable. See isRovingTabindexMember.
+     */
+    isGridCellControl(el) {
+        return ['BUTTON', 'A', 'INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) && this.isInGridCell(el);
     }
 
     focusElement(el, attempt = 1) {

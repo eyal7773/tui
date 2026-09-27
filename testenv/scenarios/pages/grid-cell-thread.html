@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Review thread in a grid cell</title>
+<style>
+  body { font: 14px sans-serif; margin: 40px; }
+  td { vertical-align: top; padding: 2px 8px; }
+  code { display: block; }
+  .thread { margin: 6px 0; padding: 8px; width: 320px; border: 1px solid #ccc; }
+  .thread button { display: block; margin: 6px 0; cursor: pointer; }
+</style></head>
+<body>
+  <!-- GitHub's diff: the review thread sits in the cell of the line it is on,
+       and the grid hides every control in it (tabindex=-1, aria-hidden). -->
+  <table role="grid">
+    <tr><td role="gridcell" tabindex="0" id="line1"><code>line one</code></td></tr>
+    <tr><td role="gridcell" tabindex="-1" id="line2"><code>line two</code>
+      <div><div class="thread" aria-hidden="true">
+        <p>A comment on line two.</p>
+        <button tabindex="-1" id="actions" aria-label="Actions for the comment">...</button>
+        <div tabindex="-1"><button tabindex="-1" id="reply" aria-hidden="true">Write a reply</button></div>
+        <button tabindex="-1" id="resolve" aria-hidden="true">Resolve comment</button>
+      </div></div>
+    </td></tr>
+    <tr><td role="gridcell" tabindex="-1" id="line3"><code>line three</code></td></tr>
+  </table>
+</body></html>

@@ -1,0 +1,17 @@
+# GitHub diff: ArrowDown from a line went round the review thread under it, never reaching
+# "Write a reply", and the ring took in the whole thread with the line it is on.
+pages/grid-cell-thread.html
+start:css=#line1
+key:ArrowDown
+expect:css=#line2
+eval:(() => { const h = document.getElementById('tui-spotlight').getBoundingClientRect().height; if (h > 40) throw new Error('ring ' + h + 'px, the thread too'); return h; })()
+key:ArrowDown
+expect:css=#actions
+key:ArrowDown
+expect:css=#reply
+key:ArrowDown
+expect:css=#resolve
+key:ArrowDown
+expect:css=#line3
+key:ArrowUp
+expect:css=#resolve
