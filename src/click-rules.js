@@ -194,8 +194,47 @@
     return el;
   }
 
+  /**
+   * Enter twice within this many milliseconds on the same element is a
+   * double-click, the same window Windows gives the mouse by default.
+   */
+  const DOUBLE_ENTER_MS = 500;
+
+  /** How long a click has to show it did something before Enter's hint. */
+  const CLICK_EFFECT_MS = 800;
+
+  // State that changes when a click opens, expands or toggles something.
+  // aria-selected is left out on purpose: a file row in Drive only gets
+  // selected by a click and opens on a double-click, and that is exactly
+  // the case the hint is for.
+  const EFFECT_ATTRIBUTES = ['aria-expanded', 'aria-pressed', 'aria-checked', 'open'];
+
+  const OVERLAY_ROLES = new Set(['dialog', 'alertdialog', 'menu', 'listbox']);
+
+  /** A dialog, menu or popup: what a click brings up when it opens something. */
+  function isOverlay(el) {
+    if (!el || !el.tagName) return false;
+    if (tagOf(el) === 'DIALOG' || hasAttr(el, 'popover')) return true;
+    if (attrOf(el, 'aria-modal') === 'true') return true;
+    return OVERLAY_ROLES.has(roleOf(el));
+  }
+
+  /**
+   * Whether a click on el that did nothing may have wanted a double-click.
+   * Links, buttons and form controls act on one click by nature; a row or a
+   * tile whose action is scripted may open only on a double-click.
+   */
+  function mayWantDoubleClick(el) {
+    return !!el && !isActivating(el);
+  }
+
   root.TuiClickRules = {
     resolveClickTarget: resolveClickTarget,
+    isOverlay: isOverlay,
+    mayWantDoubleClick: mayWantDoubleClick,
+    EFFECT_ATTRIBUTES: EFFECT_ATTRIBUTES,
+    DOUBLE_ENTER_MS: DOUBLE_ENTER_MS,
+    CLICK_EFFECT_MS: CLICK_EFFECT_MS,
     isActivating: isActivating,
     isContainer: isContainer,
     isPrimaryAction: isPrimaryAction,

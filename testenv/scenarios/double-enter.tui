@@ -1,0 +1,17 @@
+# Drive: Enter on a file only selected it, and there was no way to open it. Enter twice is a
+# double-click, and an Enter that did nothing says so beside the ring.
+pages/double-click-rows.html
+start:css=#file1
+key:Enter
+eval:(() => { if (document.getElementById('opened').textContent !== 'nothing opened') throw new Error('one Enter opened it'); if (document.getElementById('file1').getAttribute('aria-selected') !== 'true') throw new Error('not selected'); return 'selected'; })()
+wait:900
+eval:(() => { const h = document.getElementById('tui-hint'); if (!h || !/Enter twice/.test(h.textContent)) throw new Error('no hint'); return h.textContent; })()
+shot:double-enter-hint
+key:Enter
+key:Enter
+eval:(() => { const t = document.getElementById('opened').textContent; if (t !== 'opened file1 detail=2') throw new Error(t); if (document.getElementById('tui-hint')) throw new Error('hint left up'); return t; })()
+key:ArrowDown*2
+expect:css=#details
+key:Enter
+wait:900
+eval:(() => { if (document.getElementById('tui-hint')) throw new Error('hint after a click that opened a dialog'); return 'no hint'; })()

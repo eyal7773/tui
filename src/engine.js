@@ -632,6 +632,11 @@ class SpatialEngine {
         // User is interacting, stop any pending focus monitoring to avoid conflicts/lag
         this.stopFocusMonitor();
 
+        // A key after Enter means the user has moved on: the hint that Enter
+        // twice is a double-click is no longer wanted, nor the wait for it.
+        this.endClickWatch();
+        this.hideHint();
+
         if (e.key === 'F10' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
             e.preventDefault();
             e.stopPropagation();
@@ -739,7 +744,24 @@ class SpatialEngine {
             e.preventDefault();
             e.stopImmediatePropagation();
             if (active) {
-                this.simulateClick(active);
+                // Enter twice on the same element is a double-click, which is
+                // how a file opens in Drive; one click only selects it. The
+                // first press has already clicked, so the second completes
+                // the pair, as a mouse would, and nothing waits on a timer.
+                const rules = window.TuiClickRules;
+                const last = this.lastEnter;
+                const now = Date.now();
+                const second = !!rules && !e.repeat && !!last && last.el === active &&
+                    now - last.at <= rules.DOUBLE_ENTER_MS;
+                this.lastEnter = second ? null : { el: active, at: now };
+                if (second) {
+                    this.simulateClick(active, 2);
+                } else {
+                    // Watching from before the click: the page's handler runs
+                    // inside it, and a dialog it opens is already there after.
+                    this.watchClickEffect(active);
+                    this.simulateClick(active);
+                }
                 this.safeSendMessage({ type: 'METRIC_EVENT', payload: { action: 'ENTER', key: 'Enter' } });
             }
         }
@@ -760,7 +782,7 @@ class SpatialEngine {
         return `${tag}${id}${cls}${href}`;
     }
 
-    simulateClick(el) {
+    simulateClick(el, clickCount = 1) {
         if (this.debugMode) console.log('[TUI] Simulating Click on:', this.describeElement(el));
 
         // SMART TARGETING: the focused element is often not the element that
@@ -786,6 +808,7 @@ class SpatialEngine {
             cancelable: true,
             composed: true,  // Allow events to cross shadow DOM boundaries
             buttons: 1,
+            detail: clickCount,
             pointerType: 'mouse'  // Explicitly mark as mouse event (not pen/touch)
         };
 
@@ -810,7 +833,105 @@ class SpatialEngine {
             target.dispatchEvent(new MouseEvent('click', options));
         }
 
+        // 3. The second click of a pair is followed by dblclick, at the
+        // middle of the element, where a mouse would have been.
+        if (clickCount === 2) {
+            const r = target.getBoundingClientRect();
+            target.dispatchEvent(new MouseEvent('dblclick', {
+                ...options,
+                clientX: r.left + r.width / 2,
+                clientY: r.top + r.height / 2
+            }));
+        }
+
         if (this.debugMode) console.log('[TUI] Click simulation complete.');
+    }
+
+    /**
+     * After Enter clicked el, waits CLICK_EFFECT_MS for a sign that the click
+     * did something: the page navigated or was left, focus moved, el went
+     * away, a dialog or menu came up, or something opened, expanded or
+     * toggled. With none, the hint says that Enter twice is a double-click.
+     * Only for elements that may want one (see mayWantDoubleClick); a row
+     * that only got selected counts as nothing.
+     */
+    watchClickEffect(el) {
+        const rules = window.TuiClickRules;
+        if (!rules || !rules.mayWantDoubleClick(el) || !document.body) return;
+        this.endClickWatch();
+
+        const href = location.href;
+        const ours = (node) => node === this.spotlight || node === this.hint ||
+            node.id === 'tui-menu-container';
+        const overlayInside = (node) => rules.isOverlay(node) || (!!node.querySelector && !!node.querySelector(
+            'dialog, [popover], [aria-modal="true"], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]'));
+        const observer = new MutationObserver((records) => {
+            const acted = records.some(r => r.type === 'attributes'
+                ? !ours(r.target)
+                : Array.from(r.addedNodes).some(n => n.nodeType === 1 && !ours(n) && overlayInside(n)));
+            if (acted) this.endClickWatch();
+        });
+        observer.observe(document.body, {
+            subtree: true, childList: true, attributes: true, attributeFilter: rules.EFFECT_ATTRIBUTES
+        });
+
+        // Leaving the page, or a new tab taking the window, ends it too.
+        const left = () => this.endClickWatch();
+        const nav = window.navigation;
+        window.addEventListener('pagehide', left);
+        window.addEventListener('blur', left);
+        if (nav) nav.addEventListener('navigate', left);
+
+        const timer = setTimeout(() => {
+            const moved = location.href !== href || document.hidden || !el.isConnected ||
+                this.deepActiveElement() !== el || this.lastActiveElement !== el;
+            this.endClickWatch();
+            if (!moved) this.showDoubleClickHint(el);
+        }, rules.CLICK_EFFECT_MS);
+
+        this.clickWatch = () => {
+            clearTimeout(timer);
+            observer.disconnect();
+            window.removeEventListener('pagehide', left);
+            window.removeEventListener('blur', left);
+            if (nav) nav.removeEventListener('navigate', left);
+        };
+    }
+
+    endClickWatch() {
+        const stop = this.clickWatch;
+        this.clickWatch = null;
+        if (stop) stop();
+    }
+
+    /** A note beside the ring, under it, or above when there is no room below. */
+    showDoubleClickHint(el) {
+        this.hideHint();
+        const rect = this.rectOf(el);
+        if (!document.body || (rect.width === 0 && rect.height === 0)) return;
+
+        const hint = document.createElement('div');
+        hint.id = 'tui-hint';
+        hint.setAttribute('role', 'status');
+        hint.textContent = 'Press Enter twice to double-click';
+        document.body.appendChild(hint);
+        this.hint = hint;
+
+        const gap = 6;
+        const below = rect.bottom + gap + hint.offsetHeight <= window.innerHeight;
+        const top = below ? rect.bottom + gap : rect.top - gap - hint.offsetHeight;
+        const left = Math.max(gap, Math.min(rect.left, window.innerWidth - hint.offsetWidth - gap));
+        hint.style.top = `${Math.max(gap, top) + (window.scrollY || 0)}px`;
+        hint.style.left = `${left + (window.scrollX || 0)}px`;
+        requestAnimationFrame(() => hint.classList.add('tui-hint-visible'));
+
+        this.hintTimer = setTimeout(() => this.hideHint(), 3000);
+    }
+
+    hideHint() {
+        clearTimeout(this.hintTimer);
+        if (this.hint) this.hint.remove();
+        this.hint = null;
     }
 
     handleInteraction(e) {

@@ -183,3 +183,27 @@ test('the descendant search stops rather than walking a huge subtree', () => {
   // The link is past the budget, so the search settles for the wrapper it found.
   assert.equal(target, deepest);
 });
+
+test('a row or a tile may want a double-click; links, buttons and controls never do', () => {
+  const { mayWantDoubleClick } = globalThis.TuiClickRules;
+  // Drive's file row: a click selects it, a double-click opens it.
+  assert.equal(mayWantDoubleClick(el('tr', { role: 'row', 'aria-selected': 'false' })), true);
+  assert.equal(mayWantDoubleClick(el('div', { tabindex: '0', class: 'tile' })), true);
+  assert.equal(mayWantDoubleClick(el('a', { href: '/doc' })), false);
+  assert.equal(mayWantDoubleClick(el('button')), false);
+  assert.equal(mayWantDoubleClick(el('div', { role: 'button' })), false);
+  assert.equal(mayWantDoubleClick(el('input', { type: 'checkbox' })), false);
+  assert.equal(mayWantDoubleClick(null), false);
+});
+
+test('what a click brings up when it opens something counts as an overlay', () => {
+  const { isOverlay, EFFECT_ATTRIBUTES } = globalThis.TuiClickRules;
+  assert.equal(isOverlay(el('dialog')), true);
+  assert.equal(isOverlay(el('div', { role: 'dialog' })), true);
+  assert.equal(isOverlay(el('div', { role: 'menu' })), true);
+  assert.equal(isOverlay(el('div', { popover: '' })), true);
+  assert.equal(isOverlay(el('div', { 'aria-modal': 'true' })), true);
+  assert.equal(isOverlay(el('div', { class: 'toolbar' })), false);
+  // Being selected is not a sign that a click did what it was for.
+  assert.equal(EFFECT_ATTRIBUTES.includes('aria-selected'), false);
+});
