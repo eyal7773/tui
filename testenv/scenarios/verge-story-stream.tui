@@ -3,6 +3,8 @@ https://www.theverge.com/
 wait:4000
 start:css=#storyStream-tab
 key:ArrowDown
-eval:(() => { const r = document.getElementById('tui-spotlight').getBoundingClientRect(); if (r.height < 100) throw new Error('not on a story: ring ' + Math.round(r.height) + 'px tall'); return Math.round(r.height); })()
+# On a story: a link, in the stream column on the right. (It checked for a ring 100px tall, but
+# some stories are a one-line link.)
+eval:(() => { const r = document.getElementById('tui-spotlight').getBoundingClientRect(); const a = document.activeElement; if (!a || a.tagName !== 'A' || r.left < 900) throw new Error('not on a story: ' + (a && a.tagName) + ' at x=' + Math.round(r.left)); return 'story at x=' + Math.round(r.left); })()
 key:ArrowDown
 eval:(() => { const r = document.getElementById('tui-spotlight').getBoundingClientRect(); if (r.left < 900) throw new Error('left the stream: ring at x=' + Math.round(r.left)); return Math.round(r.left); })()
