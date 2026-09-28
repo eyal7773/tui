@@ -483,16 +483,6 @@ kbd {
   margin: 10px 0 0;
 }
 
-.config-warning {
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--text);
-  background-color: rgba(224, 85, 85, 0.08);
-  border-left: 3px solid var(--error);
-  padding: 8px 10px;
-  margin: 0 0 10px;
-}
-
 .config-status {
   font-size: 12px;
   color: var(--text-dim);
@@ -523,23 +513,3 @@ kbd {
   background-color: #2a2a38;
 }
 
-/* ── Textarea ── */
-.report-textarea {
-  width: 100%;
-  font-family: monospace;
-  font-size: 12px;
-  padding: 8px;
-  border: 1px solid var(--border);
-  background-color: var(--bg);
-  color: var(--text);
-  border-radius: 6px;
-  resize: vertical;
-  min-height: 72px;
-  margin-bottom: 8px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.report-textarea:focus {
-  border-color: var(--purple);
-}

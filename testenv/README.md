@@ -15,7 +15,16 @@ The report's `problem.txt` is printed, and its page is replayed at its original
 URL from the saved `.mhtml`. The page is not opened as an archive file, because
 Chrome disables every form control inside one, so buttons could not take focus.
 The capture's own scripts are blocked, which means a menu that only exists
-after the site's JavaScript runs will not be there.
+after the site's JavaScript runs will not be there. A report saved without a
+copy of the page cannot be replayed; its log is still unpacked under
+`.work/reports/`.
+
+## Check the report's log
+
+After `key:F10 key:ArrowDown*3 key:Enter` (Report a problem), the `report` step
+reads the log the report window shows, and `report-has:<regex>` and
+`report-lacks:<regex>` check it. `scenarios/report-log.tui` uses them to make
+sure the log says what Enter did and holds nothing from the page.
 
 ## Try a live site
 
@@ -26,6 +35,9 @@ stays in the named profile under `.work/profiles/`:
 
     node tui.js https://mail.google.com login --headed --profile google
     node tui.js https://mail.google.com key:ArrowDown --profile google
+
+Each run clears the profile's cached service worker, so a change to
+`background.js` is always the one tested; the sign-in stays.
 
 `node tui.js` with no arguments lists every step and option.
 

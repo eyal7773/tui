@@ -6,9 +6,11 @@
   "permissions": [
     "storage",
     "activeTab",
-    "pageCapture",
     "notifications",
     "alarms"
+  ],
+  "optional_permissions": [
+    "pageCapture"
   ],
   "background": {
     "service_worker": "background.js"
@@ -27,6 +29,7 @@
         "click-rules.js",
         "target-rules.js",
         "text-rules.js",
+        "tui-log.js",
         "engine.js"
       ],
       "css": [

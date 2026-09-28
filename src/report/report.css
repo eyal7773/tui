@@ -1,0 +1,158 @@
+/* The report window. Colours follow the popup (popup/popup.css). */
+:root {
+  --bg: #f5f5f5;
+  --card-bg: #ffffff;
+  --text: #1a1a1a;
+  --text-dim: #666666;
+  --accent: #00cc66;
+  --accent-hover: #009944;
+  --border: #e0e0e0;
+  --warning-bg: #fff6e0;
+  --warning-border: #e8b64c;
+  --error: #c03838;
+  --focus: #0066ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px 16px 32px;
+}
+
+h1 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  color: var(--accent-hover);
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.lead {
+  margin: 0 0 16px;
+  color: var(--text-dim);
+}
+
+section {
+  margin-top: 16px;
+  padding: 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.field-label {
+  display: block;
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+textarea {
+  width: 100%;
+  padding: 8px;
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  resize: vertical;
+}
+
+.contents {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+
+.contents li {
+  margin-bottom: 4px;
+}
+
+pre {
+  max-height: 220px;
+  margin: 0;
+  padding: 8px;
+  overflow: auto;
+  background: #fafafa;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: 11px/1.4 Consolas, 'Courier New', monospace;
+  white-space: pre;
+}
+
+.check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 600;
+}
+
+.warning,
+.warning-inline {
+  color: #6b4a00;
+}
+
+.warning {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  background: var(--warning-bg);
+  border-left: 3px solid var(--warning-border);
+  border-radius: 4px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+button {
+  padding: 8px 16px;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent-hover);
+  border: 1px solid var(--accent-hover);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #007a36;
+}
+
+button.secondary {
+  color: var(--text);
+  background: var(--card-bg);
+  border-color: var(--border);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Keyboard users are the whole audience: focus is always plain to see. */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+#status {
+  min-height: 1.5em;
+  margin: 8px 0 0;
+}
+
+#status.error {
+  color: var(--error);
+}

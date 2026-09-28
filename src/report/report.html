@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report a problem - TUI Navigator</title>
+  <link rel="stylesheet" href="report.css">
+</head>
+
+<!--
+  Opened from "Report a problem" in the F10 menu. Everything the file will
+  hold is on this page before it is saved, and nothing is sent anywhere: the
+  user saves a zip and decides whether to attach it to a GitHub issue.
+  The extension does not run on its own pages, so this page has to work with
+  the keyboard by itself: the description has focus, Tab goes down the page in
+  order, and Escape closes the window.
+-->
+
+<body>
+  <main>
+    <h1>Report a problem</h1>
+    <p class="lead">Nothing is sent. You save a file, and you decide whether to share it.</p>
+
+    <label for="description" class="field-label">What happened?</label>
+    <textarea id="description" rows="5" autofocus
+      placeholder="For example: I pressed Enter twice on a file in Drive and it did not open."></textarea>
+
+    <section aria-labelledby="contents-title">
+      <h2 id="contents-title">What the file will contain</h2>
+      <ul class="contents">
+        <li>Your description.</li>
+        <li>
+          The extension's log from <strong id="site">this page</strong>: the keys it acted on and the
+          elements it moved between, described by their shape (tag, a few class names, position).
+          <span id="log-plain">No text, labels or links from the page.</span>
+          <span id="log-verbose" class="warning-inline" hidden>Admin mode is on, so this log also holds
+            element ids, labels, links and the start of their markup.</span>
+        </li>
+        <li>The extension version and your browser version.</li>
+      </ul>
+      <p class="field-label" id="log-title">The log, exactly as it will be saved</p>
+      <pre id="log" tabindex="0" aria-labelledby="log-title">Reading the log...</pre>
+    </section>
+
+    <section aria-labelledby="page-title" class="page-copy">
+      <h2 id="page-title">A copy of the page (optional)</h2>
+      <label class="check">
+        <input type="checkbox" id="include-page">
+        <span>Include a copy of the page</span>
+      </label>
+      <p class="warning">The copy holds everything on the page: message text, file names, anything you are
+        signed in to. GitHub issues are public, so include it only if nothing on the page is private.
+        Chrome asks for permission the first time.</p>
+    </section>
+
+    <div class="actions">
+      <button id="save" type="button">Save report (.zip)</button>
+      <button id="close" type="button" class="secondary">Close</button>
+    </div>
+    <p id="status" role="status"></p>
+
+    <section id="next" aria-labelledby="next-title" hidden>
+      <h2 id="next-title">Send it</h2>
+      <p>Open a new issue on GitHub, say what happened, and drag the saved file into it.</p>
+      <button id="open-issue" type="button">Open a GitHub issue</button>
+    </section>
+  </main>
+
+  <script src="../lib/jszip.min.js"></script>
+  <script src="report.js"></script>
+</body>
+
+</html>

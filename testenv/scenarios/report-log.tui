@@ -1,0 +1,20 @@
+# F10 > Report a problem: the report window shows the log, which says what Enter did (a double-click
+# here) but holds nothing from the page itself: not the row's text, not its id.
+pages/double-click-rows.html
+start:css=#file1
+key:Enter
+key:Enter
+key:F10
+key:ArrowDown*3
+key:Enter
+# Asking a second time brings the same window forward (report fails on two).
+key:F10
+key:ArrowDown*3
+key:Enter
+report
+report-has:^version: \d+\.\d+\.\d+$
+report-has:enter on=.*second=true
+report-has:click on=.* count=2 dblclick=true
+report-has:menu-action action=report
+report-lacks:Report\.docx
+report-lacks:file1

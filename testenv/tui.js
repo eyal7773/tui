@@ -6,7 +6,7 @@
  *   node tui.js <target> [step ...] [--headed] [--debug] [--profile name]
  *                                   [--viewport 1400x900] [--ext dir]
  *
- * <target> is a URL, a saved .mhtml page, or a tui-report-*.zip from the popup
+ * <target> is a URL, a saved .mhtml page, or a tui-report-*.zip from F10 > Report a problem
  * (its problem.txt is printed and its page is opened). A saved page is replayed
  * at its original URL from the archive, with the page's own scripts blocked and
  * nothing fetched from the network. Every run starts a fresh browser, so it
@@ -23,6 +23,9 @@
  *   goto:<url>       navigate
  *   eval:<js>        run JS in the page and print the result
  *   ring             print where the ring is
+  report           after F10 > Report a problem: read the log the report window shows
+  report-has:<re>  fail unless that log matches the regular expression
+  report-lacks:<re> fail if it does
  *   login            headed only: waits until you close the window, so you can
  *                    sign in once and keep the session in the profile
  *
@@ -59,11 +62,11 @@ function parseArgs(argv) {
     return opts;
 }
 
-/** Unpacks a popup report and returns the page inside it. */
+/** Unpacks a report (F10 > Report a problem) and returns the page inside it. */
 async function openReport(zip) {
     const dir = path.join(WORK, 'reports', path.basename(zip, '.zip'));
     fs.mkdirSync(dir, { recursive: true });
-    // The popup builds these with the JSZip it ships, so read them with it too.
+    // The report window builds these with the JSZip it ships, so read them with it too.
     const JSZip = require(path.join(EXT, 'lib/jszip.min.js'));
     const archive = await JSZip.loadAsync(fs.readFileSync(zip));
     for (const entry of Object.values(archive.files)) {
@@ -72,7 +75,8 @@ async function openReport(zip) {
     const problem = path.join(dir, 'problem.txt');
     if (fs.existsSync(problem)) console.log(`problem.txt: ${fs.readFileSync(problem, 'utf8').trim()}\n`);
     const mhtml = fs.readdirSync(dir).find((f) => f.endsWith('.mhtml'));
-    if (!mhtml) throw new Error(`No .mhtml in ${zip}`);
+    // The copy of the page is optional; without it there is nothing to replay.
+    if (!mhtml) throw new Error(`No copy of the page in ${zip}: its log is in ${dir}`);
     return path.join(dir, mhtml);
 }
 
@@ -263,6 +267,34 @@ async function runStep(page, step, state) {
             console.log(`  shot   ${file}`);
             break;
         }
+        case 'report': {
+            // F10 > Report a problem opens a window; this reads the log it shows.
+            // A new window is about:blank when it first appears, so look again until it has loaded.
+            let win = null;
+            for (let tries = 0; !win && tries < 25; tries++) {
+                win = state.ctx.pages().find((p) => p.url().includes('/report/report.html'));
+                if (!win) await new Promise((r) => setTimeout(r, 200));
+            }
+            if (!win) throw new Error(`The report window did not open; pages: ${state.ctx.pages().map((p) => p.url()).join(', ')}`);
+            // Asking again brings the open window forward rather than opening another.
+            await new Promise((r) => setTimeout(r, 500));
+            const open = state.ctx.pages().filter((p) => p.url().includes('/report/report.html')).length;
+            if (open > 1) { console.log(`  FAIL   ${open} report windows are open`); state.failed++; }
+            await win.waitForFunction(() => !/^Reading/.test(document.getElementById('log').textContent), null, { timeout: 5000 });
+            state.report = await win.evaluate(() => document.getElementById('log').textContent);
+            const file = path.join(WORK, 'last-report-log.txt');
+            fs.writeFileSync(file, state.report);
+            console.log(`  report ${state.report.split('\n').length} lines, saved to ${file}`);
+            break;
+        }
+        case 'report-has':
+        case 'report-lacks': {
+            if (state.report === undefined) throw new Error(`${cmd} needs a report step before it`);
+            const has = new RegExp(arg, 'm').test(state.report);   // ^ and $ are per line
+            if (has === (cmd === 'report-has')) console.log(`  PASS   report ${cmd === 'report-has' ? 'has' : 'lacks'} /${arg}/`);
+            else { console.log(`  FAIL   report ${cmd === 'report-has' ? 'lacks' : 'has'} /${arg}/`); state.failed++; }
+            break;
+        }
         case 'login': {
             if (!state.headed) throw new Error('login needs --headed');
             console.log('  Sign in, then close the browser window to continue.');
@@ -282,19 +314,24 @@ async function main() {
     const { url, archive } = await resolveTarget(opts.target);
     const [w, h] = opts.viewport.split('x').map(Number);
 
-    const ctx = await chromium.launchPersistentContext(path.join(WORK, 'profiles', opts.profile), {
+    const profile = path.join(WORK, 'profiles', opts.profile);
+    // Chrome keeps the extension's service worker from the last run in the
+    // profile and starts that one, so a change to background.js went untested.
+    // Only the cached worker goes; sign-ins and cookies stay.
+    fs.rmSync(path.join(profile, 'Default', 'Service Worker'), { recursive: true, force: true });
+    const ctx = await chromium.launchPersistentContext(profile, {
         channel: 'chromium',
         headless: !opts.headed,
         viewport: { width: w, height: h },
         args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
     });
     const missing = archive ? await replay(ctx, archive) : [];
-    const state = { failed: 0, shots: 0, settle: 250, headed: opts.headed };
+    const state = { failed: 0, shots: 0, settle: 250, headed: opts.headed, ctx: ctx };
     try {
         let [sw] = ctx.serviceWorkers();
         if (!sw) sw = await ctx.waitForEvent('serviceworker', { timeout: 10000 });
         const version = await sw.evaluate(() => chrome.runtime.getManifest().version);
-        // Debug mode is what the popup's admin switch sets; it makes the engine log each move.
+        // Admin mode is what the popup's switch sets; it makes the log verbose and prints it.
         await sw.evaluate((on) => chrome.storage.session.set({ tuiAdminMode: on }), opts.debug);
         console.log(`TUI Navigator ${version} from ${EXT}\nopen ${url}` +
             (archive ? ` (replayed from ${archive.parts.size} saved parts)` : ''));

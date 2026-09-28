@@ -3,20 +3,21 @@
  * A pure geometric navigation engine that doesn't rely on site-specific configs.
  */
 
+// What the engine did, for a bug report (see tui-log.js). If it failed to
+// load, logging is skipped rather than every call site checking.
+const LOG = window.TuiLog || {
+    event() {}, detail() {}, describe: () => '', verbose: false
+};
+
 class SpatialEngine {
     constructor(options = {}) {
         // Running inside an iframe (see the start of the engine at the bottom
-        // of this file). The badge, the session count and the popup's log
-        // download belong to the top page, so a frame stays quiet about them.
+        // of this file). The badge, the session count and the log belong to
+        // the top page, so a frame stays quiet about them.
         this.isSubframe = !!options.subframe;
         this.candidates = [];
         this.candidatesDirty = true;
         this.isEnabled = true;
-        this.debugMode = false;
-        this.logBuffer = [];
-        this._originalConsoleLog = null;
-        this._originalConsoleGroup = null;
-        this._originalConsoleGroupEnd = null;
 
         // Excluded sites. userEnabled is the global on/off switch; isExcluded is
         // this particular site being on the list. isEnabled is derived from both,
@@ -166,18 +167,6 @@ class SpatialEngine {
                     this.refreshExclusion();
                 }
             }
-            if (namespace === 'session') {
-                if (changes.tuiAdminMode) {
-                    this.debugMode = !!changes.tuiAdminMode.newValue;
-                    console.log(`[TUI] Debug Mode ${this.debugMode ? 'Enabled' : 'Disabled'}`);
-                    if (this.debugMode) {
-                        this.logBuffer = [];
-                        this._startLogCapture();
-                    } else {
-                        this._stopLogCapture();
-                    }
-                }
-            }
         });
 
         // Broadcast initial status (always supported now)
@@ -185,14 +174,6 @@ class SpatialEngine {
 
         // Inject Menu
         this.injectMenu();
-
-        // Listen for log download requests from the popup
-        chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-            if (message.type === 'GET_DEBUG_LOGS' && !this.isSubframe) {
-                sendResponse({ logs: this.logBuffer.slice() });
-                return true;
-            }
-        });
     }
 
     createSpotlight() {
@@ -397,7 +378,7 @@ class SpatialEngine {
         }
 
         this.applyEnabledState();
-        console.log(`[TUI] Keyboard ${suspended ? 'handed back to the page' : 'taken back'} (Escape).`);
+        LOG.event('handover', { keys: suspended ? 'page' : 'extension' });
     }
 
     /** Recomputes isEnabled from its inputs and tidies up the ring if needed. */
@@ -418,6 +399,7 @@ class SpatialEngine {
 
         console.log(`[TUI] ${this.isEnabled ? 'Enabled' : 'Disabled'}` +
             (this.isExcluded ? ' (site is on the excluded list)' : ''));
+        LOG.event('enabled', { on: this.isEnabled, excluded: this.isExcluded, handedOver: this.isSuspended });
 
         // Deliberately not broadcastStatus(): background counts every
         // STATUS_UPDATE as a page load, and a settings flip is not one.
@@ -475,18 +457,6 @@ class SpatialEngine {
         this.motion = localStorage.tuiMotion || null;
         this.applyRingColor();
         await this.refreshExclusion();
-
-        try {
-            const sessionStorage = await chrome.storage.session.get(['tuiAdminMode']);
-            this.debugMode = !!sessionStorage.tuiAdminMode;
-            if (this.debugMode) {
-                this.logBuffer = [];
-                this._startLogCapture();
-            }
-        } catch (e) {
-            console.warn('[TUI] Failed to access session storage (likely restricted context):', e);
-            this.debugMode = false;
-        }
     }
 
     handleScroll() {
@@ -734,6 +704,7 @@ class SpatialEngine {
             if (frame && frame.isConnected && this.isTrapElement(frame) && active !== frame) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
+                LOG.event('frame-enter', { frame: LOG.describe(frame) });
                 frame.focus();
                 // The frame draws its own ring; this one waits for the way back.
                 this.isActiveMode = false;
@@ -752,6 +723,7 @@ class SpatialEngine {
                 e.stopImmediatePropagation();
 
                 const input = wrapper._tui_input;
+                LOG.event('enter-input', { input: LOG.describe(input) });
                 input.focus();
 
                 // Special handling for SELECT elements
@@ -786,6 +758,7 @@ class SpatialEngine {
                 const second = !!rules && !e.repeat && !!last && last.el === active &&
                     now - last.at <= rules.DOUBLE_ENTER_MS;
                 this.lastEnter = second ? null : { el: active, at: now };
+                LOG.event('enter', { on: LOG.describe(active), second: second, afterMs: last ? now - last.at : undefined });
                 if (second) {
                     this.simulateClick(active, 2);
                 } else {
@@ -799,24 +772,7 @@ class SpatialEngine {
         }
     }
 
-    /**
-     * A one-line description of an element for the debug log. Logging the
-     * element itself is useless in a downloaded report: the capture serialises
-     * a DOM node as "{}", which is what a click that went nowhere looks like.
-     */
-    describeElement(el) {
-        if (!el) return 'null';
-        const tag = el.tagName || '?';
-        const id = el.id ? `#${el.id}` : '';
-        const cls = (typeof el.className === 'string' && el.className.trim())
-            ? `.${el.className.trim().split(/\s+/).join('.')}` : '';
-        const href = (el.tagName === 'A' && el.getAttribute('href')) ? ` href=${el.getAttribute('href')}` : '';
-        return `${tag}${id}${cls}${href}`;
-    }
-
     simulateClick(el, clickCount = 1) {
-        if (this.debugMode) console.log('[TUI] Simulating Click on:', this.describeElement(el));
-
         // SMART TARGETING: the focused element is often not the element that
         // does the work. A list row keeps the tabindex while the link inside it
         // carries the href, and clicking the row does nothing at all.
@@ -828,10 +784,6 @@ class SpatialEngine {
 
         if (window.TuiClickRules) {
             target = window.TuiClickRules.resolveClickTarget(el, intended) || el;
-            if (this.debugMode && target !== el) {
-                console.log('[TUI] Retargeting click to:', this.describeElement(target),
-                    intended === target ? '(intended by navigation)' : '(container action)');
-            }
         }
 
         const options = {
@@ -843,8 +795,6 @@ class SpatialEngine {
             detail: clickCount,
             pointerType: 'mouse'  // Explicitly mark as mouse event (not pen/touch)
         };
-
-        if (this.debugMode) console.log('[TUI] Dispatching synthetic events...');
 
         // 1. Dispatch generic Down/Up events first (required for some UI frameworks)
         // Standard sequence: pointerdown -> mousedown -> pointerup -> mouseup -> click
@@ -863,22 +813,26 @@ class SpatialEngine {
         // AND handles default behaviors (like navigation for <a> tags).
         // Not for the second click of a pair: native click() always has
         // detail 0, and Drive opens a file only when that click says 2.
+        const native = !pair && typeof target.click === 'function';
+        LOG.event('click', {
+            on: LOG.describe(target),
+            from: target !== el ? LOG.describe(el) : undefined,
+            why: target === el ? undefined : (intended === target ? 'aimed-at' : 'container-action'),
+            count: clickCount,
+            dblclick: !!pair,
+            via: native ? 'click()' : 'dispatchEvent'
+        });
         if (pair) {
-            if (this.debugMode) console.log('[TUI] Dispatching second click of a double-click');
             target.dispatchEvent(new MouseEvent('click', pair));
-        } else if (typeof target.click === 'function') {
-            if (this.debugMode) console.log('[TUI] Calling native .click()');
+        } else if (native) {
             target.click();
         } else {
             // Fallback for elements without .click() (e.g., SVG in some contexts)
-            if (this.debugMode) console.log('[TUI] Dispatching synthetic click event');
             target.dispatchEvent(new MouseEvent('click', options));
         }
 
         // 3. The second click of a pair is followed by dblclick.
         if (pair) target.dispatchEvent(new MouseEvent('dblclick', pair));
-
-        if (this.debugMode) console.log('[TUI] Click simulation complete.');
     }
 
     /**
@@ -920,6 +874,7 @@ class SpatialEngine {
             const moved = location.href !== href || document.hidden || !el.isConnected ||
                 this.deepActiveElement() !== el || this.lastActiveElement !== el;
             this.endClickWatch();
+            LOG.event('click-effect', { seen: moved, hint: !moved });
             if (!moved) this.showDoubleClickHint(el);
         }, rules.CLICK_EFFECT_MS);
 
@@ -1030,11 +985,13 @@ class SpatialEngine {
             const at = this.lastActiveElement && this.lastActiveElement.isConnected
                 ? this.rectOf(this.lastActiveElement)
                 : { left: 16, top: 16, right: 16, bottom: 16, width: 0, height: 0 };
+            LOG.event('text-mode', { on: false, why: 'no-text-here' });
             this.showKeyHint(at, 'There is no text here to select', [['\u21E7', '\u2190\u2192']], '\u2715');
             return;
         }
 
         this.textMode = { marking: false };
+        LOG.event('text-mode', { on: true, from: e ? 'shift-arrow' : 'menu' });
         this.isActiveMode = true;
         this.userHasActed = true;
         if (this.spotlight) this.spotlight.style.display = 'none';
@@ -1058,6 +1015,7 @@ class SpatialEngine {
         const at = sel && sel.rangeCount ? this.caretRect(sel.focusNode, sel.focusOffset) : null;
 
         this.textMode = null;
+        LOG.event('text-mode', { on: false, ringBack: !!ringBack });
         document.removeEventListener('copy', this.onTextCopy, true);
         this.onTextCopy = null;
         if (this.caret) this.caret.remove();
@@ -1112,11 +1070,14 @@ class SpatialEngine {
     markText() {
         const sel = window.getSelection();
         if (!sel || !sel.rangeCount) return;
+        // What was selected is never logged, only that it was copied.
         if (!sel.isCollapsed) {
             this.textMode.marking = false;
+            LOG.event('text-copy', {});
             this.copySelection(sel);
         } else {
             this.textMode.marking = !this.textMode.marking;
+            LOG.event('text-anchor', { set: this.textMode.marking });
         }
         this.updateTextBadge();
         this.updateCaret();
@@ -1412,17 +1373,27 @@ class SpatialEngine {
         this.userHasActed = true;
         this.isActiveMode = true;
 
-        if (this.debugMode) {
-            const active = this.lastActiveElement || this.deepActiveElement();
-            const tag = active ? active.tagName : 'NULL';
-            const id = active && active.id ? `#${active.id}` : '';
-            let cls = '';
-            if (active && typeof active.className === 'string') {
-                cls = `.${active.className.split(' ').join('.')}`;
-            }
-            console.log(`%c[TUI] Navigating ${key} from ${tag}${id}${cls}`, 'color: cyan; font-weight: bold;');
-        }
+        LOG.event('navigate', {
+            key: key,
+            mode: mode,
+            from: LOG.describe(this.lastActiveElement || this.deepActiveElement()),
+            firstPress: firstPress || undefined
+        });
 
+        try {
+            this.stepUntilFocused(key, mode, firstPress);
+        } catch (err) {
+            // Into the report, then on to the console as before.
+            LOG.event('error', { where: 'navigate', message: err && err.message });
+            throw err;
+        } finally {
+            // Reset lock, even when a step threw: a lock left on stops every arrow.
+            requestAnimationFrame(() => this.isNavigating = false);
+        }
+    }
+
+    /** navigate()'s search: the best candidate that way, retried when focus refuses it. */
+    stepUntilFocused(key, mode, firstPress) {
         // AUTO-RETRY LOOP
         // If focus fails (phantom element), we try again immediately with the next best candidate.
         // Limit to 5 attempts to prevent infinite loops or performance issues.
@@ -1432,9 +1403,7 @@ class SpatialEngine {
 
         while (attempts < maxAttempts && !success) {
             attempts++;
-            if (attempts > 1 && this.debugMode) {
-                console.log(`[TUI] Navigation Retry Attempt ${attempts}/${maxAttempts}`);
-            }
+            if (attempts > 1) LOG.event('retry', { attempt: attempts });
 
             // 1. Discovery
             // Only strictly needed on first attempt or if we want to be very safe,
@@ -1442,11 +1411,6 @@ class SpatialEngine {
             this.refreshCandidates();
 
             // 2. Current Position - PREFER internal tracking
-            if (this.debugMode) {
-                const lae = this.lastActiveElement;
-                console.log('[TUI NAV] lastActiveElement:', lae ? `${lae.tagName}#${lae.id}` : 'null',
-                    '| _tui_input:', lae?._tui_input ? `${lae._tui_input.tagName}#${lae._tui_input.id}` : 'none');
-            }
             let current = this.lastActiveElement;
             if (!current || !current.isConnected) {
                 current = this.deepActiveElement();
@@ -1481,11 +1445,18 @@ class SpatialEngine {
             // 3. Find Best Candidate
             // Note: findBestCandidate automatically filters out elements in this.failedFocusElements
             let target = this.findBestCandidate(currentRect, key, current, mode);
+            let ranking = this.lastRanking;
+            let widened;
             if (target && mode !== 'extreme' && this.leavesColumnUnseen(currentRect, target, key)) {
                 const wider = this.withWiderReach(() => this.findBestCandidate(currentRect, key, current, mode));
-                if (wider && (this.besideOrBefore(this.rectOf(wider), this.rectOf(target), key) ||
-                              this.sharesColumn(current, wider, target))) target = wider;
+                widened = !!wider && (this.besideOrBefore(this.rectOf(wider), this.rectOf(target), key) ||
+                              this.sharesColumn(current, wider, target));
+                if (widened) {
+                    target = wider;
+                    ranking = this.lastRanking;
+                }
             }
+            LOG.event('candidates', { count: this.candidates.length, widened: widened, top: ranking });
 
             // 4. Action
             if (target) {
@@ -1503,15 +1474,14 @@ class SpatialEngine {
                         type: 'METRIC_EVENT',
                         payload: { action: 'NAVIGATE', key: key }
                     });
-                } else {
-                    // Focus failed. The element was added to failedFocusElements inside focusElement().
-                    // The loop will continue, and findBestCandidate will skip this element next time.
-                    if (this.debugMode) console.log(`[TUI] Focus failed (Attempt ${attempts}/${maxAttempts}). Retrying navigation...`);
                 }
+                // Otherwise focus failed. The element was added to failedFocusElements inside
+                // focusElement(), so the loop's next pass skips it.
             } else if (mode === 'extreme') {
                 // Home/End stop at the end of the line rather than scrolling on.
                 // Scrolling here would turn a second press into a page-down,
                 // which is not what the key was asked to do.
+                LOG.event('stay', { why: 'end-of-line' });
                 success = true;
             } else {
                 // 5. Off-screen handling (scroll) - Only if NO candidate found
@@ -1524,9 +1494,6 @@ class SpatialEngine {
                 });
             }
         }
-
-        // Reset lock
-        requestAnimationFrame(() => this.isNavigating = false);
     }
 
     /**
@@ -2066,9 +2033,6 @@ class SpatialEngine {
                     const parentRole = el.parentElement.getAttribute('role');
                     const validParentRoles = ['row', 'grid', 'list', 'menu', 'menubar', 'tablist', 'treegrid'];
                     if (!parentRole || !validParentRoles.includes(parentRole)) {
-                        if (this.debugMode && ['SELECT', 'INPUT', 'TEXTAREA'].includes(el.tagName)) {
-                            console.log('[TUI FILTER] Dropping', el.tagName, el.id || '', '— parent tabindex=-1, _tui_input:', el.parentElement._tui_input || 'NOT SET');
-                        }
                         return false;
                     }
                 }
@@ -2268,42 +2232,12 @@ class SpatialEngine {
         });
 
         this.candidatesDirty = false;
-        if (this.debugMode) console.log(`[TUI Spatial] Candidates refreshed: ${this.candidates.length}`);
-
-        // [DEBUG] Trace every element that IS or CONTAINS a contenteditable.
-        // Shows whether it made it into the candidate list, and if not, at which filter it was killed.
-        if (this.debugMode) {
-            const editableParents = new Set();
-            document.querySelectorAll('[contenteditable]:not([contenteditable="false"])').forEach(ce => {
-                if (ce.offsetParent !== null) {
-                    editableParents.add(ce);          // the contenteditable itself
-                    if (ce.parentElement) editableParents.add(ce.parentElement); // its container
-                }
-            });
-
-            editableParents.forEach(el => {
-                const survived = this.candidates.includes(el);
-                const rect = el.getBoundingClientRect();
-                const tag = el.tagName;
-                const cls = el.className && typeof el.className === 'string' ? el.className : '';
-                const ti = el.getAttribute('tabindex') ?? '(none)';
-                const ce = el.isContentEditable ? 'yes' : 'no';
-                const containsEditable = !el.isContentEditable && !!el.querySelector('[contenteditable]:not([contenteditable="false"])');
-                const parentTI = el.parentElement ? (el.parentElement.getAttribute('tabindex') ?? '(none)') : 'N/A';
-                const role = el.getAttribute('role') ?? '(none)';
-                const cursor = window.getComputedStyle(el).cursor;
-                console.log(
-                    `[TUI INPUT-TRACE] ${survived ? '✅ CANDIDATE' : '❌ FILTERED'} | ` +
-                    `${tag}.${cls.split(' ').join('.')} | ` +
-                    `tabindex=${ti} role=${role} contenteditable=${ce} containsEditable=${containsEditable} | ` +
-                    `cursor=${cursor} | parentTabindex=${parentTI} | ` +
-                    `rect: L${rect.left.toFixed(0)} R${rect.right.toFixed(0)} T${rect.top.toFixed(0)} B${rect.bottom.toFixed(0)} W${rect.width.toFixed(0)} H${rect.height.toFixed(0)}`
-                );
-            });
-        }
+        LOG.detail('candidates-refreshed', { count: this.candidates.length });
     }
 
     findBestCandidate(currentRect, key, currentEl, mode) {
+        // The closest few, for the log; set only when there was a contest.
+        this.lastRanking = undefined;
         if (!currentRect) {
             // Corner case: No focus. Pick top-left most visible element or first one.
             // If we have no origin, we can't do directional relative navigation effectively.
@@ -2337,6 +2271,7 @@ class SpatialEngine {
 
         let bestCandidate = null;
         let minScore = Infinity;
+        const scored = [];
 
         // Determine if we are currently starting from a sticky/fixed context (e.g. Header)
         // BUG FIX: Also treat semantic navigation regions (HEADER, NAV) as "Sticky/Anchor" regions.
@@ -2359,9 +2294,6 @@ class SpatialEngine {
             // 3. If lastActiveElement is a wrapper with a child input, skip both wrapper AND child
             if (this.lastActiveElement && this.lastActiveElement._tui_input) {
                 if (cand === this.lastActiveElement._tui_input) {
-                    if (this.debugMode && ['SELECT', 'INPUT', 'TEXTAREA'].includes(cand.tagName)) {
-                        console.log('[TUI SKIP] Skipping', cand.tagName, cand.id || '', '— it is lastActiveElement._tui_input (wrapper already active)');
-                    }
                     return;
                 }
             }
@@ -2384,7 +2316,6 @@ class SpatialEngine {
 
             // 5. Skip elements that recently failed to receive focus
             if (this.failedFocusElements.has(cand)) {
-                if (this.debugMode) console.log('[TUI] Skipping element that previously failed to focus:', cand.tagName, cand.className);
                 return;
             }
 
@@ -2406,22 +2337,6 @@ class SpatialEngine {
                 case 'ArrowUp':
                     isValid = rect.bottom <= currentRect.top + 5;
                     break;
-            }
-
-            if (this.debugMode && (cand.id === 'vector-main-menu-dropdown-label' || cand.id === 'vector-main-menu-dropdown-checkbox')) {
-                console.log(`[TUI DEBUG CONE] Direction: ${key}, IsValid: ${isValid}`);
-                console.log(`- Logic (${key}): Rect[${rect.left}, ${rect.right}, ${rect.top}, ${rect.bottom}] vs Current[${currentRect.left}, ${currentRect.right}, ${currentRect.top}, ${currentRect.bottom}]`);
-            }
-
-            // [DEBUG] Spatial trace for contenteditable-related elements
-            if (this.debugMode && (cand.isContentEditable || !!cand.querySelector?.('[contenteditable]:not([contenteditable="false"])'))) {
-                const cls = cand.className && typeof cand.className === 'string' ? cand.className : '';
-                console.log(
-                    `[TUI INPUT-TRACE SPATIAL] ${cand.tagName}.${cls.split(' ').join('.')} | ` +
-                    `direction=${key} isValid=${isValid} | ` +
-                    `candRect: L${rect.left.toFixed(0)} T${rect.top.toFixed(0)} | ` +
-                    `currentRect: R${currentRect.right.toFixed(0)} B${currentRect.bottom.toFixed(0)}`
-                );
             }
 
             if (!isValid) return;
@@ -2569,12 +2484,7 @@ class SpatialEngine {
                 }
             }
 
-            if (this.debugMode) {
-                // Store for debug logging
-                cand._debugScore = score;
-                cand._debugDistance = score; // Since score IS distance currently
-                cand._debugIsSticky = targetIsSticky;
-            }
+            scored.push({ cand, rect, score });
 
             if (score < minScore) {
                 minScore = score;
@@ -2582,24 +2492,9 @@ class SpatialEngine {
             }
         });
 
-        if (this.debugMode) {
-            const ranked = this.candidates
-                .filter(c => c._debugScore !== undefined)
-                .sort((a, b) => a._debugScore - b._debugScore)
-                .slice(0, 5)
-                .map(c => {
-                    let name = c.tagName;
-                    if (c.id) name += '#' + c.id;
-                    else if (c.className) name += '.' + c.className.split(' ').join('.');
-                    return `🏆 ${name} [Score: ${c._debugScore.toFixed(2)}]`;
-                });
-
-            console.log('[TUI] Candidates Analysis (Top 5)');
-            ranked.forEach((r, i) => console.log(i === 0 ? r : `${i + 1}. ${r.replace('🏆 ', '')}`));
-
-            // Cleanup
-            this.candidates.forEach(c => delete c._debugScore);
-        }
+        // Only the five nearest are described, so a long list costs a sort, not a log line each.
+        this.lastRanking = scored.sort((a, b) => a.score - b.score).slice(0, 5)
+            .map(s => `${LOG.describe(s.cand, s.rect)} =${Math.round(s.score)}`).join(' | ') || 'none that way';
 
         return bestCandidate;
     }
@@ -2689,60 +2584,7 @@ class SpatialEngine {
             return this.focusElement(el.control, attempt);
         }
 
-        // DEBUG: Log what element we're trying to focus
-        if (this.debugMode) {
-            const tag = el.tagName;
-            const id = el.id ? `#${el.id}` : '';
-            const cls = el.className ? `.${el.className.split(' ').join('.')}` : '';
-            const isContentEditable = el.isContentEditable ? ' [contenteditable]' : '';
-
-            console.group(`[TUI] focusElement (Attempt ${attempt})`);
-            console.log(`Target: ${tag}${id}${cls}${isContentEditable}`);
-
-            // Log relevant attributes for diagnosis
-            const attrs = ['tabindex', 'role', 'aria-hidden', 'aria-disabled', 'disabled', 'type'];
-            const attrLog = attrs.reduce((acc, attr) => {
-                if (el.hasAttribute(attr)) acc[attr] = el.getAttribute(attr);
-                return acc;
-            }, {});
-            console.log('Attributes:', attrLog);
-
-            // Log Label diagnostics
-            if (tag === 'LABEL') {
-                const forId = el.getAttribute('for');
-                if (forId) {
-                    const target = document.getElementById(forId);
-                    if (target) {
-                        const style = window.getComputedStyle(target);
-                        console.log('Label Target:', {
-                            tagName: target.tagName,
-                            id: target.id,
-                            type: target.getAttribute('type'),
-                            display: style.display,
-                            visibility: style.visibility,
-                            disabled: target.disabled,
-                            tabindex: target.getAttribute('tabindex'),
-                            ariaHidden: target.getAttribute('aria-hidden')
-                        });
-                    } else {
-                        console.warn('Label Target: NOT FOUND (ID: ' + forId + ')');
-                    }
-                } else {
-                    console.log('Label: No "for" attribute');
-                }
-            }
-
-            // Log computed style focus blockers
-            const style = window.getComputedStyle(el);
-            if (style.display === 'none' || style.visibility === 'hidden') console.warn('⚠️ Element is hidden!');
-            if (style.pointerEvents === 'none') console.warn('⚠️ pointer-events: none');
-
-            console.log('OuterHTML (truncated):', el.outerHTML.substring(0, 150) + '...');
-        }
-
-        const cleanupLogs = () => {
-            if (this.debugMode) console.groupEnd();
-        };
+        LOG.detail('focus-try', { attempt: attempt, el: LOG.describe(el) });
 
         // 1. Handle Virtual Focus for Trap Elements
         if (this.isTrapElement(el)) {
@@ -2751,7 +2593,7 @@ class SpatialEngine {
             this.deepActiveElement().blur();
             this.scrollToReveal(el);
             this.highlight(el);
-            cleanupLogs();
+            LOG.event('focus', { result: 'ring-only', el: LOG.describe(el) });
             return true; // Success (Virtual)
         }
 
@@ -2759,16 +2601,8 @@ class SpatialEngine {
         // Improvement: Only wrap inputs that need arrow keys (Text, Select).
         // Buttons, checkboxes, etc. can be focused directly.
         if (this.shouldTrapArrows(el)) {
-            if (this.debugMode) console.log('[TUI] Element needs wrapper (shouldTrapArrows=true)');
-
             const parent = el.parentElement;
             if (parent) {
-                if (this.debugMode) {
-                    const parentTag = parent.tagName;
-                    const parentId = parent.id ? `#${parent.id}` : '';
-                    console.log(`[TUI] Focusing parent wrapper: ${parentTag}${parentId}`);
-                }
-
                 // Make parent focusable if not already
                 if (!parent.hasAttribute('tabindex')) {
                     parent.setAttribute('tabindex', '-1');
@@ -2779,17 +2613,11 @@ class SpatialEngine {
 
                 parent.focus();
 
-                if (this.debugMode) {
-                    console.log('[TUI] After parent.focus(), activeElement:', this.deepActiveElement().tagName, this.deepActiveElement().id || '(no id)');
-                    console.log('[TUI] Is contenteditable active?', this.deepActiveElement() === el);
-                }
-
                 // CRITICAL FIX: Verify wrapper focus success
                 // If focus didn't move to parent (or inside it), it means parent refused focus.
                 if (this.deepActiveElement() !== parent && !parent.contains(this.deepActiveElement())) {
-                    if (this.debugMode) console.log('[TUI] ⚠️ Wrapper focus FAILED. Parent is not focusable. Marking candidate as failed.');
                     this.failedFocusElements.add(el);
-                    cleanupLogs();
+                    LOG.event('focus', { result: 'wrapper-refused', el: LOG.describe(el) });
                     return false; // Failed
                 }
 
@@ -2797,19 +2625,15 @@ class SpatialEngine {
                 // Some browsers/sites may still try to focus the contenteditable
                 // when its parent wrapper is focused. Explicitly blur it.
                 if (el.isContentEditable && this.deepActiveElement() === el) {
-                    if (this.debugMode) console.log('[TUI] ⚠️ Contenteditable got focus! Blurring it...');
                     el.blur();
-                    if (this.debugMode) console.log('[TUI] After blur(), activeElement:', this.deepActiveElement().tagName);
                 }
 
                 this.scrollToReveal(parent);
                 this.highlight(parent);
-                cleanupLogs();
+                LOG.event('focus', { result: 'wrapper', el: LOG.describe(el), wrapper: LOG.describe(parent) });
                 return true; // Success
-            } else {
-                if (this.debugMode) console.log('[TUI] ⚠️ No parent found for wrapping!');
-                // Fallthrough to normal focus if no parent
             }
+            // No parent to wrap it in: fall through to normal focus.
         }
 
         // 3. Normal Focus
@@ -2818,9 +2642,7 @@ class SpatialEngine {
         if (el._tui_owned_item && !el.hasAttribute('tabindex')) {
             el.setAttribute('tabindex', '-1');
         }
-        if (this.debugMode) console.log('[TUI] Using normal focus (no wrapper needed)');
         el.focus();
-        if (this.debugMode) console.log('[TUI] After el.focus(), activeElement:', this.deepActiveElement().tagName, this.deepActiveElement().id || '(no id)');
 
         // CRITICAL FIX: Check if focusing this element caused a DIFFERENT element to get focus
         // This can happen with:
@@ -2835,16 +2657,10 @@ class SpatialEngine {
         // Note: actualFocus could be body if focus failed completely
 
         if (actualFocus !== el) {
-            if (this.debugMode) console.log('[TUI] ⚠️ Focus went to different element! Intended:', el.tagName, 'Actual:', actualFocus.tagName);
-
             // SPECIAL CASE: Focus returned to the element we started from
             if (actualFocus === this.lastActiveElement) {
-                if (this.debugMode) {
-                    console.log('[TUI] ⚠️ Focus attempt REJECTED! Focus returned to previous element.');
-                    console.log('[TUI] Adding to exclusion list. Next navigation will try different candidate.');
-                }
                 this.failedFocusElements.add(el);
-                cleanupLogs();
+                LOG.event('focus', { result: 'refused', el: LOG.describe(el) });
                 return false; // Failed
             }
 
@@ -2866,7 +2682,7 @@ class SpatialEngine {
                 this.scrollToReveal(shown);
                 this.highlight(shown);
 
-                cleanupLogs();
+                LOG.event('focus', { result: 'label-to-input', el: LOG.describe(el), focused: LOG.describe(actualFocus) });
                 return true;
             }
 
@@ -2875,18 +2691,18 @@ class SpatialEngine {
             // tab-unreachable, so focusing the link focuses the row. The row has
             // no click handler, so Enter on it would do nothing - remember what
             // we were actually aiming at so Enter can click that instead.
-            if (this.composedContains(actualFocus, el)) {
-                if (this.debugMode) console.log('[TUI] Focus bounced to ancestor; Enter will activate', el.tagName, el.id || '(no id)');
-                actualFocus._tui_activate = el;
-            } else {
-                actualFocus._tui_activate = null;
-            }
+            const bounced = this.composedContains(actualFocus, el);
+            actualFocus._tui_activate = bounced ? el : null;
 
             // Trust the browser focus (it moved somewhere valid)
             this.lastActiveElement = actualFocus;
             this.highlight(actualFocus);
 
-            cleanupLogs();
+            LOG.event('focus', {
+                result: bounced ? 'bounced-to-container' : 'moved-elsewhere',
+                el: LOG.describe(el),
+                focused: LOG.describe(actualFocus)
+            });
             return true;
         }
 
@@ -2897,13 +2713,14 @@ class SpatialEngine {
         this.scrollToReveal(el);
         this.highlight(el);
 
-        cleanupLogs();
+        LOG.event('focus', { result: 'ok', el: LOG.describe(el) });
         return true;
     }
 
     handleOffScreen(key) {
         if (this.isSubframe && this.leaveFrame(key)) return;
         const scrollAmount = 300;
+        LOG.event('scroll', { key: key, why: 'nothing-that-way' });
         if (key === 'ArrowDown') window.scrollBy({ top: scrollAmount, behavior: this.scrollBehavior() });
         if (key === 'ArrowUp') window.scrollBy({ top: -scrollAmount, behavior: this.scrollBehavior() });
         // NOTE: A re-scan happens on the NEXT keypress because scroll creates a new geometric state.
@@ -2950,69 +2767,10 @@ class SpatialEngine {
 
         const active = this.deepActiveElement();
         if (active === frame) frame.blur();
+        LOG.event('frame-exit', { key: key, frame: LOG.describe(frame) });
         this.lastActiveElement = frame;
         this.userHasActed = true;
         this.navigate(key);
-    }
-
-    _startLogCapture() {
-        if (this._originalConsoleLog) return; // Already capturing
-        this._originalConsoleLog = console.log;
-        this._originalConsoleGroup = console.group;
-        this._originalConsoleGroupEnd = console.groupEnd;
-
-        let tuiGroupDepth = 0;
-        const self = this;
-
-        const format = (...args) => args.map(a => {
-            if (typeof a === 'object') {
-                try { return JSON.stringify(a); } catch (e) { return String(a); }
-            }
-            return String(a).replace(/%c/g, '');
-        }).join(' ');
-
-        const isTui = msg => msg.includes('[TUI]') || msg.includes('[TUI Spatial]');
-
-        console.group = function (...args) {
-            self._originalConsoleGroup.apply(console, args);
-            const msg = format(...args);
-            if (isTui(msg)) {
-                tuiGroupDepth++;
-                self.logBuffer.push(`[${new Date().toISOString()}] ${msg}`);
-            } else if (tuiGroupDepth > 0) {
-                tuiGroupDepth++;
-                self.logBuffer.push(`[${new Date().toISOString()}] ${'  '.repeat(tuiGroupDepth)}${msg}`);
-            }
-        };
-
-        console.groupEnd = function () {
-            self._originalConsoleGroupEnd.apply(console);
-            if (tuiGroupDepth > 0) tuiGroupDepth--;
-        };
-
-        console.log = function (...args) {
-            self._originalConsoleLog.apply(console, args);
-            const msg = format(...args);
-            if (isTui(msg) || tuiGroupDepth > 0) {
-                const indent = '  '.repeat(tuiGroupDepth);
-                self.logBuffer.push(`[${new Date().toISOString()}] ${indent}${msg}`);
-            }
-        };
-    }
-
-    _stopLogCapture() {
-        if (this._originalConsoleLog) {
-            console.log = this._originalConsoleLog;
-            this._originalConsoleLog = null;
-        }
-        if (this._originalConsoleGroup) {
-            console.group = this._originalConsoleGroup;
-            this._originalConsoleGroup = null;
-        }
-        if (this._originalConsoleGroupEnd) {
-            console.groupEnd = this._originalConsoleGroupEnd;
-            this._originalConsoleGroupEnd = null;
-        }
     }
 
     broadcastStatus() {
@@ -3090,6 +2848,7 @@ class SpatialEngine {
     openMenu() {
         if (!this.menuContainer) return;
         this.isMenuOpen = true;
+        LOG.event('menu', { open: true });
         this.menuContainer.classList.add('tui-menu-visible');
         this.selectedMenuIndex = 0; // Select first item by default
         this.updateMenuSelection();
@@ -3099,6 +2858,7 @@ class SpatialEngine {
 
     closeMenu() {
         if (!this.menuContainer) return;
+        if (this.isMenuOpen) LOG.event('menu', { open: false });
         this.isMenuOpen = false;
         this.menuContainer.classList.remove('tui-menu-visible');
     }
@@ -3137,10 +2897,14 @@ class SpatialEngine {
     }
 
     executeMenuAction(action) {
-        console.log('[TUI] Executing menu action:', action);
+        LOG.event('menu-action', { action: action });
         this.closeMenu();
 
-        if (action === 'duplicate') {
+        if (action === 'report') {
+            // Background asks the top frame for its log and opens the report
+            // window, which shows the user all of it before anything is saved.
+            this.safeSendMessage({ type: 'OPEN_REPORT' });
+        } else if (action === 'duplicate') {
             window.open(window.location.href, '_blank');
         } else if (action === 'back') {
             window.history.back();

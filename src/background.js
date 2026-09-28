@@ -70,6 +70,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // keep the message channel open for the async reply
   }
 
+  if (message.type === 'OPEN_REPORT') {
+    // "Report a problem" in the F10 menu. The window reads the tab's log
+    // itself (report.js), so nothing about the page passes through here.
+    if (sender.tab) openReportWindow(sender.tab.id);
+    return;
+  }
+
   if (message.type === 'RECAP_TEST') {
     // The popup's test button. force:true fires regardless of the rules;
     // force:false reports what would happen right now without sending.
@@ -112,6 +119,35 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     });
   }
 });
+
+// The open report window, so asking again brings it forward instead of
+// opening a second one. Lost when the worker sleeps, which only means a new
+// window.
+let reportWindow = null;
+
+function openReportWindow(tabId) {
+  const create = () => chrome.windows.create({
+    url: chrome.runtime.getURL(`report/report.html?tab=${tabId}`),
+    type: 'popup',
+    width: 620,
+    height: 780
+  }, (win) => {
+    reportWindow = win ? { id: win.id, tabId } : null;
+  });
+
+  if (!reportWindow) return create();
+  const open = reportWindow;
+  chrome.windows.get(open.id, () => {
+    if (chrome.runtime.lastError) return create();   // the user closed it
+    if (open.tabId === tabId) {
+      // Same page: keep what they have typed.
+      chrome.windows.update(open.id, { focused: true });
+    } else {
+      // Another page: its log is a different one.
+      chrome.windows.remove(open.id, create);
+    }
+  });
+}
 
 // In-memory cache
 const localCache = {
