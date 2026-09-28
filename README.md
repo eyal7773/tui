@@ -32,7 +32,7 @@ Every push to `main` builds a new release automatically via GitHub Actions.
 ### Verify installation
 
 -   You should see "TUI Navigator" in your list of extensions.
--   The icon (terminal arrow) should appear in your browser toolbar.
+-   The icon (a keycap with a chevron) should appear in your browser toolbar.
 
 ## Ring appearance
 
@@ -125,7 +125,8 @@ awkward rows can be tested without a page.
 file and a double-click opens it, so Enter alone could never open one. A second
 Enter on the same element within half a second completes a mouse double-click:
 a second click, then `dblclick`. The first click goes out at once, so nothing
-waits on a timer.
+waits on a timer. The second click says it is click number 2 (`detail: 2`), as a
+mouse's does: Drive ignores the `dblclick` without it.
 
 When a single Enter on something that is not a link, button or form control
 does nothing that shows - no navigation, no focus move, no dialog or menu,
@@ -198,6 +199,10 @@ cookie-consent dialog. The extension runs in every frame, but a frame only
 starts navigating on the first arrow key it receives, and a frame that holds a
 video keeps its own arrow keys for seeking.
 
+**Enter steps into a frame the ring is on**, and an arrow with nothing further
+that way inside it steps back out to the page, carrying on in the same
+direction.
+
 ## Handing the keyboard back
 
 Spatial navigation works by moving real focus, and a site that routes its own
@@ -250,8 +255,9 @@ It only appears when all of these hold:
 
 The decision lives in `src/recap-rules.js` as a pure function, away from any
 Chrome API, so it can be tested against any date instead of waiting for Thursday.
-The **Config** tab has a test button that fires one immediately and a second that
-explains why one would not fire right now.
+The **Config** tab (admin mode: click the version on the About tab ten times) has a
+test button that fires one immediately and a second that explains why one would not
+fire right now.
 
 On Windows the notification goes through the system notification centre. If Focus
 Assist is on, or Chrome notifications are off in Windows settings, it is dropped
@@ -371,10 +377,9 @@ The download button does not depend on any of this. It points at
 
 ## Usage Guide
 
-### Supported Sites
--   **Google Search**: Navigates search results.
--   **YouTube**: Navigates search results and recommendations.
--   **Wikipedia**: Navigates article links.
+It works on any site, with no per-site setup: the ring moves between whatever can
+be clicked or typed into, by where it is on the screen. Sites where you would rather
+not have it can be excluded (see Excluded sites).
 
 ### Controls
 | Key | Action |
@@ -386,26 +391,60 @@ The download button does not depend on any of this. It points at
 | **Enter** | Activate the focused item (see below); twice for a double-click |
 | **Shift + Arrows** | Select text (see below) |
 | **Esc** | Leave a text box, or hand the keyboard back to the page |
+| **F10** | The menu: duplicate the page, go back, select text, report a problem |
 
-### Management
-Click the extension icon to:
--   See if the current site is supported.
--   View usage statistics (Total Actions).
--   Enable/Disable TUI for the current session.
-
-## Debug Log Download
-
-When **Admin/Debug Mode** is active, the extension captures all internal `[TUI]` log entries in memory. Open the popup → **Config** tab → click **Download Logs** to save them as a `.txt` file. Useful for diagnosing navigation issues without keeping the browser DevTools open.
+### The popup
+Click the extension icon for:
+-   **Status**: how many actions you have taken, and a link to your stats page.
+-   **About**: the keys, and the version.
+-   **Settings**: the ring's look, scrolling, the weekly recap, turning it off on this
+    site, and the list of excluded sites.
 
 ## Report a Problem
 
-The **Config** tab also includes a **Report a Problem** section. Enter a description of the issue, then click **Download Report (ZIP)** to generate a bundle containing:
+**F10** → **Report a problem** opens a small window that shows everything the report
+will hold before anything is saved, and saves it as a zip in your downloads. Nothing is
+sent: attach the zip to an [issue on GitHub](https://github.com/eyal7773/tui/issues)
+if you want to. The zip holds:
 - `problem.txt` — your description
-- `tui-logs-*.txt` — captured debug logs
-- `page-*.mhtml` — a snapshot of the current page
+- `tui-logs-*.txt` — the log of what the extension did on that page
+- `page-*.mhtml` — a copy of the page, only if you tick the box for it. It holds
+  everything on the page, so it is off by default, and Chrome asks for the optional
+  `pageCapture` permission the first time.
 
-Requires Admin/Debug Mode to be active.
+### The log
+
+`src/tui-log.js` keeps it; the engine only calls `TuiLog.event(...)`. It runs for
+everyone, all the time, so it is built to be harmless:
+
+- It stays in the page's memory: the last 500 events, gone on reload. Nothing is
+  stored or sent.
+- An element is its shape (tag, role, up to three class names, tabindex, position),
+  never its text, label, link, id or data attributes. Keys are only the ones the
+  engine acts on; a typed character is recorded as `other`.
+- Only the top frame records.
+
+Admin mode (click the version on the About tab ten times) makes it verbose: every
+event is also printed to the page's console, `TuiLog.detail(...)` events are kept, and
+an element also carries its id, label, link and its opening tag. Reports made in admin
+mode say `verbose: yes` in their header.
+
+What the extension keeps and sends is written up for users in
+[docs/privacy.html](docs/privacy.html), and for the store in
+[docs/store-listing.md](docs/store-listing.md).
+
+## Development
+
+```bash
+npm test
+```
+
+runs the unit tests in `tests/`, which cover the rule files and the log. To try the
+extension in a real browser, reproduce a bug report, or run the regression scenarios,
+see [testenv/README.md](testenv/README.md).
 
 ## Troubleshooting
 -   **"Extension invalidated"**: If you see errors in the console, refresh the extension on the `chrome://extensions` page.
--   **No Focus Ring**: Ensure you are on a supported site. Try refreshing the page.
+-   **No Focus Ring**: The ring appears on the first arrow key. If it still does not,
+    check that the site is not excluded (Settings), that the keyboard was not handed to
+    the page (press Esc), and try refreshing the page.
