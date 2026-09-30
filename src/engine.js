@@ -2475,6 +2475,15 @@ class SpatialEngine {
                 // Nearly straight up or down is not left or right. See strays.
                 if (window.TuiLineRules && window.TuiLineRules.strays(currentRect, rect, key)) return;
 
+                // Nor does left or right scroll the page to another row. On
+                // Walmart ArrowRight at the end of a row went 330px up to a
+                // carousel arrow above the window, and on Pinterest ArrowLeft
+                // from a form field scrolled 500px down to the footer's logo.
+                // A pinned column beside the page (Wikipedia) is on screen.
+                if ((key === 'ArrowLeft' || key === 'ArrowRight') && window.TuiLineRules && window.TuiViewRules &&
+                    !window.TuiLineRules.sameLine(currentRect, rect, window.TuiLineRules.HORIZONTAL) &&
+                    !window.TuiViewRules.onScreen(rect)) return;
+
                 // Step C: The Distance/Priority Formula
                 score = this.getDistance(currentRect, rect, key);
 

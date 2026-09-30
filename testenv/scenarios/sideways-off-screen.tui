@@ -1,0 +1,8 @@
+# Left and right do not scroll the page to another row: from the end of a row, ArrowRight went down to a link out of sight (Walmart, Pinterest).
+pages/sideways-off-screen.html
+key:ArrowDown
+key:ArrowRight
+expect:css=#end
+key:ArrowRight
+expect:css=#end
+eval:scrollY

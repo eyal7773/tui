@@ -1,0 +1,14 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Sideways off screen</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  #far { margin-left: 900px; }
+</style></head>
+<body>
+  <!-- Nothing lies to the right of "End of row" on its row; the only thing
+       further right is a link far down the page, out of sight. ArrowRight
+       used to scroll the page down to it (Walmart, Pinterest). -->
+  <p><a id="start" href="#a">Start of row</a> <a id="end" href="#b">End of row</a></p>
+  <p style="height: 1200px"></p>
+  <a id="far" href="#c">Far down, to the right</a>
+</body></html>
