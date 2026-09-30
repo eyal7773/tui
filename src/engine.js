@@ -560,6 +560,27 @@ class SpatialEngine {
         return covered.top > 0 || covered.bottom > 0;
     }
 
+    /**
+     * A fixed box over the whole window, such as the dimmed backdrop behind
+     * a consent dialog, or null. Reuters dims the page behind its OneTrust
+     * banner, and ArrowDown from the banner went on to stories below the
+     * fold: they were not on screen to be found covered, and scrolling them
+     * in put them under the backdrop, where a click cannot reach them. The
+     * first pinned box at the middle of the window decides, so a dialog in
+     * the middle of its own backdrop counts as inside the cover.
+     */
+    windowCover() {
+        const hit = this.deepElementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+        for (let node = hit; node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
+            const style = window.getComputedStyle(node);
+            if (style.position !== 'fixed') continue;
+            const box = node.getBoundingClientRect();
+            const whole = box.width >= window.innerWidth * 0.9 && box.height >= window.innerHeight * 0.9;
+            return whole && parseFloat(style.opacity) >= 0.05 && style.pointerEvents !== 'none' ? node : null;
+        }
+        return null;
+    }
+
     /** The nearest ancestor-or-self that is position fixed or sticky, or null. */
     pinnedAncestor(node) {
         for (; node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
@@ -2284,6 +2305,8 @@ class SpatialEngine {
         // This ensures that navigating FROM a header (even if not CSS sticky) to a sticky sidebar doesn't incur a penalty.
         const currentIsSticky = currentEl ? (this.isSticky(currentEl) || !!this.composedClosest(currentEl, 'header, nav, [role="banner"], [role="navigation"]')) : false;
 
+        const cover = this.windowCover();
+
         this.candidates.forEach(cand => {
             // Skip self - ENHANCED to prevent navigation loops
             // Check multiple conditions:
@@ -2352,12 +2375,19 @@ class SpatialEngine {
             const centerY = rect.top + rect.height / 2;
             const topEl = this.deepElementFromPoint(centerX, centerY);
 
+
             // The hit missed the candidate: it may have been cut away by a box
             // that hides its overflow. weather.com parks its hourly carousel's
             // back button just outside the carousel, where it cannot be seen,
             // and ArrowLeft from a daily row went 660px up to it. See
             // clipState. Nothing is hit when the middle is off the window.
             const hitSelf = topEl && (topEl === cand || this.composedContains(cand, topEl));
+
+            // Under a cover over the whole window, only what is in it or drawn
+            // above it can be used. That also rules out what is off screen,
+            // where there is nothing to hit, and what sits behind a bar on
+            // top of the cover, such as Reuters' consent banner.
+            if (cover && !hitSelf && !this.composedContains(cover, cand)) return;
             const clip = hitSelf ? 'visible' : this.clipState(cand, rect, currentEl);
             if (clip === 'clipped') return;
 

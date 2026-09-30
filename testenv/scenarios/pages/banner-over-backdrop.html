@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Banner over a backdrop</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  .story { display: block; margin: 20px 0; }
+  #backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 10; }
+  #banner { position: fixed; left: 0; right: 0; bottom: 0; height: 200px; background: #fff; z-index: 11; padding: 20px; }
+</style></head>
+<body>
+  <!-- Reuters' consent banner: a strip along the bottom, on top of a backdrop
+       that dims the whole page. The page cannot be clicked, so the arrows
+       belong in the banner, and the stories below the fold, off screen, or
+       behind the banner, are out of reach too. -->
+  <a class="story" href="#1">Story one</a>
+  <p style="height: 450px"></p>
+  <a class="story" href="#2">Story two, behind the banner</a>
+  <p style="height: 600px"></p>
+  <a class="story" href="#3">Story three, below the fold</a>
+  <div id="backdrop"></div>
+  <div id="banner">
+    <p>We value your privacy</p>
+    <a id="partners" href="#p">List of Partners</a>
+    <p><button id="allow">Allow All</button> <button id="reject">Reject All</button></p>
+  </div>
+</body></html>

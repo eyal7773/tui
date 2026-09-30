@@ -1,0 +1,10 @@
+# A consent banner on a backdrop over the whole page (Reuters): ArrowDown from the banner went to stories behind the backdrop, off screen or behind the banner itself.
+pages/banner-over-backdrop.html
+key:ArrowDown
+key:ArrowDown
+expect:css=#allow
+key:ArrowDown
+expect:css=#allow
+key:ArrowRight
+key:ArrowUp
+expect:css=#partners
