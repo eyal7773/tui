@@ -26,8 +26,10 @@ child.on('error', (err) => {
 });
 
 child.on('close', (code) => {
+  // "# tests 167" from the tap reporter, "ℹ tests 167" from spec, which
+  // newer Node versions use even when the output is piped.
   const read = (label) => {
-    const match = output.match(new RegExp(`^# ${label} (\\d+)$`, 'm'));
+    const match = output.match(new RegExp(`^(?:#|ℹ) ${label} (\\d+)$`, 'm'));
     return match ? Number(match[1]) : null;
   };
 
