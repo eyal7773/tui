@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Terms dialog</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  #dialog { position: fixed; left: 25%; top: 25%; width: 50%; height: 40%; background: #fff; border: 2px solid #000; padding: 20px; box-sizing: border-box; }
+  #behind { position: absolute; left: 596px; top: 330px; }
+  #sentinel { position: fixed; bottom: 0; width: 0; height: 0; overflow: hidden; }
+</style></head>
+<body>
+  <!-- The LA Times: as it loads, the page focuses an empty element at its
+       foot, and a terms dialog floats in the middle of the window, with no
+       backdrop, over a link of the page. -->
+  <a id="first" href="#f">First link</a>
+  <a id="behind" href="#b">Behind the dialog</a>
+  <div id="dialog">
+    <p>By continuing you agree to our <a id="terms" href="#t">Terms</a>.</p>
+    <p style="margin-top: 150px"><button id="continue">Continue</button></p>
+  </div>
+  <div id="sentinel" tabindex="0" role="dialog">Legal Terms</div>
+  <p style="height: 3100px"></p>
+  <script>document.getElementById('sentinel').focus();</script>
+</body></html>

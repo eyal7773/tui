@@ -1,0 +1,7 @@
+# The LA Times: focus on an empty element sent every ArrowDown looking below it, and a floating terms dialog did not hide the page link behind it, which ArrowDown took over the dialog's Continue.
+pages/terms-dialog.html
+key:ArrowDown
+expect:css=#first
+start:css=#terms
+key:ArrowDown
+expect:css=#continue

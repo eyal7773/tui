@@ -1470,6 +1470,12 @@ class SpatialEngine {
                 const left = place.left - (window.scrollX || 0);
                 const top = place.top - (window.scrollY || 0);
                 currentRect = { left, top, right: left + place.width, bottom: top + place.height, width: place.width, height: place.height };
+            } else if (emptyRect) {
+                // Focus on something with no size, and no ring drawn there
+                // before, is nowhere to start from. The LA Times focuses an
+                // empty "Legal Terms" dialog at the foot of the page as it
+                // loads, and every ArrowDown looked below the page's end.
+                currentRect = null;
             }
 
             // 3. Find Best Candidate
@@ -2456,9 +2462,19 @@ class SpatialEngine {
                             // to a button behind it. Taller than an edge bar
                             // can be (see coveredEdges), it hides what it
                             // covers, unless the candidate is inside it.
+                            // Nor a box floating in the middle of the window:
+                            // the LA Times' terms dialog is one, and ArrowDown
+                            // from its Privacy Policy link went to a page link
+                            // behind it rather than to its Continue button.
+                            // A bar lies along the top or bottom edge; a column
+                            // down the side is let through as before.
                             const box = obstacle.getBoundingClientRect();
                             const maxBar = window.innerHeight * (window.TuiViewRules ? window.TuiViewRules.MAX_EDGE_OVERLAY_RATIO : 0.6);
-                            isObstructingFixed = box.height <= maxBar || this.composedContains(obstacle, cand);
+                            const edges = window.TuiViewRules
+                                ? window.TuiViewRules.coveredEdges(window.innerHeight, [box], 40) : { top: 1 };
+                            const column = box.height >= box.width * 1.5;
+                            const bar = box.height <= maxBar && (edges.top > 0 || edges.bottom > 0 || column);
+                            isObstructingFixed = bar || this.composedContains(obstacle, cand);
                             break;
                         }
                         obstacle = this.composedParent(obstacle);
