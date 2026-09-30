@@ -1476,8 +1476,12 @@ class SpatialEngine {
             // Note: findBestCandidate automatically filters out elements in this.failedFocusElements
             // A wrapper that took focus for the element stepped to is that
             // step's too (Microsoft's chat box focuses the div around it).
-            const placed = !this.steppedTo || !this.composedContains(current, this.steppedTo);
-            let target = mode !== 'extreme' && currentRect && placed ? this.firstInside(current) : null;
+            // Not the body, which focus falls back to when the page removes
+            // the ring's element (Walmart re-renders a carousel's links):
+            // the step goes on from where the ring was, not from the top.
+            const placed = current && current !== document.body && !emptyRect &&
+                (!this.steppedTo || !this.composedContains(current, this.steppedTo));
+            let target = mode !== 'extreme' && placed ? this.firstInside(current) : null;
             if (target) this.lastRanking = undefined;
             else target = this.findBestCandidate(currentRect, key, current, mode);
             let ranking = this.lastRanking;
@@ -2810,7 +2814,11 @@ class SpatialEngine {
         if (!box || !window.TuiViewRules) return null;
         const inside = this.candidates.filter(c => c !== box && this.composedContains(box, c) &&
             !this.failedFocusElements.has(c) && window.TuiViewRules.onScreen(this.rectOf(c)));
-        if (!inside.length) return null;
+        // A box around one control is a wrapper that took focus for it,
+        // not a place to enter. Booking re-renders its destination field, so
+        // the wrapper's input is not the one stepped to, and the ring went
+        // back into the field on every press.
+        if (inside.length < 2) return null;
         const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
         return inside[window.TuiViewRules.firstInReadingOrder(inside.map(c => this.rectOf(c)), rtl)];
     }
