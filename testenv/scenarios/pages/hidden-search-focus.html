@@ -1,0 +1,14 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Search box out of sight</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  #search { position: fixed; top: -70px; left: 300px; }
+</style></head>
+<body>
+  <!-- Merriam-Webster autofocuses a search box parked above the window. It
+       kept the arrows, so the first ArrowDown went to a box nobody could
+       see. -->
+  <input id="search" type="search" autofocus>
+  <a id="first" href="#1">First link</a>
+  <p><a id="second" href="#2">Second link</a></p>
+</body></html>

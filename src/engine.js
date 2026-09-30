@@ -690,7 +690,10 @@ class SpatialEngine {
 
         // BUG FIX: Only trap navigation if the input actually USES arrow keys (Text, Select, etc.)
         // Simple buttons (submit, reset, button) should NOT trap navigation.
-        if (this.shouldTrapArrows(active)) {
+        // Nor does a text box out of sight: Merriam-Webster autofocuses a
+        // search box parked above the window, and the first ArrowDown went
+        // to a box the user could not see.
+        if (this.shouldTrapArrows(active) && !this.isOutOfSight(active)) {
             if (e.key === 'Escape') {
                 // Return focus to wrapper if possible, otherwise blur
                 const parent = active.parentElement;
@@ -2309,10 +2312,16 @@ class SpatialEngine {
             const onScreen = window.TuiViewRules
                 ? this.candidates.filter(c => window.TuiViewRules.onScreen(this.rectOf(c)))
                 : [];
+            // Tested at the middle of the part on screen: a carousel card
+            // half past the left edge has its middle off the window, where
+            // nothing is hit, and it passed as uncovered. On Rotten Tomatoes
+            // the first press went to one, behind the cookie wall's backdrop.
             const uncovered = onScreen.filter(c => {
                 const r = this.rectOf(c);
-                const hit = this.deepElementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-                return !hit || hit === c || this.composedContains(c, hit) || this.composedContains(hit, c);
+                const x = (Math.max(r.left, 0) + Math.min(r.right, window.innerWidth)) / 2;
+                const y = (Math.max(r.top, 0) + Math.min(r.bottom, window.innerHeight)) / 2;
+                const hit = this.deepElementFromPoint(x, y);
+                return !!hit && (hit === c || this.composedContains(c, hit) || this.composedContains(hit, c));
             });
             // By where it is drawn, not where it is in the markup: a card
             // pinned to a corner often comes before the header (LinkedIn).

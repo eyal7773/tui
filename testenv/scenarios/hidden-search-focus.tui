@@ -1,0 +1,6 @@
+# A text box focused out of sight kept the arrows (Merriam-Webster's search box, parked above the window).
+pages/hidden-search-focus.html
+key:ArrowDown
+expect:css=#first
+key:ArrowDown
+expect:css=#second
