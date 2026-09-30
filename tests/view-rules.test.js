@@ -162,3 +162,31 @@ test('children with no area leave the element as it was', () => {
   assert.equal(unionRect(own, [r(1, 1, 0, 0)]), own);
   assert.equal(unionRect(own, []), own);
 });
+
+/* ── where the first press starts ───────────────────────────────────────── */
+
+const { firstInReadingOrder } = globalThis.TuiViewRules;
+
+test('the first press starts at the top, whatever the markup order (LinkedIn)', () => {
+  const card = r(1033, 819, 119, 35);      // "Open the app", first in the markup
+  const logo = r(136, 24, 102, 30);
+  const signIn = r(1044, 13, 100, 50);
+  assert.equal(firstInReadingOrder([card, signIn, logo]), 2);
+});
+
+test('the top row starts at its left end, even when the menu beside the logo is higher', () => {
+  const logo = r(20, 16, 100, 40);
+  const menu = r(400, 10, 60, 20);
+  const below = r(0, 80, 300, 20);
+  assert.equal(firstInReadingOrder([menu, below, logo]), 2);
+});
+
+test('a right-to-left page starts at the right end of the top row', () => {
+  const left = r(20, 10, 100, 30);
+  const right = r(880, 12, 100, 30);
+  assert.equal(firstInReadingOrder([left, right], true), 1);
+});
+
+test('nothing to start from is -1', () => {
+  assert.equal(firstInReadingOrder([]), -1);
+});

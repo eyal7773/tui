@@ -144,7 +144,39 @@
     return { left, top, right, bottom, width: right - left, height: bottom - top, x: left, y: top };
   }
 
+  /**
+   * Where reading starts: the index of the top row's first rectangle, leftmost
+   * or, on a right-to-left page, rightmost. -1 for none.
+   *
+   * The first press used to take the first candidate in the markup. LinkedIn
+   * puts its "better on the app" card, pinned to the bottom right, before the
+   * header, so the ring started there and ArrowDown went on past the fold,
+   * skipping the whole top of the page. The top row is everything that starts
+   * before the topmost rectangle ends, so a logo a few pixels higher than the
+   * menu beside it does not lose its place as the start of the row.
+   *
+   * @param {Array<{left:number,top:number,right:number,bottom:number}>} rects
+   * @param {boolean} [rtl]
+   */
+  function firstInReadingOrder(rects, rtl) {
+    let top = -1;
+    (rects || []).forEach((rect, i) => {
+      if (rect && (top < 0 || rect.top < rects[top].top)) top = i;
+    });
+    if (top < 0) return -1;
+
+    const rowEnd = rects[top].bottom;
+    let best = top;
+    rects.forEach((rect, i) => {
+      if (!rect || rect.top >= rowEnd) return;
+      const better = rtl ? rect.right > rects[best].right : rect.left < rects[best].left;
+      if (better) best = i;
+    });
+    return best;
+  }
+
   root.TuiViewRules = {
+    firstInReadingOrder,
     unionRect,
     withinReach,
     onScreen,

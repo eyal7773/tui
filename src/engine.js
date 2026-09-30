@@ -2250,12 +2250,18 @@ class SpatialEngine {
             const onScreen = window.TuiViewRules
                 ? this.candidates.filter(c => window.TuiViewRules.onScreen(this.rectOf(c)))
                 : [];
-            const uncovered = onScreen.find(c => {
+            const uncovered = onScreen.filter(c => {
                 const r = this.rectOf(c);
                 const hit = this.deepElementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
                 return !hit || hit === c || this.composedContains(c, hit) || this.composedContains(hit, c);
             });
-            return uncovered || onScreen[0] || (this.candidates.length > 0 ? this.candidates[0] : null);
+            // By where it is drawn, not where it is in the markup: a card
+            // pinned to a corner often comes before the header (LinkedIn).
+            if (uncovered.length) {
+                const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
+                return uncovered[window.TuiViewRules.firstInReadingOrder(uncovered.map(c => this.rectOf(c)), rtl)];
+            }
+            return onScreen[0] || (this.candidates.length > 0 ? this.candidates[0] : null);
         }
 
         // Special case: ArrowDown from an open SUMMARY → enter popup in DOM order
