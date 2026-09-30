@@ -112,11 +112,38 @@ and a recheck.
 | Zara | zara.com/us | Cookie modal keeps the ring | - |
 | H&M | hm.com | Category tiles taller than the window | - |
 | Sephora | sephora.com | Country-choice modal keeps the ring | - |
+| PayPal | paypal.com | Down from the cookie strip only scrolled the page; from the page it went back to the strip | 0b09cc6 |
+| Wayfair | wayfair.com | Promo strip, product rows | - |
+| Hotels.com | hotels.com | Search form, business-travel checkbox, footer | - |
+| National Weather Service | weather.gov | Forecast forms, alert links | - |
+| AccuWeather | accuweather.com | Cookie box over a dimmed page keeps the ring | - |
+| OpenAI | openai.com | Story cards, "View more" rows | - |
+| Anthropic | anthropic.com | Feature cards taller than the window, model links | - |
+| Mozilla | mozilla.org | Full-width product rows | - |
+| WordPress.com | wordpress.com | Theme carousel, FAQ summaries | - |
+| Tumblr | tumblr.com | Consent dialog in a frame over a dimmed page is ringed; Enter steps in | - |
+| Vimeo | vimeo.com | Scroll-animated cards | - |
+| SoundCloud | soundcloud.com | Cookie banner over a dimmed page keeps the ring | - |
+| Bandcamp | bandcamp.com | Cookie dialog keeps the ring | - |
+| Discord | discord.com | Long stretches with nothing to step to: Down scrolls on | - |
+| Imgur | imgur.com | Masonry post grid, Move to the top | - |
+| The Home Depot | homedepot.com | Promo banners, category tiles | - |
+| Lowe's | lowes.com | Flyout menu buttons, filter chips (slow to load) | - |
+| Costco | costco.com | Header, promo carousel, newsletter form | - |
+| KAYAK | kayak.com | Search form, deal lists | - |
+| Expedia | expedia.com | Search form, deal cards, footer | - |
+| Airbnb | airbnb.com | Listing rows, tabbed link sections | - |
+| DuckDuckGo | duckduckgo.com | Autofocused search box keeps the arrows until Escape, by design | - |
+| Bing | bing.com | Autofocused search box keeps the arrows until Escape, by design | - |
+| Spotify | open.spotify.com | Sidebar, playlist rows (grid rows) | - |
+| Netflix | netflix.com | Title cards, FAQ accordion | - |
+| Wolfram Alpha | wolframalpha.com | Autofocused input keeps the arrows until Escape, by design | - |
+| Cloudflare | cloudflare.com | Animated hero pulled every scroll back to its button; after scrolling, Down started above the window | 0bfa451 |
 
 ## Blocked (not counted)
 
 Answered the harness with a bot check, so the page itself was never seen:
-Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed out), Oracle (error page), Adidas (bot block).
+Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed out), Oracle (error page), Adidas (bot block), Macy's (access denied), Zillow (captcha).
 
 ## Tested, no scenario
 
