@@ -590,6 +590,19 @@ class SpatialEngine {
         return null;
     }
 
+    /**
+     * Is el somewhere the user cannot see? Forbes focuses a link parked off
+     * the right edge of the window as it loads, and the first ArrowDown
+     * started from there, landing on its moving headline ticker instead of
+     * the top of the page. Like a cookie strip's focus (isInEdgeBar), the
+     * first press does not start from it.
+     */
+    isOutOfSight(el) {
+        const rect = this.rectOf(el);
+        return !!window.TuiViewRules && !!rect && (rect.width > 0 || rect.height > 0) &&
+            !window.TuiViewRules.onScreen(rect);
+    }
+
     /** The nearest ancestor-or-self that is position fixed or sticky, or null. */
     pinnedAncestor(node) {
         for (; node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
@@ -1456,7 +1469,7 @@ class SpatialEngine {
 
             let currentRect = null;
             if (current && current !== document.body && !this.isLayoutWrapper(current) &&
-                !(firstPress && this.isInEdgeBar(current))) {
+                !(firstPress && (this.isInEdgeBar(current) || this.isOutOfSight(current)))) {
                 currentRect = this.rectOf(current);
             }
 

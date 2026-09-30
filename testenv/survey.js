@@ -35,7 +35,7 @@ const ext = opt('--ext');
 const W = 1400, H = 900;
 const KEYS = [...Array(8).fill('ArrowDown'), 'ArrowRight', 'ArrowRight', 'ArrowRight',
     'ArrowLeft', 'ArrowLeft', 'ArrowDown', 'ArrowDown', 'ArrowUp', 'ArrowUp', 'ArrowUp'];
-const steps = ['wait:3000', 'shot:' + name + '-start'];
+const steps = ['wait:5000', 'shot:' + name + '-start'];
 for (const k of KEYS) steps.push('key:' + k, 'eval:scrollX+","+scrollY');
 steps.push('shot:' + name + '-end');
 
