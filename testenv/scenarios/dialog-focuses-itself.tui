@@ -1,0 +1,10 @@
+# A dialog that focuses its own box on opening (AP News' consent dialog): no arrow found anything outside the box, and the ring never got in.
+pages/dialog-focuses-itself.html
+key:ArrowDown
+expect:css=#policy
+key:ArrowDown
+expect:css=#reject
+key:ArrowLeft
+expect:css=#purposes
+key:ArrowDown
+expect:css=#accept

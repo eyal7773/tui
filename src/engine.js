@@ -52,6 +52,7 @@ class SpatialEngine {
         this.observer = null;
         this.focusMonitorInterval = null;
         this.failedFocusElements = new Set(); // Track elements that recently failed to receive focus
+        this.steppedTo = null; // Where the last arrow step landed, as opposed to focus the page placed
 
         // Menu State
         this.isMenuOpen = false;
@@ -565,18 +566,26 @@ class SpatialEngine {
      * a consent dialog, or null. Reuters dims the page behind its OneTrust
      * banner, and ArrowDown from the banner went on to stories below the
      * fold: they were not on screen to be found covered, and scrolling them
-     * in put them under the backdrop, where a click cannot reach them. The
-     * first pinned box at the middle of the window decides, so a dialog in
-     * the middle of its own backdrop counts as inside the cover.
+     * in put them under the backdrop, where a click cannot reach them.
+     *
+     * It looks down through what is stacked at the middle of the window: AP
+     * News puts its consent dialog there, in a box of its own above the
+     * backdrop. The first thing that is part of the page itself ends the
+     * search, so a fixed background under the content is no cover.
      */
     windowCover() {
-        const hit = this.deepElementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
-        for (let node = hit; node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
-            const style = window.getComputedStyle(node);
-            if (style.position !== 'fixed') continue;
-            const box = node.getBoundingClientRect();
+        const stack = document.elementsFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+        for (const hit of stack) {
+            if (hit === document.body || hit === document.documentElement) return null;
+            let fixed = null;
+            for (let node = hit; node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
+                if (window.getComputedStyle(node).position === 'fixed') { fixed = node; break; }
+            }
+            if (!fixed) return null;   // the page itself is on top here
+            const style = window.getComputedStyle(fixed);
+            const box = fixed.getBoundingClientRect();
             const whole = box.width >= window.innerWidth * 0.9 && box.height >= window.innerHeight * 0.9;
-            return whole && parseFloat(style.opacity) >= 0.05 && style.pointerEvents !== 'none' ? node : null;
+            if (whole && parseFloat(style.opacity) >= 0.05 && style.pointerEvents !== 'none') return fixed;
         }
         return null;
     }
@@ -1465,7 +1474,12 @@ class SpatialEngine {
 
             // 3. Find Best Candidate
             // Note: findBestCandidate automatically filters out elements in this.failedFocusElements
-            let target = this.findBestCandidate(currentRect, key, current, mode);
+            // A wrapper that took focus for the element stepped to is that
+            // step's too (Microsoft's chat box focuses the div around it).
+            const placed = !this.steppedTo || !this.composedContains(current, this.steppedTo);
+            let target = mode !== 'extreme' && currentRect && placed ? this.firstInside(current) : null;
+            if (target) this.lastRanking = undefined;
+            else target = this.findBestCandidate(currentRect, key, current, mode);
             let ranking = this.lastRanking;
             let widened;
             if (target && mode !== 'extreme' && this.leavesColumnUnseen(currentRect, target, key)) {
@@ -1486,6 +1500,7 @@ class SpatialEngine {
 
                 if (focusResult) {
                     success = true;
+                    this.steppedTo = target;   // see firstInside
                     // Remember the axis for Home/End. A jump counts the same as a
                     // step: both leave the ring travelling in that direction.
                     this.lastDirection = key;
@@ -2778,6 +2793,27 @@ class SpatialEngine {
     }
 
 
+
+    /**
+     * The first thing to step to inside a box the page focused, or null.
+     *
+     * AP News' consent dialog focuses its own box when it opens, as dialogs
+     * are meant to. Everything in it lies inside that box, so no arrow found
+     * anything above, below or beside it, and the ring never got in: each
+     * press scrolled the page behind instead. Focus the page put on a box
+     * around other controls is somewhere to enter, at the start of its top
+     * row, whichever arrow is pressed. A box an arrow stepped to is a place
+     * to leave as before, so a card with buttons inside is stepped past
+     * rather than into.
+     */
+    firstInside(box) {
+        if (!box || !window.TuiViewRules) return null;
+        const inside = this.candidates.filter(c => c !== box && this.composedContains(box, c) &&
+            !this.failedFocusElements.has(c) && window.TuiViewRules.onScreen(this.rectOf(c)));
+        if (!inside.length) return null;
+        const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
+        return inside[window.TuiViewRules.firstInReadingOrder(inside.map(c => this.rectOf(c)), rtl)];
+    }
 
     /** Whether the page itself has further to scroll this way. Sideways never counts. */
     canScrollPage(key) {

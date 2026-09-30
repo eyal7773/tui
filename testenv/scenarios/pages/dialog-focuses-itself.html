@@ -1,0 +1,20 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Dialog focuses itself</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  #backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); }
+  #dialog { position: fixed; left: 30%; top: 20%; width: 40%; height: 50%; background: #fff; padding: 20px; }
+</style></head>
+<body>
+  <!-- AP News' consent dialog: when it opens it focuses its own box, as
+       dialogs are meant to. Everything in it lies inside that box, so no
+       arrow found anything that way and the ring never got in. -->
+  <a href="#a">Behind the backdrop</a>
+  <div id="backdrop"></div>
+  <div id="dialog" tabindex="0">
+    <p>We care about your privacy. <a id="policy" href="#p">Cookie policy</a></p>
+    <p><button id="purposes">See purposes</button> <button id="reject">Reject all</button></p>
+    <p><button id="accept">Accept all</button></p>
+  </div>
+  <script>document.getElementById('dialog').focus();</script>
+</body></html>
