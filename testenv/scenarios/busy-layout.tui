@@ -1,0 +1,6 @@
+# A layout that shifts all the time (Cloudflare's animated hero): ArrowDown past the ring's element scrolled and was pulled straight back to it.
+pages/busy-layout.html
+key:ArrowDown
+expect:css=#cta
+key:ArrowDown*8
+expect:css=#far

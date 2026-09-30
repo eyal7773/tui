@@ -93,11 +93,30 @@ and a recheck.
 | Sky Sports | skysports.com | Full-window consent frame is ringed; Enter steps in | - |
 | DW | dw.com | Consent dialog with a scrolling list of purposes | - |
 | Le Monde | lemonde.fr | Consent wall of links without an href: focus stayed on the body, ring round the whole page | de74588 |
+| Der Spiegel | spiegel.de | Full-window consent frame is ringed; Enter steps in | - |
+| GOV.UK | gov.uk | Cookie banner, service links, topic list | - |
+| USA.gov | usa.gov | Topic cards in rows, Back to top | - |
+| CDC | cdc.gov | A–Z letter grid, feature links | - |
+| WHO | who.int | News cards, "Read more" link rows | - |
+| United Nations | un.org | Language chooser | - |
+| Adobe | adobe.com | Product tabs, carousels, plan links | - |
+| Dropbox | dropbox.com | CTA sections, animation toggle | - |
+| Slack | slack.com | Feature tabs, update carousel | - |
+| Zoom | zoom.us | Product cards, tabs, video controls | - |
+| Salesforce | salesforce.com | Carousels, video testimonials, chat widget | - |
+| IBM | ibm.com | Link cards, contact form fields | - |
+| Samsung | samsung.com/us | Cookie dialog over a dimmed page keeps the ring | - |
+| Dell | dell.com | Category carousel; Down leaves the cookie strip for the page | 0b09cc6 |
+| HP | hp.com | Right-to-left edition: cookie dialog, product rows | - |
+| Nike | nike.com | Hero "Shop" links, shoe-icon rows | - |
+| Zara | zara.com/us | Cookie modal keeps the ring | - |
+| H&M | hm.com | Category tiles taller than the window | - |
+| Sephora | sephora.com | Country-choice modal keeps the ring | - |
 
 ## Blocked (not counted)
 
 Answered the harness with a bot check, so the page itself was never seen:
-Etsy, Yelp, Ars Technica.
+Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed out), Oracle (error page), Adidas (bot block).
 
 ## Tested, no scenario
 

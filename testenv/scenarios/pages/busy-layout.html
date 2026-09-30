@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Busy layout</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  #pulse { background: orange; }
+</style></head>
+<body>
+  <!-- Cloudflare's hero animates all the time, so the layout keeps shifting.
+       For two seconds after the ring arrives, a shift pulls the page back to
+       it; ArrowDown past the button scrolled 300px and was pulled straight
+       back, and when it did get past, the next step started from the button
+       far above the window. -->
+  <a id="cta" href="#c">Start</a>
+  <div id="pulse" style="height: 20px"></div>
+  <div style="height: 2200px"></div>
+  <a id="far" href="#f">Far below</a>
+  <div style="height: 600px"></div>
+  <script>
+    let tall = false;
+    setInterval(() => { tall = !tall; document.getElementById('pulse').style.height = tall ? '21px' : '20px'; }, 50);
+  </script>
+</body></html>

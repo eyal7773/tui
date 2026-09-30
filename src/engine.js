@@ -1496,6 +1496,21 @@ class SpatialEngine {
                 currentRect = null;
             }
 
+            // The ring's element was scrolled out of the window, above it for
+            // ArrowDown or below it for ArrowUp: the step carries on from the
+            // window's edge, from what the user can see. On Cloudflare, after
+            // a few presses scrolled past its hero, ArrowDown went from the
+            // hero's button, 300px above the window, to a link of the header
+            // that had slid out of sight, and the page jumped back up.
+            if (currentRect && mode !== 'extreme') {
+                const edge = key === 'ArrowDown' && currentRect.bottom <= 0 ? 0
+                    : key === 'ArrowUp' && currentRect.top >= window.innerHeight ? window.innerHeight : null;
+                if (edge !== null) {
+                    currentRect = { left: currentRect.left, right: currentRect.right, width: currentRect.width,
+                        top: edge - 1, bottom: edge, height: 1 };
+                }
+            }
+
             // 3. Find Best Candidate
             // Note: findBestCandidate automatically filters out elements in this.failedFocusElements
             // A wrapper that took focus for the element stepped to is that
@@ -2869,6 +2884,12 @@ class SpatialEngine {
 
     handleOffScreen(key) {
         if (this.isSubframe && this.leaveFrame(key)) return;
+        // The user is scrolling on, away from where the ring arrived: a
+        // layout shift must not pull the page back to it (keepArrivalInView).
+        // Cloudflare's animated hero shifts the layout all the time, and
+        // quick presses of ArrowDown past its button scrolled 300px and
+        // were pulled straight back.
+        this.lastArrivalAt = 0;
         const scrollAmount = 300;
         LOG.event('scroll', { key: key, why: 'nothing-that-way' });
         if (key === 'ArrowDown') window.scrollBy({ top: scrollAmount, behavior: this.scrollBehavior() });
