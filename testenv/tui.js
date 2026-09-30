@@ -17,6 +17,7 @@
  *   key:<Key>[*n]    press a key, n times (ArrowDown, End, Enter, F10, ...)
  *   expect:<what>    fail unless the ring is on that element
  *   expect-not:<what> fail if it is; for pages whose right answer changes
+ *   expect-ring:<what> fail unless the ring is drawn around it, focus or not
  *   click:<what>     a real mouse click
  *   type:<text>      type into whatever has focus
  *   wait:<ms>        pause
@@ -241,10 +242,11 @@ async function runStep(page, step, state) {
             break;
         }
         case 'expect':
-        case 'expect-not': {
-            const want = cmd === 'expect';
+        case 'expect-not':
+        case 'expect-ring': {
+            const want = cmd !== 'expect-not';
             await find(page, arg);
-            const hit = await page.evaluate(() => {
+            const hit = await page.evaluate((drawnOnly) => {
                 const want = document.querySelector('[data-tui-harness]');
                 const spot = document.getElementById('tui-spotlight');
                 if (!spot || getComputedStyle(spot).display === 'none') return false;
@@ -254,9 +256,10 @@ async function runStep(page, step, state) {
                     s.right + 2 >= w.right && s.bottom + 2 >= w.bottom;
                 const around = w.left - 2 <= s.left && w.top - 2 <= s.top &&
                     w.right + 2 >= s.right && w.bottom + 2 >= s.bottom;
+                if (drawnOnly) return inside && around;
                 return inside && around || document.activeElement === want ||
                     want.contains(document.activeElement) && inside;
-            });
+            }, cmd === 'expect-ring');
             const r = await ring(page);
             if (hit === want) console.log(`  PASS   ring is ${want ? '' : 'not '}on "${arg}"`);
             else { console.log(`  FAIL   expected ${want ? '' : 'anything but '}"${arg}", ring is on ${fmt(r.ring)}`); state.failed++; }

@@ -33,6 +33,19 @@
   border-radius: 2px !important;
   box-sizing: border-box !important;
   /* Ensure width/height includes border if borders are added */
+
+  /* The box is exactly the top, left, width and height engine.js writes.
+     Page rules aimed at every div must not move it: MIT gives the body's
+     children a 15px top margin, and the ring sat 15px below every element. */
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  transform: none !important;
+  translate: none !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
 }
 
 /* Specific overrides for common elements if needed */
@@ -176,6 +189,10 @@
    caret does, and holds still while an anchor is down. */
 #tui-caret {
   position: absolute;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  transform: none !important;
   z-index: 2147483647;
   width: 3px;
   background-color: var(--tui-ring, #00ff00);

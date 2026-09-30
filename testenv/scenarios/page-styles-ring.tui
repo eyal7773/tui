@@ -1,0 +1,6 @@
+# The page's own rules for every div moved the ring off its element (MIT: a 15px top margin on the body's children).
+pages/page-styles-ring.html
+key:ArrowDown
+expect-ring:css=#one
+key:ArrowDown
+expect-ring:css=#two
