@@ -2479,13 +2479,19 @@ class SpatialEngine {
                     // on screen, so it was always "near": ArrowDown on
                     // Microsoft's home page left a panel for Back to Top rather
                     // than the next panel's link. With nothing else that way it
-                    // is still reached.
+                    // is still reached, but only once the page cannot scroll
+                    // on: Walmart's Sparky button took ArrowDown whenever the
+                    // next row was out of reach, and from a pinned button
+                    // every further ArrowDown only scrolled the page under it.
                     const floating = this.pinnedAncestor(cand);
                     if (floating) {
                         const fb = floating.getBoundingClientRect();
                         const bar = fb.width >= window.innerWidth * 0.5;
                         const col = fb.height >= fb.width * 1.5 && fb.height >= window.innerHeight * 0.3;
-                        if (!bar && !col) score += 1000;
+                        if (!bar && !col) {
+                            if (this.canScrollPage(key)) return;
+                            score += 1000;
+                        }
                     }
                 }
             }
@@ -2734,6 +2740,14 @@ class SpatialEngine {
 
 
 
+    /** Whether the page itself has further to scroll this way. Sideways never counts. */
+    canScrollPage(key) {
+        const doc = document.scrollingElement || document.documentElement;
+        if (key === 'ArrowDown') return window.scrollY + window.innerHeight < doc.scrollHeight - 1;
+        if (key === 'ArrowUp') return window.scrollY > 0;
+        return false;
+    }
+
     /**
      * Hands the keyboard back to the page around this frame when there is
      * nothing further this way and nothing left to scroll. Enter steps into a
@@ -2743,12 +2757,7 @@ class SpatialEngine {
      * carries on in the same direction (see handleFrameExit).
      */
     leaveFrame(key) {
-        const doc = document.scrollingElement || document.documentElement;
-        const atEnd =
-            key === 'ArrowDown' ? window.scrollY + window.innerHeight >= doc.scrollHeight - 1 :
-            key === 'ArrowUp' ? window.scrollY <= 0 :
-            true;   // sideways never scrolls here
-        if (!atEnd) return false;
+        if (this.canScrollPage(key)) return false;
 
         try {
             window.parent.postMessage({ tuiFrameExit: key }, '*');
