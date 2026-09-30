@@ -53,6 +53,8 @@ class SpatialEngine {
         this.focusMonitorInterval = null;
         this.failedFocusElements = new Set(); // Track elements that recently failed to receive focus
         this.steppedTo = null; // Where the last arrow step landed, as opposed to focus the page placed
+        this.leavingBar = null; // The bottom bar a step down is leaving (see belowBottomBar)
+        this.leftBar = null; // The bottom bar the ring stepped down out of, passed by after
 
         // Menu State
         this.isMenuOpen = false;
@@ -1506,9 +1508,22 @@ class SpatialEngine {
             let target = mode !== 'extreme' && placed ? this.firstInside(current) : null;
             if (target) this.lastRanking = undefined;
             else target = this.findBestCandidate(currentRect, key, current, mode);
+            let leftBar = false;
+            if (!target && mode !== 'extreme') {
+                const below = this.belowBottomBar(current, currentRect, key);
+                if (below) {
+                    this.leavingBar = below.bar;
+                    // The page's next item is often past the usual reach,
+                    // since the bar sits at the bottom edge of the window.
+                    try { target = this.withWiderReach(() => this.findBestCandidate(below.rect, key, current, mode)); }
+                    finally { this.leavingBar = null; }
+                    if (target) { currentRect = below.rect; leftBar = true; this.leftBar = below.bar; }
+                }
+            }
             let ranking = this.lastRanking;
             let widened;
-            if (target && mode !== 'extreme' && this.leavesColumnUnseen(currentRect, target, key)) {
+            // Already searched as wide as it goes, and without the bar.
+            if (target && mode !== 'extreme' && !leftBar && this.leavesColumnUnseen(currentRect, target, key)) {
                 const wider = this.withWiderReach(() => this.findBestCandidate(currentRect, key, current, mode));
                 widened = !!wider && (this.besideOrBefore(this.rectOf(wider), this.rectOf(target), key) ||
                               this.sharesColumn(current, wider, target));
@@ -1527,6 +1542,7 @@ class SpatialEngine {
                 if (focusResult) {
                     success = true;
                     this.steppedTo = target;   // see firstInside
+                    if (this.leftBar && (!this.leftBar.isConnected || this.composedContains(this.leftBar, target))) this.leftBar = null;
                     // Remember the axis for Home/End. A jump counts the same as a
                     // step: both leave the ring travelling in that direction.
                     this.lastDirection = key;
@@ -2357,6 +2373,15 @@ class SpatialEngine {
         const cover = this.windowCover();
 
         this.candidates.forEach(cand => {
+            // Stepping down out of a bar pinned to the bottom: not back into it.
+            if (this.leavingBar && this.composedContains(this.leavingBar, cand)) return;
+            // Nor, once left, on the next steps down the page: on PayPal
+            // ArrowDown went back and forth between the page and its cookie
+            // strip, which lies below everything on screen. Up still reaches
+            // it, and so does Down at the end of the page.
+            if (this.leftBar && key === 'ArrowDown' && this.composedContains(this.leftBar, cand) &&
+                this.canScrollPage(key)) return;
+
             // Skip self - ENHANCED to prevent navigation loops
             // Check multiple conditions:
             // 1. Don't select lastActiveElement (tracked wrapper)
@@ -2876,6 +2901,33 @@ class SpatialEngine {
         if (inside.length < 2) return null;
         const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
         return inside[window.TuiViewRules.firstInReadingOrder(inside.map(c => this.rectOf(c)), rtl)];
+    }
+
+    /**
+     * Where ArrowDown goes on from, out of a bar pinned along the bottom of
+     * the window with nothing further down in it: the bar's top edge, under
+     * the ring. PayPal's cookie strip sits there without covering the page,
+     * and once the ring was in it every ArrowDown only scrolled the page, as
+     * whatever came into view was above the bar, never below it. From the
+     * bar's top edge, the page's next item scrolls into view above it.
+     * Null for anything else, and for a modal dialog, which keeps the ring.
+     */
+    belowBottomBar(current, currentRect, key) {
+        if (key !== 'ArrowDown' || !current || !currentRect || !window.TuiViewRules || this.windowCover()) return null;
+        const bar = this.pinnedAncestor(current);
+        if (!bar) return null;
+        try {
+            if (this.composedClosest(current, 'dialog:modal, [aria-modal="true"]')) return null;
+        } catch (e) {
+            if (this.composedClosest(current, '[aria-modal="true"]')) return null;
+        }
+        const box = bar.getBoundingClientRect();
+        if (!(window.TuiViewRules.coveredEdges(window.innerHeight, [box], 40).bottom > 0)) return null;
+        return {
+            bar,
+            rect: { left: currentRect.left, right: currentRect.right, width: currentRect.width,
+                top: box.top - 1, bottom: box.top, height: 1 }
+        };
     }
 
     /** Whether the page itself has further to scroll this way. Sideways never counts. */

@@ -69,6 +69,30 @@ and a recheck.
 | npm | npmjs.com | Landing page, footer columns | - |
 | GitLab | about.gitlab.com | Logo row, CTA sections, AI chat widget | - |
 | Internet Archive | archive.org | Search, collection carousels | - |
+| Forbes | forbes.com | First press started from a link parked off the right edge | d840f9e |
+| National Geographic | nationalgeographic.com | Story list, card row | - |
+| Khan Academy | khanacademy.org | Cookie card that declares itself modal keeps the first press; course grid | - |
+| Coursera | coursera.org | Hero carousel dots, course cards | - |
+| Udemy | udemy.com | Top banner, category cards, course carousel | - |
+| Harvard | harvard.edu | Tall story cards, video link | - |
+| MIT | mit.edu | Page CSS gave the ring a 15px margin: it sat below every element | dcefb0b |
+| Stanford | stanford.edu | Story cards, video player controls | - |
+| Britannica | britannica.com | Feature cards, list rows | - |
+| Dictionary.com | dictionary.com | Autofocused search box keeps the arrows until Escape, by design | - |
+| Goodreads | goodreads.com | Book covers in inline links, genre columns | - |
+| Merriam-Webster | merriam-webster.com | Autofocused search box out of sight kept the arrows | f52b150 |
+| Rotten Tomatoes | rottentomatoes.com | First press went to a card half off the edge, behind the cookie backdrop | f52b150 |
+| Metacritic | metacritic.com | Score cards, video list | - |
+| IGN | ign.com | Right-to-left edition: sidebar, feature cards | - |
+| GameSpot | gamespot.com | Feed tabs, story list | - |
+| Steam | store.steampowered.com | Hero carousel, deal cards | - |
+| Epic Games Store | store.epicgames.com | Autofocused search box keeps the arrows until Escape, by design | - |
+| NFL | nfl.com | Consent banner over a dimmed page keeps the ring | - |
+| NBA | nba.com | Story list, media-day button row | - |
+| MLB | mlb.com | Consent banner over a dimmed page keeps the ring | - |
+| Sky Sports | skysports.com | Full-window consent frame is ringed; Enter steps in | - |
+| DW | dw.com | Consent dialog with a scrolling list of purposes | - |
+| Le Monde | lemonde.fr | Consent wall of links without an href: focus stayed on the body, ring round the whole page | de74588 |
 
 ## Blocked (not counted)
 

@@ -1,0 +1,12 @@
+# A cookie strip along the bottom that covers nothing (PayPal): ArrowDown from it only scrolled the page, and from the page it went back into the strip.
+pages/bottom-bar.html
+key:ArrowDown
+expect:css=#top
+key:ArrowDown
+expect:css=#accept
+key:ArrowDown
+expect:css=#one
+key:ArrowDown
+expect:css=#two
+key:ArrowUp
+expect:css=#one
