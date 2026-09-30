@@ -1,5 +1,6 @@
 # Amazon: the colour swatches under a result are inline links around block squares, 0x0 themselves, and were never reached.
+# Starts on the first result that has swatches; which one that is changes from day to day.
 https://www.amazon.com/s?k=headphones
-start:css=[data-component-type=s-search-result] a.a-link-normal[href*='/dp/']:not([tabindex])
-key:ArrowDown*4
+start:css=[data-component-type=s-search-result]:has(a[aria-current]) a.a-link-normal[href*='/dp/']:not([tabindex])
+key:ArrowDown*3
 expect:css=[data-component-type=s-search-result] a[aria-current]

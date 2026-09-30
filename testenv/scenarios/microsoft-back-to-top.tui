@@ -1,4 +1,5 @@
 # Microsoft: Back to Top floats in the corner; ArrowDown from a panel's button went to it instead of the next panel's link.
+# The promo cards change order and name from one visit to the next, so this checks where the ring did not go.
 https://www.microsoft.com/en-us
 wait:3000
 key:ArrowDown
@@ -7,4 +8,4 @@ key:ArrowDown
 key:ArrowDown*2
 wait:800
 key:ArrowDown
-expect:Pre-order Surface Laptop, 13-inch (2nd Edition).
+expect-not:Back to Top

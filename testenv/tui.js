@@ -16,6 +16,7 @@
  *   start:<what>     put the ring on an element, as if the user had got there
  *   key:<Key>[*n]    press a key, n times (ArrowDown, End, Enter, F10, ...)
  *   expect:<what>    fail unless the ring is on that element
+ *   expect-not:<what> fail if it is; for pages whose right answer changes
  *   click:<what>     a real mouse click
  *   type:<text>      type into whatever has focus
  *   wait:<ms>        pause
@@ -31,6 +32,11 @@
  *
  * <what> is text (aria-label, title or visible text; exact match wins over
  * contains) or css=<selector>.
+ *
+ * --as-chrome hides that the browser is automated (no "HeadlessChrome" in the
+ * user agent, no navigator.webdriver), so sites that answer a bot with a
+ * check show their real page. survey.js uses it; scenarios keep what they
+ * were recorded with.
  *
  * --ext loads another build instead of ../src, e.g. an old commit checked out
  * with `git worktree add`, to see whether a bug was already there.
@@ -52,6 +58,7 @@ function parseArgs(argv) {
     for (let i = 0; i < argv.length; i++) {
         const a = argv[i];
         if (a === '--headed') opts.headed = true;
+        else if (a === '--as-chrome') opts.asChrome = true;
         else if (a === '--debug') opts.debug = true;
         else if (a === '--profile') opts.profile = argv[++i];
         else if (a === '--viewport') opts.viewport = argv[++i];
@@ -233,7 +240,9 @@ async function runStep(page, step, state) {
             console.log(`  ${key}${times ? '*' + times : ''}  ring → ${fmt(r.ring)}${r.ring && r.focus && r.focus.el !== r.ring.el ? `   (focus: ${fmt(r.focus)})` : ''}`);
             break;
         }
-        case 'expect': {
+        case 'expect':
+        case 'expect-not': {
+            const want = cmd === 'expect';
             await find(page, arg);
             const hit = await page.evaluate(() => {
                 const want = document.querySelector('[data-tui-harness]');
@@ -249,8 +258,8 @@ async function runStep(page, step, state) {
                     want.contains(document.activeElement) && inside;
             });
             const r = await ring(page);
-            if (hit) console.log(`  PASS   ring is on "${arg}"`);
-            else { console.log(`  FAIL   expected "${arg}", ring is on ${fmt(r.ring)}`); state.failed++; }
+            if (hit === want) console.log(`  PASS   ring is ${want ? '' : 'not '}on "${arg}"`);
+            else { console.log(`  FAIL   expected ${want ? '' : 'anything but '}"${arg}", ring is on ${fmt(r.ring)}`); state.failed++; }
             break;
         }
         case 'click': (await find(page, arg)).click(); await page.waitForTimeout(500); break;
@@ -323,7 +332,9 @@ async function main() {
         channel: 'chromium',
         headless: !opts.headed,
         viewport: { width: w, height: h },
-        args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
+        args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`,
+            // Sites turn away navigator.webdriver with a bot check before the page is seen.
+            ...(opts.asChrome ? ['--disable-blink-features=AutomationControlled'] : [])],
     });
     const missing = archive ? await replay(ctx, archive) : [];
     const state = { failed: 0, shots: 0, settle: 250, headed: opts.headed, ctx: ctx };
@@ -337,7 +348,14 @@ async function main() {
             (archive ? ` (replayed from ${archive.parts.size} saved parts)` : ''));
 
         const page = ctx.pages()[0] || await ctx.newPage();
-        const logFile = path.join(WORK, 'last-console.log');
+        if (opts.asChrome && !opts.headed) {
+            // "HeadlessChrome" in the user agent gets a bot check instead of the page.
+            const cdp = await ctx.newCDPSession(page);
+            const ua = await page.evaluate(() => navigator.userAgent);
+            await cdp.send('Emulation.setUserAgentOverride', { userAgent: ua.replace('HeadlessChrome', 'Chrome') });
+        }
+        // One per profile, so runs in parallel (survey.js) keep their own.
+        const logFile = path.join(WORK, opts.profile === 'default' ? 'last-console.log' : `last-console-${opts.profile}.log`);
         const log = fs.createWriteStream(logFile);
         page.on('console', (m) => {
             const t = m.text();
