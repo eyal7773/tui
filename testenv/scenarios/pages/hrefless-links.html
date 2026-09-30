@@ -1,0 +1,20 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Links without href</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  #backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); }
+  #wall { position: fixed; left: 30%; top: 20%; width: 40%; background: #fff; padding: 20px; }
+  a { color: blue; cursor: pointer; }
+</style></head>
+<body>
+  <!-- Le Monde's consent wall: its links have no href and run from a click
+       handler, so focus() did nothing, focus stayed on the body and the ring
+       went round the whole page. -->
+  <a href="#behind">Behind the backdrop</a>
+  <div id="backdrop"></div>
+  <div id="wall">
+    <p>Our <a id="partners" data-action="partners">partners (305)</a> use cookies.</p>
+    <p><button id="accept">Accept and continue</button></p>
+    <p><a id="subscribe" data-action="subscribe">Subscribe</a></p>
+  </div>
+</body></html>

@@ -1,0 +1,8 @@
+# Links without an href, run from a click handler, could not take focus (Le Monde's consent wall): the ring went round the whole page.
+pages/hrefless-links.html
+key:ArrowDown
+expect-ring:css=#partners
+key:ArrowDown
+expect-ring:css=#accept
+key:ArrowDown
+expect-ring:css=#subscribe

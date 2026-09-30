@@ -2309,8 +2309,10 @@ class SpatialEngine {
             // And one nothing lies over: with a dialog or a bot check over
             // the page (Target), the first press went to the page's first
             // button, out of sight behind it.
+            // Without the ones that just refused focus, or a retry picks the
+            // same one again.
             const onScreen = window.TuiViewRules
-                ? this.candidates.filter(c => window.TuiViewRules.onScreen(this.rectOf(c)))
+                ? this.candidates.filter(c => !this.failedFocusElements.has(c) && window.TuiViewRules.onScreen(this.rectOf(c)))
                 : [];
             // Tested at the middle of the part on screen: a carousel card
             // half past the left edge has its middle off the window, where
@@ -2750,7 +2752,20 @@ class SpatialEngine {
         if (el._tui_owned_item && !el.hasAttribute('tabindex')) {
             el.setAttribute('tabindex', '-1');
         }
+        const focusBefore = this.deepActiveElement();
         el.focus();
+
+        // Nor can a link without an href, which pages drive from a click
+        // handler: Le Monde's consent wall is made of them, focus stayed on
+        // the body, and the ring went round the whole page. Given a
+        // tabindex, it takes focus like the control it stands for.
+        // (Chrome reports tabIndex 0 for such a link, so the attribute decides.)
+        // Only when focus went nowhere at all: a label hands it to its input.
+        if (this.deepActiveElement() === focusBefore && focusBefore !== el &&
+            el.tagName !== 'LABEL' && !el.hasAttribute('tabindex')) {
+            el.setAttribute('tabindex', '-1');
+            el.focus();
+        }
 
         // CRITICAL FIX: Check if focusing this element caused a DIFFERENT element to get focus
         // This can happen with:
@@ -2765,8 +2780,10 @@ class SpatialEngine {
         // Note: actualFocus could be body if focus failed completely
 
         if (actualFocus !== el) {
-            // SPECIAL CASE: Focus returned to the element we started from
-            if (actualFocus === this.lastActiveElement) {
+            // SPECIAL CASE: Focus returned to the element we started from,
+            // or fell back to the page itself, which is no place for the ring
+            if (actualFocus === this.lastActiveElement || !actualFocus ||
+                actualFocus === document.body || actualFocus === document.documentElement) {
                 this.failedFocusElements.add(el);
                 LOG.event('focus', { result: 'refused', el: LOG.describe(el) });
                 return false; // Failed
