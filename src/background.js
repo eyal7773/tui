@@ -10,6 +10,9 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Also init on service worker startup (after browser restart)
 chrome.runtime.onStartup.addListener(() => {
+  // Again on every start, so the pages can read admin mode (tui-log.js)
+  // whether or not Chrome kept the level from the install.
+  chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
   initStorage();
   scheduleRecapAlarm();
   // Catch the case where the browser was closed at every alarm time.

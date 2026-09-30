@@ -29,8 +29,11 @@
 (function (root) {
   'use strict';
 
-  /** How many events are kept. About 100KB at most. */
-  const MAX_ENTRIES = 500;
+  /**
+   * How many events are kept: a step is about three (navigate, candidates,
+   * focus), so this is the last six or seven key presses. A few KB at most.
+   */
+  const MAX_ENTRIES = 20;
 
   /** Class names kept per element, and how much of each. */
   const MAX_CLASSES = 3;
@@ -67,6 +70,8 @@
    * again. In verbose mode the id, label, href and start of the markup follow.
    */
   function describe(el, rect) {
+    // A frame does not record, so it need not measure anything either.
+    if (!recording) return '';
     if (!el || !el.tagName) return String(el === null || el === undefined ? 'none' : el);
     let out = el.tagName;
     const cls = classesOf(el);
@@ -127,8 +132,7 @@
     if (!recording) return;
     const entry = { at: Date.now(), kind: kind, fields: clean(fields), detail: isDetail };
     entries.push(entry);
-    // Trimmed in batches, so a push is never a copy of the whole buffer.
-    if (entries.length > MAX_ENTRIES + 100) entries.splice(0, entries.length - MAX_ENTRIES);
+    if (entries.length > MAX_ENTRIES) entries.shift();
     if (verbose) console.log('[TUI] ' + formatEntry(entry));
   }
 
@@ -140,6 +144,20 @@
   /** More about it, for admin mode only. */
   function detail(kind, fields) {
     if (verbose) push(kind, fields, true);
+  }
+
+  /**
+   * Something threw. Its message can quote the page (a selector, a value), so
+   * only its type and the place in the extension's own files are kept.
+   */
+  function error(where, err) {
+    const stack = err && typeof err.stack === 'string' ? err.stack : '';
+    const place = stack.match(/([\w-]+\.js):(\d+):\d+/);
+    event('error', {
+      where: where,
+      type: (err && err.name) || typeof err,
+      at: place ? `${place[1]}:${place[2]}` : undefined
+    });
   }
 
   function formatValue(value) {
@@ -163,9 +181,9 @@
     const lines = ['TUI Navigator log'];
     for (const name of Object.keys(meta || {})) lines.push(`${name}: ${meta[name]}`);
     lines.push(`verbose: ${verbose ? 'yes' : 'no'}`);
-    lines.push(`events: ${Math.min(entries.length, MAX_ENTRIES)} (the last ${MAX_ENTRIES} are kept)`);
+    lines.push(`events: ${entries.length} (the last ${MAX_ENTRIES} are kept)`);
     lines.push('');
-    for (const entry of entries.slice(-MAX_ENTRIES)) lines.push(formatEntry(entry));
+    for (const entry of entries) lines.push(formatEntry(entry));
     return lines.join('\n');
   }
 
@@ -185,6 +203,7 @@
   root.TuiLog = {
     event: event,
     detail: detail,
+    error: error,
     describe: describe,
     exportText: exportText,
     clear: clear,

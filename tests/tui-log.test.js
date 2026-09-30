@@ -88,12 +88,24 @@ test('a typed character is never recorded, only the keys the engine acts on', ()
   assert.ok(!/key=p\b/.test(text));
 });
 
-test('only the last MAX_ENTRIES events are kept', () => {
-  for (let i = 0; i < log.MAX_ENTRIES * 3; i++) log.event('step', { n: i });
-  assert.ok(log.size <= log.MAX_ENTRIES + 100, `buffer grew to ${log.size}`);
+test('only the last 20 events are kept', () => {
+  assert.equal(log.MAX_ENTRIES, 20);
+  for (let i = 0; i < 100; i++) log.event('step', { n: i });
+  assert.equal(log.size, 20);
   const lines = log.exportText({}).split('\n').filter(l => / step n=/.test(l));
-  assert.equal(lines.length, log.MAX_ENTRIES);
-  assert.ok(lines[lines.length - 1].endsWith(`n=${log.MAX_ENTRIES * 3 - 1}`));
+  assert.equal(lines.length, 20);
+  assert.ok(lines[0].endsWith('n=80'));
+  assert.ok(lines[19].endsWith('n=99'));
+});
+
+test('an error keeps its type and place in the extension, never its message', () => {
+  const err = new TypeError("'#dana@example.com' is not a valid selector");
+  err.stack = "TypeError: '#dana@example.com' is not a valid selector\n" +
+    '    at SpatialEngine.findBestCandidate (chrome-extension://abc/engine.js:2400:17)';
+  log.error('navigate', err);
+  const text = log.exportText({});
+  assert.match(text, /error where=navigate type=TypeError at=engine\.js:2400$/m);
+  assert.ok(!text.includes('dana'));
 });
 
 test('detail events are kept in admin mode only', () => {

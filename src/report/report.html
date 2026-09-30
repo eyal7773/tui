@@ -31,14 +31,18 @@
       <ul class="contents">
         <li>Your description.</li>
         <li>
-          The extension's log from <strong id="site">this page</strong>: the keys it acted on and the
-          elements it moved between, described by their shape (tag, a few class names, position).
+          The extension's log from <strong id="site">this page</strong>: its last 20 events, with the
+          time of each, the keys it acted on and the elements it moved between, described by their
+          shape (tag, a few class names, position).
           <span id="log-plain">No text, labels or links from the page.</span>
           <span id="log-verbose" class="warning-inline" hidden>Admin mode is on, so this log also holds
-            element ids, labels, links and the start of their markup.</span>
+            element ids, labels, links and their opening tags.</span>
         </li>
-        <li>The extension version and your browser version.</li>
+        <li>The extension version, your browser's version string, the window size and the site's
+          name (not its full address).</li>
       </ul>
+      <p class="note">The extension keeps this log only in the page's memory, and only the last 20
+        events. Reloading the page clears it. It leaves only in a file you save here.</p>
       <p class="field-label" id="log-title">The log, exactly as it will be saved</p>
       <pre id="log" tabindex="0" aria-labelledby="log-title">Reading the log...</pre>
     </section>

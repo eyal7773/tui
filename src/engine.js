@@ -6,7 +6,7 @@
 // What the engine did, for a bug report (see tui-log.js). If it failed to
 // load, logging is skipped rather than every call site checking.
 const LOG = window.TuiLog || {
-    event() {}, detail() {}, describe: () => '', verbose: false
+    event() {}, detail() {}, error() {}, describe: () => '', verbose: false
 };
 
 class SpatialEngine {
@@ -377,8 +377,8 @@ class SpatialEngine {
             this.lastActiveElement = null;
         }
 
+        // Logged by applyEnabledState, as handedOver.
         this.applyEnabledState();
-        LOG.event('handover', { keys: suspended ? 'page' : 'extension' });
     }
 
     /** Recomputes isEnabled from its inputs and tidies up the ring if needed. */
@@ -1384,7 +1384,7 @@ class SpatialEngine {
             this.stepUntilFocused(key, mode, firstPress);
         } catch (err) {
             // Into the report, then on to the console as before.
-            LOG.event('error', { where: 'navigate', message: err && err.message });
+            LOG.error('navigate', err);
             throw err;
         } finally {
             // Reset lock, even when a step threw: a lock left on stops every arrow.
@@ -2848,7 +2848,6 @@ class SpatialEngine {
     openMenu() {
         if (!this.menuContainer) return;
         this.isMenuOpen = true;
-        LOG.event('menu', { open: true });
         this.menuContainer.classList.add('tui-menu-visible');
         this.selectedMenuIndex = 0; // Select first item by default
         this.updateMenuSelection();
@@ -2858,7 +2857,6 @@ class SpatialEngine {
 
     closeMenu() {
         if (!this.menuContainer) return;
-        if (this.isMenuOpen) LOG.event('menu', { open: false });
         this.isMenuOpen = false;
         this.menuContainer.classList.remove('tui-menu-visible');
     }

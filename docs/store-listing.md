@@ -24,7 +24,7 @@ things you can click or type into, by where they are on screen.
 Nothing is collected: no data leaves the user's computer through the extension.
 
 - Settings and usage counts stay in `chrome.storage.local`.
-- The navigation log (tui-log.js) stays in the page's memory, holds the last 500 events,
+- The navigation log (tui-log.js) stays in the page's memory, holds the last 20 events,
   and records element shape only: tag, role, up to three class names, tabindex,
   position. No text, labels, links, ids or typed keys.
 - A bug report is a zip the user saves and chooses to attach to a GitHub issue. The

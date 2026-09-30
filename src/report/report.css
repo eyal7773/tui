@@ -78,6 +78,11 @@ textarea {
   margin-bottom: 4px;
 }
 
+.note {
+  margin: 0 0 12px;
+  color: var(--text-dim);
+}
+
 pre {
   max-height: 220px;
   margin: 0;

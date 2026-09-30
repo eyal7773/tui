@@ -417,7 +417,7 @@ if you want to. The zip holds:
 `src/tui-log.js` keeps it; the engine only calls `TuiLog.event(...)`. It runs for
 everyone, all the time, so it is built to be harmless:
 
-- It stays in the page's memory: the last 500 events, gone on reload. Nothing is
+- It stays in the page's memory: the last 20 events, gone on reload. Nothing is
   stored or sent.
 - An element is its shape (tag, role, up to three class names, tabindex, position),
   never its text, label, link, id or data attributes. Keys are only the ones the
