@@ -26,6 +26,12 @@ reads the log the report window shows, and `report-has:<regex>` and
 `report-lacks:<regex>` check it. `scenarios/report-log.tui` uses them to make
 sure the log says what Enter did and holds nothing from the page.
 
+`report-send:<text>` writes `<text>` as the description and presses **Continue to
+GitHub**; from then on `report-has` and `report-lacks` check the issue it opened (its
+title, then its body), and the link is saved to `.work/last-report-issue.txt`.
+`scenarios/report-issue.tui` checks the title carries the address. `report-shot`
+screenshots the report window.
+
 ## Try a live site
 
     node tui.js https://example.com key:ArrowDown*3 ring shot --debug

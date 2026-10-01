@@ -28,6 +28,10 @@
   report           after F10 > Report a problem: read the log the report window shows
   report-has:<re>  fail unless that log matches the regular expression
   report-lacks:<re> fail if it does
+  report-send:<text> after report: write <text> as the description and press
+                   Continue to GitHub; the issue it opens (its title, then its
+                   body) becomes what report-has and report-lacks check
+  report-shot[:<name>] screenshot the report window into .work/shots/
  *   login            headed only: waits until you close the window, so you can
  *                    sign in once and keep the session in the profile
  *
@@ -293,10 +297,43 @@ async function runStep(page, step, state) {
             const open = state.ctx.pages().filter((p) => p.url().includes('/report/report.html')).length;
             if (open > 1) { console.log(`  FAIL   ${open} report windows are open`); state.failed++; }
             await win.waitForFunction(() => !/^Reading/.test(document.getElementById('log').textContent), null, { timeout: 5000 });
+            state.reportWin = win;
             state.report = await win.evaluate(() => document.getElementById('log').textContent);
             const file = path.join(WORK, 'last-report-log.txt');
             fs.writeFileSync(file, state.report);
             console.log(`  report ${state.report.split('\n').length} lines, saved to ${file}`);
+            break;
+        }
+        case 'report-send': {
+            // The link is the one the window opened; GitHub itself answers (a sign-in page, signed out).
+            const win = state.reportWin;
+            if (!win) throw new Error('report-send needs a report step before it');
+            await win.fill('#description', arg);
+            const [issue] = await Promise.all([
+                state.ctx.waitForEvent('page', { timeout: 10000 }),
+                win.click('#send')
+            ]);
+            const url = new URL(await win.evaluate(() => issueLink));
+            state.report = `title: ${url.searchParams.get('title')}
+
+${url.searchParams.get('body')}`;
+            fs.writeFileSync(path.join(WORK, 'last-report-issue.txt'), `${url.href}
+
+${state.report}`);
+            console.log(`  issue  ${url.origin}${url.pathname}, link ${url.href.length} long`);
+            console.log(`         title: ${url.searchParams.get('title')}`);
+            await issue.waitForLoadState('domcontentloaded').catch(() => {});
+            console.log(`         landed on ${issue.url().slice(0, 300)}`);
+            await issue.close();
+            break;
+        }
+        case 'report-shot': {
+            if (!state.reportWin) throw new Error('report-shot needs a report step before it');
+            const dir = path.join(WORK, 'shots');
+            fs.mkdirSync(dir, { recursive: true });
+            const file = path.join(dir, `${arg || 'report-' + (++state.shots)}.png`);
+            await state.reportWin.screenshot({ path: file, fullPage: true });
+            console.log(`  shot   ${file}`);
             break;
         }
         case 'report-has':

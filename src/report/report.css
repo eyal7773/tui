@@ -161,3 +161,82 @@ button:disabled {
 #status.error {
   color: var(--error);
 }
+
+h2 .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 6px;
+  font-size: 13px;
+  color: #fff;
+  background: var(--accent-hover);
+  border-radius: 50%;
+}
+
+h2 .optional {
+  font-weight: normal;
+  color: var(--text-dim);
+}
+
+section .note:last-child {
+  margin-bottom: 0;
+}
+
+textarea + .note {
+  margin: 6px 0 0;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  font: 13px/1.4 Consolas, 'Courier New', monospace;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+input[type="text"] + .note {
+  margin: 6px 0 0;
+}
+
+.check + .note {
+  margin: 6px 0 0;
+}
+
+/* The section the whole page leads to. */
+.send {
+  border: 2px solid var(--accent-hover);
+}
+
+.steps {
+  margin: 0 0 4px;
+  padding-left: 22px;
+}
+
+.steps li {
+  margin-bottom: 6px;
+}
+
+#again-note {
+  margin: 0;
+}
+
+.file-only {
+  margin: 16px 0 0;
+  color: var(--text-dim);
+}
+
+button.link {
+  padding: 0;
+  font-weight: normal;
+  color: var(--focus);
+  background: none;
+  border: none;
+  text-decoration: underline;
+}
+
+button.link:hover {
+  background: none;
+  color: #0047b3;
+}

@@ -1,0 +1,17 @@
+# F10 > Report a problem > Continue to GitHub: the issue opens with the page's address in its
+# title and the description, address and log in its body. No copy of the page was asked for,
+# so the body asks for no file.
+pages/double-click-rows.html
+start:css=#file1
+key:Enter
+key:F10
+key:ArrowDown*3
+key:Enter
+report
+report-send:Enter on a row did not open the file
+report-has:^title: Problem on file:///.*double-click-rows\.html: Enter on a row did not open the file$
+report-has:^### What happened$
+report-has:^### Page$
+report-has:enter on=.*second=false
+report-lacks:Copy of the page
+report-lacks:Report\.docx

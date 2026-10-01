@@ -243,12 +243,15 @@
   }
 
   // The report window asks, through background, when the user picks
-  // "Report a problem" in the F10 menu. The site is its hostname only.
+  // "Report a problem" in the F10 menu. The log names the site by its hostname
+  // only; the full address goes to the window apart from it, where the user
+  // sees it in an edit box and decides how much of it the issue's title shows.
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!message || message.type !== 'GET_TUI_LOG') return;
     const site = location.hostname || location.protocol.replace(':', '');
     sendResponse({
       site: site,
+      url: location.href,
       text: exportText({
         version: chrome.runtime.getManifest().version,
         site: site,

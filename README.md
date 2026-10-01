@@ -403,10 +403,18 @@ Click the extension icon for:
 ## Report a Problem
 
 **F10** → **Report a problem** opens a small window that shows everything the report
-will hold before anything is saved, and saves it as a zip in your downloads. Nothing is
-sent: attach the zip to an [issue on GitHub](https://github.com/eyal7773/tui/issues)
-if you want to. The zip holds:
-- `problem.txt` — your description
+will hold. **Continue to GitHub** opens a new [issue](https://github.com/eyal7773/tui/issues)
+with the report already written in it: the page's address in the title (you can shorten
+it first), your description, the address and the log in the body. The extension sends
+nothing; you post the issue yourself, after signing in to GitHub. The window explains
+each step, for people who have never used GitHub, and if the report is lost while you
+make an account, **Open GitHub again** writes it in again.
+
+A copy of the page cannot go in a link. If you tick **Include a copy of the page**, the
+button first saves a zip to your downloads, and the steps (and the issue's edit box) say
+to drag it in. **Only save the report as a file** saves the zip without going to GitHub.
+The zip holds:
+- `problem.txt` — the page's address and your description
 - `tui-logs-*.txt` — the log of what the extension did on that page
 - `page-*.mhtml` — a copy of the page, only if you tick the box for it. It holds
   everything on the page, so it is off by default, and Chrome asks for the optional
