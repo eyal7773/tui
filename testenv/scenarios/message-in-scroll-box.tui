@@ -1,0 +1,13 @@
+# A mail client whose open message scrolls in a box of its own (Gmail): ArrowLeft from the side panel stopped on the whole message, a list item taller than the window, and from its first link ArrowDown left for the folders on the left. A box taller than the window is entered, and the message box scrolls before the ring leaves it.
+pages/message-in-scroll-box.html
+start:css=#tab1
+key:ArrowLeft
+expect:css=#first
+key:ArrowDown
+expect-not:css=#more
+key:ArrowDown
+expect:css=#last
+key:ArrowDown
+expect:css=#reply
+key:ArrowUp*3
+expect:css=#first

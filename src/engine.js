@@ -1518,9 +1518,12 @@ class SpatialEngine {
             // a few presses scrolled past its hero, ArrowDown went from the
             // hero's button, 300px above the window, to a link of the header
             // that had slid out of sight, and the page jumped back up.
+            // In a box that scrolls on its own, the edge is the box's: Gmail
+            // scrolls an open message inside the page, not the page itself.
             if (currentRect && mode !== 'extreme') {
-                const edge = key === 'ArrowDown' && currentRect.bottom <= 0 ? 0
-                    : key === 'ArrowUp' && currentRect.top >= window.innerHeight ? window.innerHeight : null;
+                const view = this.visibleBand(current);
+                const edge = key === 'ArrowDown' && currentRect.bottom <= view.top ? view.top
+                    : key === 'ArrowUp' && currentRect.top >= view.bottom ? view.bottom : null;
                 if (edge !== null) {
                     currentRect = { left: currentRect.left, right: currentRect.right, width: currentRect.width,
                         top: edge - 1, bottom: edge, height: 1 };
@@ -1565,6 +1568,26 @@ class SpatialEngine {
             }
             LOG.event('candidates', { count: this.candidates.length, widened: widened, top: ranking });
 
+            // Up or down out of a box that scrolls on its own, while it can
+            // still scroll that way, stays in the box: its next item that
+            // way, or else the box scrolls, since what lies further on in it
+            // is not in reach yet. In Gmail, ArrowDown from a message's first
+            // link went to the folders on the left, and the rest of the
+            // message could not be read. A bar pinned inside the box, such as
+            // the message's Reply bar, waits for the box's end too.
+            let scrollBox = null;
+            if (target && mode !== 'extreme' && current && current !== document.body &&
+                (key === 'ArrowDown' || key === 'ArrowUp')) {
+                const box = this.scrollBoxOf(current, key);
+                if (box && !this.inScrollBox(box, target)) {
+                    this.keepInside = box;
+                    try { target = this.findBestCandidate(currentRect, key, current, mode); }
+                    finally { this.keepInside = null; }
+                    if (target) ranking = this.lastRanking;
+                    else scrollBox = box;
+                }
+            }
+
             // 4. Action
             if (target) {
                 // Try to focus. access result to see if we should stop or retry.
@@ -1595,7 +1618,7 @@ class SpatialEngine {
                 success = true;
             } else {
                 // 5. Off-screen handling (scroll) - Only if NO candidate found
-                this.handleOffScreen(key);
+                this.handleOffScreen(key, scrollBox || (current && this.scrollBoxOf(current, key)));
                 success = true; // Treat scroll as "success" to stop retrying
                 // Metric Tracking
                 this.safeSendMessage({
@@ -2413,6 +2436,8 @@ class SpatialEngine {
         const cover = this.windowCover();
 
         this.candidates.forEach(cand => {
+            // Staying in the box the ring scrolls in (see stepUntilFocused).
+            if (this.keepInside && !this.inScrollBox(this.keepInside, cand)) return;
             // Stepping down out of a bar pinned to the bottom: not back into it.
             if (this.leavingBar && this.composedContains(this.leavingBar, cand)) return;
             // Nor, once left, on the next steps down the page: on PayPal
@@ -2668,6 +2693,19 @@ class SpatialEngine {
                 bestCandidate = cand;
             }
         });
+
+        // A box taller than the window, with stops of its own, is entered
+        // rather than stopped on: the ring around it shows nothing of where
+        // it is. Gmail makes an open message one focusable list item, and
+        // ArrowLeft from the side panel ringed the whole message, never the
+        // link inside it level with the start.
+        if (bestCandidate && mode !== 'extreme') {
+            const box = scored.find(s => s.cand === bestCandidate).rect;
+            if (box.height > window.innerHeight) {
+                const inside = scored.filter(s => s.cand !== bestCandidate && this.composedContains(bestCandidate, s.cand));
+                if (inside.length) bestCandidate = inside.reduce((a, b) => (b.score < a.score ? b : a)).cand;
+            }
+        }
 
         // Only the five nearest are described, so a long list costs a sort, not a log line each.
         this.lastRanking = scored.sort((a, b) => a.score - b.score).slice(0, 5)
@@ -2927,8 +2965,8 @@ class SpatialEngine {
         return true;
     }
 
-    handleOffScreen(key) {
-        if (this.isSubframe && this.leaveFrame(key)) return;
+    handleOffScreen(key, box) {
+        if (!box && this.isSubframe && this.leaveFrame(key)) return;
         // The user is scrolling on, away from where the ring arrived: a
         // layout shift must not pull the page back to it (keepArrivalInView).
         // Cloudflare's animated hero shifts the layout all the time, and
@@ -2936,9 +2974,11 @@ class SpatialEngine {
         // were pulled straight back.
         this.lastArrivalAt = 0;
         const scrollAmount = 300;
-        LOG.event('scroll', { key: key, why: 'nothing-that-way' });
-        if (key === 'ArrowDown') window.scrollBy({ top: scrollAmount, behavior: this.scrollBehavior() });
-        if (key === 'ArrowUp') window.scrollBy({ top: -scrollAmount, behavior: this.scrollBehavior() });
+        LOG.event('scroll', { key: key, why: box ? 'box-first' : 'nothing-that-way' });
+        // The box the ring is in when it scrolls on its own (see scrollBoxOf).
+        const scroller = box || window;
+        if (key === 'ArrowDown') scroller.scrollBy({ top: scrollAmount, behavior: this.scrollBehavior() });
+        if (key === 'ArrowUp') scroller.scrollBy({ top: -scrollAmount, behavior: this.scrollBehavior() });
         // NOTE: A re-scan happens on the NEXT keypress because scroll creates a new geometric state.
     }
 
@@ -2994,6 +3034,46 @@ class SpatialEngine {
             rect: { left: currentRect.left, right: currentRect.right, width: currentRect.width,
                 top: box.top - 1, bottom: box.top, height: 1 }
         };
+    }
+
+    /**
+     * The nearest box around el that scrolls on its own, short of the page,
+     * and has further to go this way (up or down), or null. Gmail scrolls
+     * an open message in such a box while the page stays put.
+     */
+    scrollBoxOf(el, key) {
+        for (let node = this.composedParent(el); node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
+            if (node.nodeType !== 1 || node.scrollHeight <= node.clientHeight + 1) continue;
+            if (!/auto|scroll|overlay/.test(window.getComputedStyle(node).overflowY)) continue;
+            if (key === 'ArrowDown' && node.scrollTop + node.clientHeight < node.scrollHeight - 1) return node;
+            if (key === 'ArrowUp' && node.scrollTop > 0) return node;
+        }
+        return null;
+    }
+
+    /** Whether el scrolls with box: inside it, and not in a bar pinned inside it. */
+    inScrollBox(box, el) {
+        if (!this.composedContains(box, el)) return false;
+        const pinned = this.pinnedAncestor(el);
+        return !pinned || !this.composedContains(box, pinned) || pinned === box;
+    }
+
+    /**
+     * The band of the window el can be seen in: the window, narrowed to the
+     * nearest box around el that scrolls on its own.
+     */
+    visibleBand(el) {
+        let top = 0;
+        let bottom = window.innerHeight;
+        for (let node = el && this.composedParent(el); node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
+            if (node.nodeType !== 1 || node.scrollHeight <= node.clientHeight + 1) continue;
+            if (!/auto|scroll|overlay/.test(window.getComputedStyle(node).overflowY)) continue;
+            const box = node.getBoundingClientRect();
+            top = Math.max(top, box.top);
+            bottom = Math.min(bottom, box.bottom);
+            break;
+        }
+        return { top, bottom };
     }
 
     /** Whether the page itself has further to scroll this way. Sideways never counts. */

@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Message in a scroll box</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; font: 15px sans-serif; }
+  nav { position: absolute; top: 0; left: 0; width: 240px; bottom: 0; }
+  nav a, nav span { display: block; margin: 20px; }
+  #more { margin-top: 320px; }
+  #side { position: absolute; top: 0; right: 0; width: 56px; bottom: 0; }
+  #side div { width: 56px; height: 56px; margin-top: 64px; cursor: pointer; }
+  #scroller { position: absolute; top: 112px; left: 300px; right: 80px; bottom: 16px; overflow-y: auto; }
+  #message { padding: 16px; }
+  #message p { margin: 0 0 24px; }
+  #reply-bar { position: sticky; bottom: 0; background: #fff; padding: 8px 16px; }
+</style></head>
+<body>
+  <!-- A mail client: the page itself does not scroll, the open message does,
+       in a box of its own. The message is one focusable list item, far
+       taller than the window, and the arrows stopped on it as a whole; from
+       its first link ArrowDown left for the folders on the left. -->
+  <nav>
+    <a id="inbox" href="#inbox">Inbox</a>
+    <a id="sent" href="#sent">Sent</a>
+    <span id="more" role="button" tabindex="0">More labels</span>
+  </nav>
+  <div id="side" role="tablist">
+    <div id="tab1" role="tab" tabindex="-1" aria-label="Calendar"></div>
+    <div id="tab2" role="tab" tabindex="-1" aria-label="Notes"></div>
+  </div>
+  <div id="scroller">
+    <div id="message" role="listitem" tabindex="-1">
+      <p>Build bot left a comment on <a id="first" href="#pr">(example/project#42)</a></p>
+      <script>
+        for (let i = 1; i <= 30; i++) document.write('<p>Line ' + i + ' of the review, plain text without any link in it.</p>');
+      </script>
+      <p><a id="last" href="#view">view it on the site</a></p>
+    </div>
+    <div id="reply-bar"><span id="reply" role="link" tabindex="0">Reply</span></div>
+  </div>
+</body></html>
