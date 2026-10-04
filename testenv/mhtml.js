@@ -49,6 +49,7 @@ function unpack(file) {
     if (!boundary) throw new Error(`${file} is not a multipart .mhtml`);
 
     const parts = new Map();
+    const frames = [];
     let first = null;
     for (const chunk of raw.slice(headEnd).split(`--${boundary}`).slice(1)) {
         if (chunk.startsWith('--')) break;
@@ -73,14 +74,39 @@ function unpack(file) {
         // Inline <style> blocks are saved as parts located at cid:css-...
         const location = (headers['content-location'] || '').replace(/^cid:(.*)$/,
             (_, id) => CID_ORIGIN + encodeURIComponent(id));
-        if (location) parts.set(location.split('#')[0], part);
+        // The first part at an address wins. A frame of the same page is saved
+        // at the page's own address (AWS's console frames are), and taking the
+        // last one replayed a frame in place of the page. Frames are found by
+        // their cid anyway.
+        const key = location.split('#')[0];
+        if (location && !parts.has(key)) parts.set(key, part);
         if (headers['content-id']) parts.set(CID_ORIGIN + encodeURIComponent(headers['content-id'].replace(/^<|>$/g, '')), part);
         if (!first) first = headers['content-location'];
+        if (/^<frame-/.test(headers['content-id'] || '')) frames.push(CID_ORIGIN + encodeURIComponent(headers['content-id'].replace(/^<|>$/g, '')));
     }
 
     const url = top['snapshot-content-location'] || first;
     if (!url) throw new Error(`${file} does not say which page it captured`);
+    linkUnsourcedFrames(parts, frames);
     return { url, parts };
+}
+
+/**
+ * Gives each <iframe> with no src the saved frame meant for it. A frame a
+ * script filled in (AWS's console draws every page into one) is saved as a
+ * part, but its <iframe> is left with no src pointing at it, so it replayed
+ * empty. Those parts are the frames nothing refers to, in the same order as
+ * the <iframe>s without a src in the page.
+ */
+function linkUnsourcedFrames(parts, frames) {
+    if (frames.length < 2) return;
+    const main = parts.get(frames[0]);
+    const html = Array.from(new Set(parts.values())).filter((p) => p.type === 'text/html')
+        .map((p) => p.body.toString('utf8'));
+    const spare = frames.slice(1).filter((cid) => !html.some((h) => h.includes(cid)));
+    if (!main || !spare.length) return;
+    main.body = Buffer.from(main.body.toString('utf8').replace(/<iframe\b(?![^>]*\s(?:src|srcdoc)=)/gi,
+        (tag) => (spare.length ? `${tag} src="${spare.shift()}"` : tag)), 'utf8');
 }
 
 module.exports = { unpack };

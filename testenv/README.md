@@ -19,6 +19,11 @@ after the site's JavaScript runs will not be there. A report saved without a
 copy of the page cannot be replayed; its log is still unpacked under
 `.work/reports/`.
 
+Once the ring steps into a frame, `ring` and the steps' output show it there
+(`frame> button#launch ...`), and `expect` looks for its element in that frame.
+A frame a script filled in has no `src` in the saved page; it is replayed from
+the saved frame meant for it, matched by order.
+
 ## Check the report's log
 
 After `key:F10 key:ArrowDown*3 key:Enter` (Report a problem), the `report` step

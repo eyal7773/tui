@@ -77,6 +77,9 @@ function parseArgs(argv) {
 /** Unpacks a report (F10 > Report a problem) and returns the page inside it. */
 async function openReport(zip) {
     const dir = path.join(WORK, 'reports', path.basename(zip, '.zip'));
+    // Emptied first: a second zip of the same name (r.zip) found the first
+    // one's page still there and replayed that.
+    fs.rmSync(dir, { recursive: true, force: true });
     fs.mkdirSync(dir, { recursive: true });
     // The report window builds these with the JSZip it ships, so read them with it too.
     const JSZip = require(path.join(EXT, 'lib/jszip.min.js'));
@@ -209,15 +212,38 @@ function pageFind({ what, focus }) {
 
 const fmt = (d) => d ? `${d.el} "${d.text}" @${d.rect || ''}` : '(none)';
 
+/**
+ * The frame the keys go to: down through every focused <iframe>. Once the
+ * ring steps into a frame, that frame's engine draws it, so ring and expect
+ * look there.
+ */
+async function keyFrame(page) {
+    let frame = page.mainFrame();
+    for (let depth = 0; depth < 5; depth++) {
+        const handle = await frame.evaluateHandle(() => document.activeElement);
+        const el = handle.asElement();
+        const inner = el && /^i?frame$/i.test(await el.evaluate((e) => e.tagName)) ? await el.contentFrame() : null;
+        await handle.dispose();
+        if (!inner) break;
+        frame = inner;
+    }
+    return frame;
+}
+
 async function ring(page) {
-    const r = await page.evaluate(pageRing);
+    const frame = await keyFrame(page);
+    const r = await frame.evaluate(pageRing);
+    if (frame !== page.mainFrame()) {
+        if (r.ring) r.ring.el = `frame> ${r.ring.el}`;
+        if (r.focus) r.focus.el = `frame> ${r.focus.el}`;
+    }
     return r;
 }
 
-async function find(page, what, focus = false) {
-    const ok = await page.evaluate(pageFind, { what, focus });
+async function find(page, what, focus = false, frame = page.mainFrame()) {
+    const ok = await frame.evaluate(pageFind, { what, focus });
     if (!ok) throw new Error(`No element matches "${what}"${focus ? ' that can take focus' : ''}`);
-    return page.locator('[data-tui-harness]').first();
+    return frame.locator('[data-tui-harness]').first();
 }
 
 async function runStep(page, step, state) {
@@ -249,8 +275,9 @@ async function runStep(page, step, state) {
         case 'expect-not':
         case 'expect-ring': {
             const want = cmd !== 'expect-not';
-            await find(page, arg);
-            const hit = await page.evaluate((drawnOnly) => {
+            const frame = await keyFrame(page);
+            await find(page, arg, false, frame);
+            const hit = await frame.evaluate((drawnOnly) => {
                 const want = document.querySelector('[data-tui-harness]');
                 const spot = document.getElementById('tui-spotlight');
                 if (!spot || getComputedStyle(spot).display === 'none') return false;
