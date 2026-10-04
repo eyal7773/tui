@@ -20,7 +20,7 @@ and a recheck.
 | Site | URL tested | What was checked | Scenario | Commits |
 |---|---|---|---|---|
 | Amazon | amazon.com/s?k=headphones, amazon.com/dp/B09XSDMT4F | See-through `<input>` buttons, inline-link colour swatches, carousel "next slide" disappearing under the ring | amazon-result-swatches, amazon-thumbnails | 9dfa9a9, df11f9d, af9135b |
-| AWS console | us-east-1.console.aws.amazon.com/ec2 Instances (report zip from issue #3 + local page) | Page drawn into one big frame: arrows step into it level with where they start, and back out the same way | page-frame, mdn-frame-round-trip | 78e9c88 |
+| AWS console | us-east-1.console.aws.amazon.com/ec2 Instances (local page) | Page drawn into one big frame: arrows step into it level with where they start, and back out the same way | page-frame, mdn-frame-round-trip | 78e9c88 |
 | Booking.com | booking.com | Destination field's label stealing the arrows; 1x1 "travelling for work" checkbox | booking-destination | 4edb195, bb6550e |
 | eBay | ebay.com/sch/i.html?_nkw=headphones | Carousel back arrow hidden at opacity 0 over the links | ebay-hidden-carousel-arrow | e16f060 |
 | GitHub | pull request diff (local page) | Review thread's buttons inside a grid cell | github-review-thread | 2f1d227 |
@@ -28,7 +28,7 @@ and a recheck.
 | Hacker News | news.ycombinator.com | ArrowLeft from the leftmost upvote arrow climbing up | hackernews-left-edge | 83fb8f7 |
 | MDN | developer.mozilla.org/.../Elements/button | Enter into a live-example iframe and back out; ring hidden before first key | mdn-frame-round-trip | f461870, 6a65389 |
 | Microsoft | microsoft.com/en-us | Floating Back to Top button; stacked full-width panels | microsoft-back-to-top | ee1c3a4, c419971 |
-| Slack | app.slack.com client (report zip from issue #2 + local page) | Sidebar `role="tree" tabindex="-1"`: ArrowLeft from a message to the channel beside it, up and down the channels | tree-container-tabindex | 0d14c28 |
+| Slack | app.slack.com client (local page) | Sidebar `role="tree" tabindex="-1"`: ArrowLeft from a message to the channel beside it, up and down the channels | tree-container-tabindex | 0d14c28 |
 | Stack Overflow | stackoverflow.com/questions/11227809/... | OneTrust cookie card taking focus on load | stackoverflow-first-press | 4c32c83 |
 | The Verge | theverge.com | Stretched links in the story stream, staying in the column | verge-story-stream, stretched-link | 2b38ea2, be73518 |
 | Wikipedia | en.wikipedia.org/wiki/Albert_Einstein, .../Python_(programming_language) | Appearance radios, Main menu Enter, page preview hover card, sticky side column | wikipedia-appearance-radios, wikipedia-main-menu-enter, wikipedia-preview-down | e9314d0, edaca2a, b42c7ec, 6e7cf43, ee1c3a4 |

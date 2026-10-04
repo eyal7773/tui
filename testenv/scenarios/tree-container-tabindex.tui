@@ -1,4 +1,4 @@
-# Slack's sidebar is a <div role="tree" tabindex="-1">: its channels with tabindex -1 were dropped as hidden helpers, and ArrowLeft from a message skipped support-automation (issue #2).
+# Slack's sidebar is a <div role="tree" tabindex="-1">: its channels with tabindex -1 were dropped as hidden helpers, and ArrowLeft from a message skipped the channel beside it.
 pages/tree-container-tabindex.html
 start:css=#m4
 key:ArrowLeft
