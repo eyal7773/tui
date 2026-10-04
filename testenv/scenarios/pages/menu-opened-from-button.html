@@ -1,0 +1,29 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Menu opened from a button</title>
+<style>
+  body { font: 16px sans-serif; margin: 0; }
+  #tree { position: relative; width: 600px; height: 400px; overflow: auto; border: 1px solid #888; margin: 20px; }
+  .node { position: absolute; left: 20px; width: 300px; height: 52px; border: 1px solid #aaa; }
+  .node button { position: absolute; right: 4px; top: 6px; width: 36px; height: 38px; }
+  /* A dropdown the page appends to the body and pins under the button that opened it:
+     outside the box that scrolls, and pinned, so it looked like a floating widget. */
+  #menu { position: fixed; left: 302px; top: 86px; width: 150px; background: #fff; border: 1px solid #888; z-index: 5; }
+  #menu ul { list-style: none; margin: 0; padding: 0; }
+  #menu li { cursor: pointer; height: 36px; line-height: 36px; padding: 0 8px; }
+</style></head>
+<body>
+  <!-- An ops dashboard's resource tree: each node has a three-dots button, and
+       the open menu sits right under its button, outside the tree's own box.
+       ArrowDown left it for the next node's button. -->
+  <div id="tree">
+    <div class="node" style="top: 20px"><button id="dots1" aria-label="Actions for first">⋮</button></div>
+    <div class="node" style="top: 100px"><button id="dots2" aria-label="Actions for second">⋮</button></div>
+    <div class="node" style="top: 180px"><button id="dots3" aria-label="Actions for third">⋮</button></div>
+    <div style="height: 600px"></div>
+  </div>
+  <div id="menu"><ul>
+    <li id="m1" tabindex="0">Details</li>
+    <li id="m2" tabindex="0">Delete</li>
+    <li id="m3" tabindex="0">Logs</li>
+  </ul></div>
+</body></html>

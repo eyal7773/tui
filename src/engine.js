@@ -616,6 +616,27 @@ class SpatialEngine {
             !window.TuiViewRules.onScreen(rect);
     }
 
+    /**
+     * Is cand inside a pinned box that lies right against the ring's box? A
+     * menu opened from a button is placed fixed under it, and it is that
+     * button's next step, not a floating widget to be passed over. On Argo CD
+     * ArrowDown from the three dots skipped the open menu's first item for a
+     * button further down the page.
+     */
+    adjoinsRing(cand, ringRect) {
+        const pinned = this.pinnedAncestor(cand);
+        // Fixed, not sticky: a sticky bar belongs to the box it sticks in.
+        if (!pinned || !ringRect || getComputedStyle(pinned).position !== 'fixed') return false;
+        const box = pinned.getBoundingClientRect();
+        const gap = 8;
+        const across = box.left < ringRect.right && box.right > ringRect.left;
+        const along = box.top < ringRect.bottom && box.bottom > ringRect.top;
+        return (across && box.top >= ringRect.bottom - gap && box.top <= ringRect.bottom + gap) ||
+            (across && box.bottom <= ringRect.top + gap && box.bottom >= ringRect.top - gap) ||
+            (along && box.left >= ringRect.right - gap && box.left <= ringRect.right + gap) ||
+            (along && box.right <= ringRect.left + gap && box.right >= ringRect.left - gap);
+    }
+
     /** The nearest ancestor-or-self that is position fixed or sticky, or null. */
     pinnedAncestor(node) {
         for (; node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
@@ -1579,7 +1600,9 @@ class SpatialEngine {
             if (target && mode !== 'extreme' && current && current !== document.body &&
                 (key === 'ArrowDown' || key === 'ArrowUp')) {
                 const box = this.scrollBoxOf(current, key);
-                if (box && !this.inScrollBox(box, target)) {
+                // Not for the menu the ring's element opened, which lies outside
+                // the box, against it (see adjoinsRing).
+                if (box && !this.inScrollBox(box, target) && !this.adjoinsRing(target, currentRect)) {
                     this.keepInside = box;
                     try { target = this.findBestCandidate(currentRect, key, current, mode); }
                     finally { this.keepInside = null; }
@@ -2642,7 +2665,7 @@ class SpatialEngine {
                 // when they visually overlap or are geometrically closer than the scrolling content.
                 // BUG FIX: Only apply penalty if we are moving FROM non-sticky TO sticky.
                 // If we are already in a sticky container (like Header), we should be able to move to other sticky containers (Sidebar) freely.
-                if (targetIsSticky && !currentIsSticky) {
+                if (targetIsSticky && !currentIsSticky && !this.adjoinsRing(cand, currentRect)) {
                     score += 500;
 
                     // A sideways step never leaves its row for a pinned bar. On

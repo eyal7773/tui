@@ -1,0 +1,9 @@
+# Argo CD: the menu opened by a node's three-dots button is pinned under it, outside the box the nodes scroll in. ArrowDown skipped it for the next node's button, as it did for any pinned box that is not a bar or a column. A pinned box lying against the ring's element is that element's own menu.
+pages/menu-opened-from-button.html
+start:css=#dots1
+key:ArrowDown
+expect:css=#m1
+key:ArrowDown
+expect:css=#m2
+key:ArrowDown
+expect:css=#m3
