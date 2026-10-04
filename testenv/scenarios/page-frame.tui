@@ -1,0 +1,16 @@
+# AWS's console draws its page into one frame: the arrows stopped on the frame as a whole and only Enter went in (issue #3). They step in now, level with where they started, and back out the same way.
+pages/page-frame.html
+start:css=#search
+key:ArrowRight
+key:ArrowRight
+expect:css=#help
+key:ArrowDown
+wait:300
+expect:css=#launch
+start:css=#nav-inst
+key:ArrowRight
+wait:300
+expect:css=#row1
+key:ArrowLeft
+wait:300
+expect:css=#nav-inst

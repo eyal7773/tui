@@ -11,7 +11,7 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 
 require('../src/view-rules.js');
-const { withinReach, onScreen, bandFor, VERTICAL_REACH_RATIO } = globalThis.TuiViewRules;
+const { withinReach, onScreen, bandFor, holdsPage, VERTICAL_REACH_RATIO } = globalThis.TuiViewRules;
 
 const VIEW = { width: 1000, height: 800 };
 
@@ -189,4 +189,22 @@ test('a right-to-left page starts at the right end of the top row', () => {
 
 test('nothing to start from is -1', () => {
   assert.equal(firstInReadingOrder([]), -1);
+});
+
+/* ── frames that are the page ───────────────────────────────────────────── */
+
+test('a frame under the header and beside the sidebar holds the page', () => {
+  // AWS's console: 1679x787 of a 1920x945 window.
+  assert.equal(holdsPage(r(241, 123, 1679, 787), { width: 1920, height: 945 }), true);
+});
+
+test('an embedded video or live example is no page', () => {
+  assert.equal(holdsPage(r(100, 200, 560, 315), VIEW), false);
+  assert.equal(holdsPage(r(0, 300, 1000, 200), VIEW), false);
+});
+
+test('only the part of a frame on screen counts', () => {
+  // A tall frame scrolled mostly above the window.
+  assert.equal(holdsPage(r(0, -2000, 1000, 2200), VIEW), false);
+  assert.equal(holdsPage(r(0, 0, 1000, 5000), VIEW), true);
 });

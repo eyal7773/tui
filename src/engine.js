@@ -55,6 +55,9 @@ class SpatialEngine {
         this.steppedTo = null; // Where the last arrow step landed, as opposed to focus the page placed
         this.leavingBar = null; // The bottom bar a step down is leaving (see belowBottomBar)
         this.leftBar = null; // The bottom bar the ring stepped down out of, passed by after
+        this.pendingFrameEntry = null; // The frame asked whether its engine will take the step (see offerFrameEntry)
+        this.enteringFrame = false; // While a step in from the frame's edge is searched (see stepInFromEdge)
+        this.frameExitOrigin = null; // Where the ring was in the frame a step just left (see handleFrameExit)
 
         // Menu State
         this.isMenuOpen = false;
@@ -101,8 +104,16 @@ class SpatialEngine {
         // the card had been until something else moved it.
         document.addEventListener('scroll', () => this.handleScroll(), { passive: true, capture: true });
 
-        // A frame the ring stepped into hands the keyboard back (leaveFrame).
-        window.addEventListener('message', (e) => this.handleFrameExit(e));
+        // A frame the ring stepped into hands the keyboard back (leaveFrame),
+        // and a frame that holds the page is stepped into (offerFrameEntry).
+        window.addEventListener('message', (e) => {
+            const data = e.data;
+            if (!data || typeof data !== 'object') return;
+            if ('tuiFrameExit' in data) this.handleFrameExit(e);
+            else if ('tuiFrameEnter' in data) this.acceptFrameEntry(e);
+            else if ('tuiFrameAccept' in data) this.handleFrameAccept(e);
+            else if ('tuiFrameStep' in data) this.stepInFromEdge(e);
+        });
 
         // Passive interaction listeners to sync state without interference
         document.addEventListener('mousedown', (e) => this.handleInteraction(e), { passive: true });
@@ -1448,6 +1459,9 @@ class SpatialEngine {
         let attempts = 0;
         const maxAttempts = 5;
         let success = false;
+        // A step that just left a frame starts from where its ring was (handleFrameExit).
+        const exitOrigin = this.frameExitOrigin;
+        this.frameExitOrigin = null;
 
         while (attempts < maxAttempts && !success) {
             attempts++;
@@ -1473,7 +1487,9 @@ class SpatialEngine {
             }
 
             let currentRect = null;
-            if (current && current !== document.body && !this.isLayoutWrapper(current) &&
+            if (exitOrigin && exitOrigin.el === current) {
+                currentRect = exitOrigin.rect;
+            } else if (current && current !== document.body && !this.isLayoutWrapper(current) &&
                 !(firstPress && (this.isInEdgeBar(current) || this.isOutOfSight(current)))) {
                 currentRect = this.rectOf(current);
             }
@@ -1557,6 +1573,7 @@ class SpatialEngine {
                 if (focusResult) {
                     success = true;
                     this.steppedTo = target;   // see firstInside
+                    if (this.isTrapElement(target) && mode !== 'extreme') this.offerFrameEntry(target, key, currentRect);
                     if (this.leftBar && (!this.leftBar.isConnected || this.composedContains(this.leftBar, target))) this.leftBar = null;
                     // Remember the axis for Home/End. A jump counts the same as a
                     // step: both leave the ring travelling in that direction.
@@ -2386,7 +2403,12 @@ class SpatialEngine {
         // Determine if we are currently starting from a sticky/fixed context (e.g. Header)
         // BUG FIX: Also treat semantic navigation regions (HEADER, NAV) as "Sticky/Anchor" regions.
         // This ensures that navigating FROM a header (even if not CSS sticky) to a sticky sidebar doesn't incur a penalty.
-        const currentIsSticky = currentEl ? (this.isSticky(currentEl) || !!this.composedClosest(currentEl, 'header, nav, [role="banner"], [role="navigation"]')) : false;
+        // A step in by the frame's edge comes from outside the page (see
+        // stepInFromEdge), as from a header: a pinned toolbar along that edge
+        // is the first thing it meets. Penalised, ArrowDown from AWS's header
+        // passed the frame's own toolbar for a table heading below it.
+        const currentIsSticky = this.enteringFrame ||
+            (currentEl ? (this.isSticky(currentEl) || !!this.composedClosest(currentEl, 'header, nav, [role="banner"], [role="navigation"]')) : false);
 
         const cover = this.windowCover();
 
@@ -2973,8 +2995,15 @@ class SpatialEngine {
     leaveFrame(key) {
         if (this.canScrollPage(key)) return false;
 
+        // Where the ring was, so the step goes on level with it outside.
+        const last = this.lastActiveElement;
+        let from = null;
+        if (last && last.isConnected) {
+            const r = this.rectOf(last);
+            if (r.width || r.height) from = { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+        }
         try {
-            window.parent.postMessage({ tuiFrameExit: key }, '*');
+            window.parent.postMessage({ tuiFrameExit: key, from }, '*');
             window.parent.focus();   // allowed across origins while a key is down
         } catch (e) {
             return false;
@@ -2984,8 +3013,104 @@ class SpatialEngine {
         return true;
     }
 
+    /**
+     * An arrow that lands on a frame holding the page (see holdsPage in
+     * view-rules.js) goes on into it. On AWS's console everything under the
+     * header is one frame, and the arrows stopped on it as a whole: there was
+     * no way to the search box or the buttons without knowing to press Enter.
+     *
+     * The frame is only asked here. Its engine answers (acceptFrameEntry), and
+     * only then does it get focus, so a frame the extension does not run in
+     * keeps the ring and the keys stay up here.
+     */
+    offerFrameEntry(frame, key, fromRect) {
+        this.pendingFrameEntry = null;
+        if (!/^Arrow(Up|Down|Left|Right)$/.test(key) || !frame.contentWindow || frame.tagName !== 'IFRAME' && frame.tagName !== 'FRAME') return;
+        if (!window.TuiViewRules || !window.TuiViewRules.holdsPage(frame.getBoundingClientRect())) return;
+
+        // Where the step came from, in the frame's own coordinates.
+        const box = frame.getBoundingClientRect();
+        const x = box.left + frame.clientLeft;
+        const y = box.top + frame.clientTop;
+        const from = fromRect ? { left: fromRect.left - x, right: fromRect.right - x,
+            top: fromRect.top - y, bottom: fromRect.bottom - y } : null;
+        this.pendingFrameEntry = { frame, key, from };
+        try {
+            frame.contentWindow.postMessage({ tuiFrameEnter: key }, '*');
+        } catch (e) {
+            this.pendingFrameEntry = null;
+        }
+    }
+
+    /** The frame's answer to offerFrameEntry: its engine is here and on. */
+    acceptFrameEntry(e) {
+        // Not before the frame has loaded and can draw a ring: until then the
+        // parent keeps it, and Enter still goes in.
+        if (!this.isEnabled || !this.spotlight || e.source !== window.parent || window.parent === window) return;
+        try {
+            e.source.postMessage({ tuiFrameAccept: e.data.tuiFrameEnter }, '*');
+        } catch (err) { /* the parent went away */ }
+    }
+
+    /** The parent hands over: the frame takes focus, then the step that reached it goes on inside. */
+    handleFrameAccept(e) {
+        const pending = this.pendingFrameEntry;
+        this.pendingFrameEntry = null;
+        if (!pending || e.data.tuiFrameAccept !== pending.key) return;
+        const frame = pending.frame;
+        // The ring has moved on since, or the frame is gone.
+        if (!frame.isConnected || frame.contentWindow !== e.source || this.lastActiveElement !== frame) return;
+
+        LOG.event('frame-enter', { frame: LOG.describe(frame), key: pending.key });
+        frame.focus();
+        // The frame draws its own ring; this one waits for the way back.
+        this.isActiveMode = false;
+        if (this.spotlight) this.spotlight.style.display = 'none';
+        try {
+            frame.contentWindow.postMessage({ tuiFrameStep: pending.key, from: pending.from }, '*');
+        } catch (err) { /* the frame went away */ }
+    }
+
+    /**
+     * Inside the frame: the step goes on from the edge it came in by, level
+     * with where it started outside, so ArrowDown from the right of the header
+     * lands on the right of the page below, not on its first link.
+     */
+    stepInFromEdge(e) {
+        const key = e.data.tuiFrameStep;
+        if (!this.isEnabled || e.source !== window.parent || !/^Arrow(Up|Down|Left|Right)$/.test(key || '')) return;
+
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const from = e.data.from;
+        const valid = from && [from.left, from.right, from.top, from.bottom].every(n => typeof n === 'number' && isFinite(n));
+        const across = valid ? from : { left: 0, right: w, top: 0, bottom: h };
+        let rect;
+        if (key === 'ArrowDown') rect = { left: across.left, right: across.right, top: -1, bottom: 0 };
+        else if (key === 'ArrowUp') rect = { left: across.left, right: across.right, top: h, bottom: h + 1 };
+        else if (key === 'ArrowRight') rect = { left: -1, right: 0, top: across.top, bottom: across.bottom };
+        else rect = { left: w, right: w + 1, top: across.top, bottom: across.bottom };
+        rect.width = rect.right - rect.left;
+        rect.height = rect.bottom - rect.top;
+
+        this.userHasActed = true;
+        this.isActiveMode = true;
+        this.candidatesDirty = true;
+        this.refreshCandidates();
+        let target;
+        this.enteringFrame = true;
+        try {
+            target = this.findBestCandidate(rect, key, null) || this.findBestCandidate(null, key, null);
+        } finally {
+            this.enteringFrame = false;
+        }
+        LOG.event('frame-step-in', { key: key, to: LOG.describe(target) });
+        if (target) this.focusElement(target);
+    }
+
     /** The parent's half of leaveFrame: the frame that sent it takes the ring, then the step goes on. */
     handleFrameExit(e) {
+        this.pendingFrameEntry = null;
         const key = e.data && e.data.tuiFrameExit;
         if (!this.isEnabled || !/^Arrow(Up|Down|Left|Right)$/.test(key || '')) return;
 
@@ -2998,6 +3123,21 @@ class SpatialEngine {
         if (active === frame) frame.blur();
         LOG.event('frame-exit', { key: key, frame: LOG.describe(frame) });
         this.lastActiveElement = frame;
+        // The step goes on from where the ring was in the frame, not from the
+        // frame's middle: on AWS ArrowLeft out of the page's first row went
+        // to Dashboard at the top of the sidebar rather than Instances beside it.
+        const from = e.data.from;
+        if (from && ['left', 'right', 'top', 'bottom'].every(k => typeof from[k] === 'number' && isFinite(from[k]))) {
+            const box = frame.getBoundingClientRect();
+            const x = box.left + frame.clientLeft;
+            const y = box.top + frame.clientTop;
+            // Clamped to the frame: what it reports cannot reach outside it.
+            const left = Math.min(Math.max(from.left + x, box.left), box.right);
+            const right = Math.min(Math.max(from.right + x, box.left), box.right);
+            const top = Math.min(Math.max(from.top + y, box.top), box.bottom);
+            const bottom = Math.min(Math.max(from.bottom + y, box.top), box.bottom);
+            this.frameExitOrigin = { el: frame, rect: { left, right, top, bottom, width: right - left, height: bottom - top } };
+        }
         this.userHasActed = true;
         this.navigate(key);
     }
@@ -3188,14 +3328,25 @@ if (!isSubframe()) {
     new SpatialEngine();
 } else {
     const ARROWS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+    const start = () => {
+        document.removeEventListener('keydown', startOnFirstArrow, true);
+        window.removeEventListener('message', startOnEntry);
+        if (document.querySelector('video')) return null;
+        return new SpatialEngine({ subframe: true });
+    };
     const startOnFirstArrow = (e) => {
         if (!ARROWS.has(e.key)) return;
-        document.removeEventListener('keydown', startOnFirstArrow, true);
-        if (document.querySelector('video')) return;
-
-        const engine = new SpatialEngine({ subframe: true });
+        const engine = start();
         // The engine's own listener was not there for this key yet.
-        if (engine.spotlight) engine.handleKeydown(e);
+        if (engine && engine.spotlight) engine.handleKeydown(e);
+    };
+    // Or when the parent's ring steps into this frame (offerFrameEntry),
+    // which has had no key yet to start it.
+    const startOnEntry = (e) => {
+        if (e.source !== window.parent || !e.data || typeof e.data !== 'object' || !('tuiFrameEnter' in e.data)) return;
+        const engine = start();
+        if (engine) engine.acceptFrameEntry(e);
     };
     document.addEventListener('keydown', startOnFirstArrow, true);
+    window.addEventListener('message', startOnEntry);
 }

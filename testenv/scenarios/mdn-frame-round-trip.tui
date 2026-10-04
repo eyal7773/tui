@@ -1,12 +1,10 @@
-# MDN: Enter steps into a live example's frame, and the arrows leave it again at its edge. Before, Enter on a ringed frame clicked <body> (NYTimes' bot check could not be entered) and a frame with focus kept the arrows forever.
+# MDN: Enter steps into a live example's frame, and the arrows leave it again at its edge. Before, Enter on a ringed frame clicked <body> (NYTimes' bot check could not be entered) and a frame with focus kept the arrows forever. Out of the frame the step goes on from where the ring was inside it (Add to favorites), so ArrowUp reaches user agent straight above, not the Reset button off to the right.
 https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button
 wait:3000
 start:user agent
 key:ArrowDown
 key:Enter
 key:ArrowDown
-wait:300
-key:ArrowUp
 wait:300
 key:ArrowUp
 expect:user agent

@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Page in a frame</title>
+<style>
+  body { font: 15px sans-serif; margin: 0; }
+  header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #232f3e; }
+  header button { position: absolute; top: 15px; height: 30px; }
+  #search { left: 20px; width: 300px; }
+  #help { right: 40px; width: 80px; }
+  nav { position: fixed; top: 60px; left: 0; width: 200px; bottom: 0; }
+  nav a { position: absolute; left: 20px; display: block; }
+  #nav-dash { top: 20px; }
+  #nav-inst { top: 140px; }
+  iframe { position: fixed; top: 60px; left: 200px; right: 0; bottom: 0; width: calc(100% - 200px); height: calc(100% - 60px); border: 0; }
+</style></head>
+<body>
+  <!-- AWS's console: a header and a sidebar around one frame that holds the
+       page. The arrows stopped on the frame as a whole, and only Enter went
+       in, which nobody knew to press. -->
+  <header><button id="search">Search</button><button id="help">Help</button></header>
+  <nav><a id="nav-dash" href="#d">Dashboard</a><a id="nav-inst" href="#i">Instances</a></nav>
+  <iframe id="page" title="Instances" src="page-frame-inner.html"></iframe>
+</body></html>

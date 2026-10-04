@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Instances</title>
+<style>
+  body { font: 15px sans-serif; margin: 0; }
+  /* A toolbar pinned to the top of the frame: the first thing ArrowDown
+     from the header meets, though pinned elements are passed over from the
+     page's own content. */
+  .toolbar { position: sticky; top: 0; height: 90px; background: #fff; border-bottom: 1px solid #ccc; }
+  .toolbar button, .toolbar input { position: absolute; }
+  #launch { right: 20px; top: 10px; width: 140px; height: 28px; }
+  #filter { left: 20px; top: 50px; width: 400px; }
+  table { margin-top: 30px; border-collapse: collapse; }
+  td { padding: 5px 16px; height: 22px; }
+</style></head>
+<body>
+  <div class="toolbar"><button id="launch">Launch instances</button><input id="filter" placeholder="Filter instances"></div>
+  <table>
+    <tr><td><a id="row1" href="#1">i-b1fd2b9b</a></td><td>Running</td></tr>
+    <tr><td><a id="row2" href="#2">i-c37aaae9</a></td><td>Running</td></tr>
+    <tr><td><a id="row3" href="#3">i-ed605f10</a></td><td>Running</td></tr>
+  </table>
+</body></html>

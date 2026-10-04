@@ -175,7 +175,30 @@
     return best;
   }
 
+  /**
+   * A frame whose part on screen covers at least this share of the window
+   * holds the page itself rather than something embedded in it.
+   */
+  const PAGE_FRAME_RATIO = 0.5;
+
+  /**
+   * Whether a frame is the page: AWS's console draws everything under its
+   * header into one, 1679x787 of a 1920x945 window. The arrows step straight
+   * into such a frame. An embed (a video, a live example, an ad) only takes
+   * the ring, and Enter goes in.
+   */
+  function holdsPage(rect, viewport) {
+    const view = viewportOf(viewport);
+    if (!rect || !view || !view.width || !view.height) return false;
+    const width = Math.min(rect.right, view.width) - Math.max(rect.left, 0);
+    const height = Math.min(rect.bottom, view.height) - Math.max(rect.top, 0);
+    if (width <= 0 || height <= 0) return false;
+    return width * height >= view.width * view.height * PAGE_FRAME_RATIO;
+  }
+
   root.TuiViewRules = {
+    holdsPage,
+    PAGE_FRAME_RATIO,
     firstInReadingOrder,
     unionRect,
     withinReach,
