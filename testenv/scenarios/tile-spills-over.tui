@@ -1,0 +1,11 @@
+# An app portal's grid of tiles (OneLogin): the focused tile is lifted over its neighbours with a part reaching across them, so their middles were taken as covered and the arrows skipped every other tile. What the ring's own element spills over goes once focus leaves it.
+pages/tile-spills-over.html
+start:css=#t1
+key:ArrowRight
+expect:css=#t2
+key:ArrowRight
+expect:css=#t3
+key:ArrowLeft
+expect:css=#t2
+key:ArrowLeft
+expect:css=#t1

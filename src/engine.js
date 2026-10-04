@@ -2518,6 +2518,8 @@ class SpatialEngine {
 
                 if (isRelatedControl) {
                     // Valid obstruction by related control -> Allow
+                } else if (this.spillsFromRing(currentEl, topEl, centerX, centerY)) {
+                    // Drawn by the ring's own element, and gone once the ring leaves it.
                 } else {
                     // BUG FIX: Allow navigation to elements obscured by fixed/sticky containers (headers/footers)
                     // We must traverse up the tree because elementFromPoint might return a child of the fixed element.
@@ -2672,6 +2674,24 @@ class SpatialEngine {
             .map(s => `${LOG.describe(s.cand, s.rect)} =${Math.round(s.score)}`).join(' | ') || 'none that way';
 
         return bestCandidate;
+    }
+
+    /**
+     * Is the cover at (x, y) something the ring's element draws past its own
+     * box? A tile lifted on focus, with a part reaching over its neighbours,
+     * lies over their middles only while it has focus. On an app portal
+     * (OneLogin) every tile beside the focused one was taken as covered, and
+     * the arrows went to the tile two along. The cover counts as spilled when
+     * the smallest box holding both it and the ring's element does not reach
+     * (x, y): a dialog or a menu over the page holds what it covers.
+     */
+    spillsFromRing(currentEl, cover, x, y) {
+        if (!currentEl || !cover || !currentEl.isConnected) return false;
+        let common = currentEl;
+        while (common && !this.composedContains(common, cover)) common = this.composedParent(common);
+        if (!common || common === document.body || common === document.documentElement) return false;
+        const box = common.getBoundingClientRect();
+        return x < box.left || x > box.right || y < box.top || y > box.bottom;
     }
 
     getDistance(currentRect, targetRect, direction) {

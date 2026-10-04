@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Tile spilling over its neighbours</title>
+<style>
+  body { font: 15px sans-serif; margin: 40px; }
+  .grid { display: grid; grid-template-columns: repeat(5, 180px); gap: 24px; }
+  .tile { position: relative; display: block; height: 122px; background: #eef; color: #000; text-decoration: none; }
+  /* A focused tile is lifted over the others, and with it a strip that
+     reaches out across its neighbours, so the middle of each neighbour lies
+     under the focused tile. */
+  .tile:focus { z-index: 2; }
+  .tile .reach { position: absolute; top: 40px; height: 40px; left: -140px; right: -140px; display: none; }
+  .tile:focus .reach { display: block; }
+</style></head>
+<body>
+  <!-- An app portal (OneLogin): from a tile, the arrows went to the tile two
+       along, never to the one beside it. -->
+  <div class="grid">
+    <a class="tile" id="t1" href="#1" tabindex="0">Mail<span class="reach"></span></a>
+    <a class="tile" id="t2" href="#2" tabindex="0">Calendar<span class="reach"></span></a>
+    <a class="tile" id="t3" href="#3" tabindex="0">Drive<span class="reach"></span></a>
+    <a class="tile" id="t4" href="#4" tabindex="0">Chat<span class="reach"></span></a>
+    <a class="tile" id="t5" href="#5" tabindex="0">Wiki<span class="reach"></span></a>
+    <a class="tile" id="t6" href="#6" tabindex="0">Tickets<span class="reach"></span></a>
+    <a class="tile" id="t7" href="#7" tabindex="0">Builds<span class="reach"></span></a>
+    <a class="tile" id="t8" href="#8" tabindex="0">Docs<span class="reach"></span></a>
+  </div>
+</body></html>
