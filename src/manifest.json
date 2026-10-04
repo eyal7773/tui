@@ -54,7 +54,6 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "menu.html",
         "stats/stats.html",
         "stats/stats.js",
         "stats/stats.css",

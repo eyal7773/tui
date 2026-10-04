@@ -3030,37 +3030,60 @@ class SpatialEngine {
     /*
      * MENU SYSTEM
      */
-    async injectMenu() {
+    injectMenu() {
         if (document.getElementById('tui-menu-container')) return;
+        if (!document.body) return;
 
-        try {
-            const response = await fetch(chrome.runtime.getURL('menu.html'));
-            const html = await response.text();
+        // Built here rather than fetched from menu.html: a frame inside a
+        // chrome:// page (YouTube's frame on the New Tab page) may not load
+        // extension URLs, and every fetch there was logged as an error on
+        // chrome://extensions.
+        const container = document.createElement('div');
+        container.id = 'tui-menu-container';
+        container.className = 'tui-menu-hidden';
 
-            // Create a wrapper to hold the HTML string
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = html;
+        const header = document.createElement('div');
+        header.className = 'tui-menu-header';
+        header.textContent = 'Menu';
+        container.appendChild(header);
 
-            this.menuContainer = wrapper.firstElementChild;
-            document.body.appendChild(this.menuContainer);
-
-            // Cache menu items
-            this.menuItems = Array.from(this.menuContainer.querySelectorAll('.tui-menu-item'));
-
-            // Add click listeners for mouse support
-            this.menuItems.forEach((item, index) => {
-                item.addEventListener('click', () => {
-                    this.executeMenuAction(item.dataset.action);
-                });
-                item.addEventListener('mouseenter', () => {
-                    this.selectedMenuIndex = index;
-                    this.updateMenuSelection();
-                });
-            });
-
-        } catch (e) {
-            console.error('[TUI] Failed to load menu:', e);
+        const list = document.createElement('ul');
+        list.className = 'tui-menu-list';
+        for (const [action, label] of [
+            ['duplicate', 'Duplicate page'],
+            ['back', 'Go to previous page'],
+            ['select-text', 'Select text'],
+            ['report', 'Report a problem']
+        ]) {
+            const item = document.createElement('li');
+            item.className = 'tui-menu-item';
+            item.dataset.action = action;
+            item.textContent = label;
+            list.appendChild(item);
         }
+        container.appendChild(list);
+
+        const footer = document.createElement('div');
+        footer.className = 'tui-menu-footer';
+        footer.textContent = 'Press ESC to close';
+        container.appendChild(footer);
+
+        this.menuContainer = container;
+        document.body.appendChild(this.menuContainer);
+
+        // Cache menu items
+        this.menuItems = Array.from(this.menuContainer.querySelectorAll('.tui-menu-item'));
+
+        // Add click listeners for mouse support
+        this.menuItems.forEach((item, index) => {
+            item.addEventListener('click', () => {
+                this.executeMenuAction(item.dataset.action);
+            });
+            item.addEventListener('mouseenter', () => {
+                this.selectedMenuIndex = index;
+                this.updateMenuSelection();
+            });
+        });
     }
 
     toggleMenu() {
