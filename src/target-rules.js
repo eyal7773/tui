@@ -204,6 +204,26 @@
     return !!host && AD_FRAME_HOSTS.test(host[1]);
   }
 
+  // Containers that move focus among their items themselves, and so may keep
+  // tabindex="-1" for focus() without hiding anything inside.
+  const WIDGET_CONTAINER_ROLES = new Set([
+    'tree', 'treegrid', 'grid', 'row', 'listbox', 'list', 'menu', 'menubar',
+    'tablist', 'radiogroup', 'toolbar'
+  ]);
+
+  /**
+   * Is this element's place in a widget the reason its parent has
+   * tabindex="-1"? A wrapper with -1 usually hides a helper input (Jira's
+   * resize handles), but a widget puts -1 on its container to focus it from
+   * script. Slack's sidebar is a <div role="tree" tabindex="-1">, and every
+   * channel in it but the current one (the only tabindex="0") was dropped:
+   * ArrowLeft from a message skipped the channel beside it.
+   */
+  function isWidgetItem(el) {
+    if (ITEM_ROLES.has(roleOf(el))) return true;
+    return WIDGET_CONTAINER_ROLES.has(roleOf(el && el.parentElement));
+  }
+
   /** Does this role (or grid-row shape) make a generic element a target? */
   function hasInteractiveRole(el) {
     return INTERACTIVE_ROLES.has(roleOf(el)) || isGridRow(el);
@@ -214,6 +234,7 @@
     isGenericTag: isGenericTag,
     isGridRow: isGridRow,
     hasInteractiveRole: hasInteractiveRole,
+    isWidgetItem: isWidgetItem,
     focusOwner: focusOwner,
     ownedItemTarget: ownedItemTarget,
     isAdFrame: isAdFrame,

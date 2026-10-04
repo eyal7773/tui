@@ -2123,9 +2123,12 @@ class SpatialEngine {
                     // interactive inputs (e.g. Telegram's message box). The wrapper uses tabindex=-1
                     // purely for programmatic focus management — not to hide the element.
                     // Never filter these out; they are valid navigation targets.
-                    const parentRole = el.parentElement.getAttribute('role');
-                    const validParentRoles = ['row', 'grid', 'list', 'menu', 'menubar', 'tablist', 'treegrid'];
-                    if (!parentRole || !validParentRoles.includes(parentRole)) {
+                    // Nor are items of a widget whose container keeps the -1
+                    // (see target-rules.js).
+                    const widgetItem = targetRules
+                        ? targetRules.isWidgetItem(el)
+                        : ['row', 'grid', 'list', 'menu', 'menubar', 'tablist', 'treegrid'].includes(el.parentElement.getAttribute('role'));
+                    if (!widgetItem) {
                         return false;
                     }
                 }

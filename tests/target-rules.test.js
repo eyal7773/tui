@@ -12,7 +12,8 @@ const { test } = require('node:test');
 
 require('../src/target-rules.js');
 const {
-  isCustomElement, isGenericTag, isGridRow, hasInteractiveRole, focusOwner, ownedItemTarget
+  isCustomElement, isGenericTag, isGridRow, hasInteractiveRole, focusOwner, ownedItemTarget,
+  isWidgetItem
 } = globalThis.TuiTargetRules;
 
 /** Minimal stand-in for an element; wires parentElement on its children. */
@@ -210,4 +211,31 @@ test('items are left alone when their container does not own focus', () => {
 test('a tree item counts as interactive once it does carry a tabindex', () => {
   assert.equal(hasInteractiveRole(el('div', { role: 'treeitem', tabindex: '-1' })), true);
   assert.equal(hasInteractiveRole(el('div', { role: 'tree', tabindex: '0' })), false);
+});
+
+test('a channel in the Slack sidebar is a widget item, though the tree has tabindex -1', () => {
+  const channel = el('div', { role: 'treeitem', tabindex: '-1' });
+  el('div', { role: 'tree', tabindex: '-1' }, [channel]);
+  assert.equal(isWidgetItem(channel), true);
+
+  // Straight inside a listbox or toolbar, whatever its own role.
+  const option = el('div', { tabindex: '-1' });
+  el('div', { role: 'listbox', tabindex: '-1' }, [option]);
+  assert.equal(isWidgetItem(option), true);
+
+  // An item role says so on its own, under any wrapper.
+  const tab = el('div', { role: 'tab', tabindex: '-1' });
+  el('div', { tabindex: '-1' }, [tab]);
+  assert.equal(isWidgetItem(tab), true);
+});
+
+test('a helper inside a plain wrapper with tabindex -1 is no widget item', () => {
+  // Jira's resize handle: <span tabindex="-1"><input></span>.
+  const input = el('input');
+  el('span', { tabindex: '-1' }, [input]);
+  assert.equal(isWidgetItem(input), false);
+
+  const inDialog = el('div', { tabindex: '-1' });
+  el('div', { role: 'dialog', tabindex: '-1' }, [inDialog]);
+  assert.equal(isWidgetItem(inDialog), false);
 });
