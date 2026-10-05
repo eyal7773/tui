@@ -31,7 +31,7 @@ and a recheck.
 | MDN | developer.mozilla.org/.../Elements/button | Enter into a live-example iframe and back out; ring hidden before first key | mdn-frame-round-trip | f461870, 6a65389 |
 | Microsoft | microsoft.com/en-us | Floating Back to Top button; stacked full-width panels | microsoft-back-to-top | ee1c3a4, c419971 |
 | OneLogin | app portal (log only, local page) | Grid of app tiles: the focused tile spills over its neighbours, and the arrows skipped every other tile | tile-spills-over | a76c0cc |
-| Slack | app.slack.com client (log only, local pages) | Sidebar `role="tree" tabindex="-1"`: ArrowLeft from a message to the channel beside it, up and down the channels; Enter on a channel row clicks the link it wraps | tree-container-tabindex, tree-item-link | 0d14c28, the commit adding tree-item-link |
+| Slack | app.slack.com client (log only, local pages) | Sidebar `role="tree" tabindex="-1"`: ArrowLeft from a message to the channel beside it, up and down the channels; Enter on a channel row clicks the link it wraps | tree-container-tabindex, tree-item-link | 0d14c28, 4ef722d |
 | Stack Overflow | stackoverflow.com/questions/11227809/... | OneTrust cookie card taking focus on load | stackoverflow-first-press | 4c32c83 |
 | The Verge | theverge.com | Stretched links in the story stream, staying in the column | verge-story-stream, stretched-link | 2b38ea2, be73518 |
 | Wikipedia | en.wikipedia.org/wiki/Albert_Einstein, .../Python_(programming_language) | Appearance radios, Main menu Enter, page preview hover card, sticky side column | wikipedia-appearance-radios, wikipedia-main-menu-enter, wikipedia-preview-down | e9314d0, edaca2a, b42c7ec, 6e7cf43, ee1c3a4 |
