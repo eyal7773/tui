@@ -132,11 +132,49 @@ test('a row with nothing inside it is clicked itself', () => {
 });
 
 test('an explicit widget role beats the container tag', () => {
-  // A <li role="menuitem"> is the widget; its inner link is presentation.
+  // A <li role="button"> is the widget, so it is not searched as a row.
   const inner = el('a', { href: '/x', text: 'Settings' });
-  const item = el('li', { role: 'menuitem', tabindex: '0' }, [inner]);
+  const item = el('li', { role: 'button', tabindex: '0' }, [inner]);
 
   assert.equal(resolveClickTarget(item), item);
+});
+
+test('a tree item that wraps its label link is clicked on the link', () => {
+  // A chat sidebar: the row takes focus, the router link inside has the
+  // handler, and a click on the row never reached it.
+  const link = el('a', { href: '/client/calendar', tabindex: '-1', text: 'Calendar' }, [
+    el('span', { text: '2' })
+  ]);
+  const more = el('button', { 'aria-haspopup': 'menu', 'aria-label': 'More' });
+  const item = el('div', { role: 'treeitem', tabindex: '-1' }, [el('div', { class: 'row' }, [link, more])]);
+  assert.equal(resolveClickTarget(item), link);
+
+  // The same for a menu item, an option and a tab built that way.
+  for (const role of ['menuitem', 'option', 'tab']) {
+    const inner = el('a', { href: '/x', text: 'Settings' });
+    assert.equal(resolveClickTarget(el('li', { role: role }, [inner])), inner);
+  }
+});
+
+test('an item is clicked itself when the link in it is not its label', () => {
+  // Most of the option's text is outside the link.
+  const profile = el('a', { href: '/u/dana', text: 'profile' });
+  const option = el('div', { role: 'option' }, [
+    el('span', { text: 'Dana Levi, product designer, Tel Aviv office' }), profile
+  ]);
+  assert.equal(resolveClickTarget(option), option);
+
+  // A section row: its own label is plain text, the links are its children's.
+  const child = el('a', { href: '/client/general', text: 'general' });
+  const section = el('div', { role: 'treeitem', 'aria-expanded': 'true' }, [
+    el('span', { text: 'Channels' }),
+    el('div', { role: 'group' }, [el('div', { role: 'treeitem' }, [child])])
+  ]);
+  assert.equal(resolveClickTarget(section), section);
+
+  // A real link or button with the role keeps the click.
+  const tabLink = el('a', { role: 'tab', href: '#a', text: 'Tab' }, [el('a', { href: '/x', text: 'Tab' })]);
+  assert.equal(resolveClickTarget(tabLink), tabLink);
 });
 
 test('an explicit container role beats an activating tag', () => {

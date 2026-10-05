@@ -1,0 +1,13 @@
+# A chat sidebar whose treeitem rows hold the link that does the work: Enter clicked the row, and the channel never opened. A section row with its channels nested inside is still clicked itself.
+pages/tree-item-link.html
+start:css=#t-threads
+key:ArrowDown
+expect:css=#t-calendar
+key:Enter
+wait:200
+eval:(() => { const t = document.getElementById('view').textContent; if (t !== 'Open: /client/calendar') throw new Error(t); return t; })()
+key:ArrowDown
+expect:css=#t-section
+key:Enter
+wait:200
+eval:(() => { const s = document.getElementById('t-section').getAttribute('aria-expanded'), t = document.getElementById('view').textContent; if (s !== 'false' || t !== 'Open: /client/calendar') throw new Error(s + ' / ' + t); return s; })()

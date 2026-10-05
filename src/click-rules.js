@@ -36,6 +36,14 @@
 
   const CONTAINER_TAGS = new Set(['LI', 'TR', 'TD', 'TH']);
 
+  // Items of a tree, listbox, menu or tab list. They take focus as a whole
+  // row, yet a page may keep the handler on the link the row wraps.
+  const ITEM_ROLES = new Set(['treeitem', 'option', 'menuitem', 'tab']);
+
+  // Where an item's own content ends: the items nested under it, and the
+  // group that holds them.
+  const NESTED_ROLES = new Set(['group', 'tree', 'listbox', 'menu', 'tablist', ...ITEM_ROLES]);
+
   /**
    * How many descendants a search will look at. A row is small; a virtualised
    * feed pretending to be one is not, and Enter has to stay instant.
@@ -73,8 +81,11 @@
     return (el && el.children) ? el.children : [];
   }
 
-  /** Pre-order, so the first match is the first one in reading order. */
-  function findDescendant(el, predicate, limit) {
+  /**
+   * Pre-order, so the first match is the first one in reading order.
+   * A node that `skip` accepts is passed over with everything inside it.
+   */
+  function findDescendant(el, predicate, limit, skip) {
     let budget = typeof limit === 'number' ? limit : MAX_NODES;
 
     const visit = (node) => {
@@ -82,6 +93,7 @@
       for (let i = 0; i < kids.length; i++) {
         if (budget-- <= 0) return null;
         const child = kids[i];
+        if (skip && skip(child)) continue;
         if (predicate(child)) return child;
         const found = visit(child);
         if (found) return found;
@@ -162,6 +174,47 @@
     return tagOf(el) === 'DIV';
   }
 
+  function isNested(el) {
+    return NESTED_ROLES.has(roleOf(el));
+  }
+
+  /** Letters only, so the lengths of parts add up to the length of the whole. */
+  function inkOf(el) {
+    return textOf(el).replace(/\s+/g, '').length;
+  }
+
+  /**
+   * The link or button that is an item's label, when the item is a plain box
+   * around it. A chat sidebar's treeitem rows take focus while the router
+   * link inside holds the handler, and a click on the row never reaches it.
+   *
+   * It has to carry most of the item's own text - the items nested under it
+   * do not count - so a link that merely sits in an option is not taken for
+   * the option.
+   */
+  function itemLabelAction(el) {
+    if (!ITEM_ROLES.has(roleOf(el))) return null;
+    const tag = tagOf(el);
+    if ((tag === 'A' && hasAttr(el, 'href')) || ACTIVATING_TAGS.has(tag)) return null;
+
+    const action = findDescendant(el, isPrimaryAction, MAX_NODES, isNested);
+    if (!action) return null;
+
+    // Takes away the text of what is nested, outermost first.
+    let own = inkOf(el);
+    let budget = MAX_NODES;
+    const visit = (node) => {
+      const kids = childrenOf(node);
+      for (let i = 0; i < kids.length && budget-- > 0; i++) {
+        if (isNested(kids[i])) own -= inkOf(kids[i]);
+        else visit(kids[i]);
+      }
+    };
+    visit(el);
+
+    return inkOf(action) * 2 >= own ? action : null;
+  }
+
   /**
    * @param {Element} el       the focused element, which is what a click would hit
    * @param {Element} [intended] the element navigation aimed at, when focus was
@@ -175,15 +228,19 @@
     //    browser only refused to keep focus on it. That beats any guess.
     if (intended && intended !== el && contains(el, intended)) return intended;
 
-    // 2. Anything that acts on its own click is clicked as-is.
+    // 2. A tree, listbox, menu or tab item that only wraps its label link.
+    const label = itemLabelAction(el);
+    if (label) return label;
+
+    // 3. Anything that acts on its own click is clicked as-is.
     if (isActivating(el)) return el;
 
     if (isContainer(el)) {
-      // 3. The row's own action.
+      // 4. The row's own action.
       const action = findDescendant(el, isPrimaryAction, MAX_NODES);
       if (action) return action;
 
-      // 4. No link or button, so the handler is on some inner div - the shape
+      // 5. No link or button, so the handler is on some inner div - the shape
       //    used by chat lists and other app-like rows. The outermost one with
       //    classes of its own is the content wrapper; bare divs are spacers.
       const wrapper = findDescendant(el, isClassedDiv, MAX_NODES) ||
