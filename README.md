@@ -426,7 +426,7 @@ deleting (`GET /reports`, `GET` and `DELETE /reports/<id>`) need the password to
 
 To get the new reports:
 
-    npm run pull-reports
+    npm run pull-reports      # or ./pull-reports.sh
 
 It saves each one into `examples/` (which git ignores), prints its `problem.txt`, and
 deletes it from the server once it is on disk. Replay one with
