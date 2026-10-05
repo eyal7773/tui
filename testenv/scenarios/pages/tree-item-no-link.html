@@ -1,0 +1,42 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Tree items with no link in them</title>
+<style>
+  body { font: 15px sans-serif; margin: 0; display: flex; }
+  #sidebar { width: 260px; background: #3f0e40; color: #fff; padding: 8px 0; }
+  [role=treeitem] { height: 28px; line-height: 28px; }
+  .channel { display: flex; align-items: center; gap: 8px; padding-left: 16px; cursor: pointer; }
+  .avatar { width: 16px; height: 16px; background: #aaa; }
+  .badge { background: #e01e5a; border-radius: 8px; padding: 0 6px; font-size: 12px; }
+  .heading { display: flex; padding-left: 8px; }
+  .toggle { flex: 1; }
+  #view { flex: 1; padding: 16px; }
+</style></head>
+<body>
+  <!-- A chat app's sidebar where no row holds a link: each treeitem wraps a
+       div of its own, and the app listens at the root for clicks that pass
+       through that div, the way React does. A click on the treeitem itself
+       never passes through it. A section heading toggles on a hidden
+       role=button around its label. -->
+  <div id="sidebar" role="tree" tabindex="-1">
+    <div role="treeitem" tabindex="0" id="t-starred" aria-expanded="true">
+      <div class="heading"><div class="toggle" role="button" aria-hidden="true" tabindex="-1"><span>Starred</span></div><button aria-haspopup="menu" aria-label="Section options" tabindex="-1"></button></div>
+    </div>
+    <div role="treeitem" tabindex="-1" id="t-dana">
+      <div class="channel" data-open="dm-dana"><div class="avatar"><img alt=""></div><span class="name"><span>Dana Levi</span></span><span class="suffix"><span class="badge">1</span></span></div>
+    </div>
+    <div role="treeitem" tabindex="-1" id="t-builds">
+      <div class="channel" data-open="builds"><span class="name"><span>builds</span></span></div>
+    </div>
+  </div>
+  <div id="view">Nothing open</div>
+  <script>
+    document.addEventListener('click', (e) => {
+      const channel = e.target.closest('.channel');
+      if (channel) document.getElementById('view').textContent = 'Open: ' + channel.dataset.open;
+      if (e.target.closest('.toggle')) {
+        const item = document.getElementById('t-starred');
+        item.setAttribute('aria-expanded', item.getAttribute('aria-expanded') === 'true' ? 'false' : 'true');
+      }
+    });
+  </script>
+</body></html>

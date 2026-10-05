@@ -156,21 +156,49 @@ test('a tree item that wraps its label link is clicked on the link', () => {
   }
 });
 
-test('an item is clicked itself when the link in it is not its label', () => {
+test('a tree item with no link in it is clicked on its label, where a mouse would', () => {
+  // A chat sidebar's direct-message row: the treeitem holds a div with the
+  // handler, an avatar, the name and an unread badge, and no link at all. A
+  // click on the row never reached the div; a click on the name passes it.
+  const name = el('span', { text: 'Dana Levi' });
+  const row = el('div', { class: 'sidebar__channel', draggable: 'true' }, [
+    el('div', { class: 'sidebar__avatar' }, [el('img', { alt: '' })]),
+    el('span', { class: 'sidebar__name' }, [name]),
+    el('span', { class: 'sidebar__suffix' }, [el('span', { class: 'badge', text: '1' })])
+  ]);
+  const item = el('div', { role: 'treeitem', tabindex: '-1' }, [row]);
+  assert.equal(resolveClickTarget(item), name);
+
+  // A section heading whose toggle is a hidden role=button around the label.
+  const label = el('span', { text: 'Starred' });
+  const heading = el('div', { role: 'treeitem', tabindex: '-1', 'aria-expanded': 'true' }, [
+    el('div', { class: 'section_heading' }, [
+      el('div', { role: 'button', 'aria-hidden': 'true', tabindex: '-1' }, [label]),
+      el('button', { 'aria-haspopup': 'menu', 'aria-label': 'Section options' })
+    ])
+  ]);
+  assert.equal(resolveClickTarget(heading), label);
+
+  // An item with no text at all is clicked itself.
+  const icon = el('div', { role: 'tab' }, [el('div', { class: 'icon' })]);
+  assert.equal(resolveClickTarget(icon), icon);
+});
+
+test('an item is clicked on its label, not on a link in it that is not the label', () => {
   // Most of the option's text is outside the link.
   const profile = el('a', { href: '/u/dana', text: 'profile' });
-  const option = el('div', { role: 'option' }, [
-    el('span', { text: 'Dana Levi, product designer, Tel Aviv office' }), profile
-  ]);
-  assert.equal(resolveClickTarget(option), option);
+  const words = el('span', { text: 'Dana Levi, product designer, Tel Aviv office' });
+  const option = el('div', { role: 'option' }, [words, profile]);
+  assert.equal(resolveClickTarget(option), words);
 
   // A section row: its own label is plain text, the links are its children's.
   const child = el('a', { href: '/client/general', text: 'general' });
+  const channels = el('span', { text: 'Channels' });
   const section = el('div', { role: 'treeitem', 'aria-expanded': 'true' }, [
-    el('span', { text: 'Channels' }),
+    channels,
     el('div', { role: 'group' }, [el('div', { role: 'treeitem' }, [child])])
   ]);
-  assert.equal(resolveClickTarget(section), section);
+  assert.equal(resolveClickTarget(section), channels);
 
   // A real link or button with the role keeps the click.
   const tabLink = el('a', { role: 'tab', href: '#a', text: 'Tab' }, [el('a', { href: '/x', text: 'Tab' })]);

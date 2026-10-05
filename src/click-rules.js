@@ -184,23 +184,10 @@
   }
 
   /**
-   * The link or button that is an item's label, when the item is a plain box
-   * around it. A chat sidebar's treeitem rows take focus while the router
-   * link inside holds the handler, and a click on the row never reaches it.
-   *
-   * It has to carry most of the item's own text - the items nested under it
-   * do not count - so a link that merely sits in an option is not taken for
-   * the option.
+   * How much of an item's text is its own: the items nested under it, and
+   * the group that holds them, are taken away, outermost first.
    */
-  function itemLabelAction(el) {
-    if (!ITEM_ROLES.has(roleOf(el))) return null;
-    const tag = tagOf(el);
-    if ((tag === 'A' && hasAttr(el, 'href')) || ACTIVATING_TAGS.has(tag)) return null;
-
-    const action = findDescendant(el, isPrimaryAction, MAX_NODES, isNested);
-    if (!action) return null;
-
-    // Takes away the text of what is nested, outermost first.
+  function ownInkOf(el) {
     let own = inkOf(el);
     let budget = MAX_NODES;
     const visit = (node) => {
@@ -211,8 +198,48 @@
       }
     };
     visit(el);
+    return own;
+  }
 
-    return inkOf(action) * 2 >= own ? action : null;
+  /**
+   * Where a mouse would click an item of a tree, listbox, menu or tab list
+   * that is a plain box: on its label. The page may keep the handler on
+   * anything between the label and the row - a router link, or a div of the
+   * row's own (Slack's sidebar rows are divs with no link at all) - and a
+   * click on the row itself never reaches it, while a click on the label
+   * passes through every one of them.
+   *
+   * The label's link or button wins when it carries most of the item's own
+   * text. Otherwise it is the innermost element that does: the chain of
+   * children each holding at least half of that text. The items nested under
+   * the item do not count, so a section row is clicked on its heading, never
+   * on a channel inside it, and an option is never clicked on a small link
+   * that merely sits in it.
+   */
+  function itemLabelAction(el) {
+    if (!ITEM_ROLES.has(roleOf(el))) return null;
+    const tag = tagOf(el);
+    if ((tag === 'A' && hasAttr(el, 'href')) || ACTIVATING_TAGS.has(tag)) return null;
+
+    const own = ownInkOf(el);
+    if (own <= 0) return null;
+    const carries = (node) => inkOf(node) * 2 >= own;
+
+    const action = findDescendant(el, isPrimaryAction, MAX_NODES, isNested);
+    if (action && carries(action)) return action;
+
+    let label = el;
+    let budget = MAX_NODES;
+    for (;;) {
+      const kids = childrenOf(label);
+      let next = null;
+      for (let i = 0; i < kids.length && budget-- > 0; i++) {
+        if (!isNested(kids[i]) && carries(kids[i])) { next = kids[i]; break; }
+      }
+      if (!next) break;
+      label = next;
+    }
+    return label === el ? null : label;
   }
 
   /**
@@ -228,7 +255,7 @@
     //    browser only refused to keep focus on it. That beats any guess.
     if (intended && intended !== el && contains(el, intended)) return intended;
 
-    // 2. A tree, listbox, menu or tab item that only wraps its label link.
+    // 2. A tree, listbox, menu or tab item that is a plain box: on its label.
     const label = itemLabelAction(el);
     if (label) return label;
 

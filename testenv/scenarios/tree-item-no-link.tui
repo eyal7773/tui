@@ -1,0 +1,18 @@
+# A chat sidebar whose treeitem rows hold no link: the app listens for clicks passing through a div inside the row, so Enter on the row did nothing. Enter clicks the row's label, as a mouse would, and a section heading toggles through the hidden button around its label.
+pages/tree-item-no-link.html
+start:css=#t-starred
+key:ArrowDown
+expect:css=#t-dana
+key:Enter
+wait:200
+eval:(() => { const t = document.getElementById('view').textContent; if (t !== 'Open: dm-dana') throw new Error(t); return t; })()
+key:ArrowDown
+expect:css=#t-builds
+key:Enter
+wait:200
+eval:(() => { const t = document.getElementById('view').textContent; if (t !== 'Open: builds') throw new Error(t); return t; })()
+key:ArrowUp*2
+expect:css=#t-starred
+key:Enter
+wait:200
+eval:(() => { const s = document.getElementById('t-starred').getAttribute('aria-expanded'); if (s !== 'false') throw new Error(s); return s; })()
