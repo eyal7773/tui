@@ -1,14 +1,10 @@
 /* The report window. Colours follow the popup (popup/popup.css). */
 :root {
   --bg: #f5f5f5;
-  --card-bg: #ffffff;
   --text: #1a1a1a;
   --text-dim: #666666;
-  --accent: #00cc66;
   --accent-hover: #009944;
   --border: #e0e0e0;
-  --warning-bg: #fff6e0;
-  --warning-border: #e8b64c;
   --error: #c03838;
   --focus: #0066ff;
 }
@@ -31,88 +27,36 @@ main {
 }
 
 h1 {
-  margin: 0 0 4px;
+  margin: 0 0 8px;
   font-size: 20px;
   color: var(--accent-hover);
-}
-
-h2 {
-  margin: 0 0 8px;
-  font-size: 15px;
-}
-
-.lead {
-  margin: 0 0 16px;
-  color: var(--text-dim);
-}
-
-section {
-  margin-top: 16px;
-  padding: 14px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.field-label {
-  display: block;
-  margin: 0 0 6px;
-  font-weight: 600;
 }
 
 textarea {
   width: 100%;
   padding: 8px;
   font: inherit;
+  background: #fff;
   border: 1px solid var(--border);
   border-radius: 6px;
   resize: vertical;
-}
-
-.contents {
-  margin: 0 0 12px;
-  padding-left: 20px;
-}
-
-.contents li {
-  margin-bottom: 4px;
-}
-
-.note {
-  margin: 0 0 12px;
-  color: var(--text-dim);
-}
-
-pre {
-  max-height: 220px;
-  margin: 0;
-  padding: 8px;
-  overflow: auto;
-  background: #fafafa;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font: 11px/1.4 Consolas, 'Courier New', monospace;
-  white-space: pre;
 }
 
 .check {
   display: flex;
   gap: 8px;
   align-items: center;
+  margin-top: 12px;
   font-weight: 600;
 }
 
-.warning,
-.warning-inline {
-  color: #6b4a00;
+.note {
+  margin: 2px 0 0;
+  color: var(--text-dim);
 }
 
-.warning {
-  margin: 8px 0 0;
-  padding: 8px 10px;
-  background: var(--warning-bg);
-  border-left: 3px solid var(--warning-border);
-  border-radius: 4px;
+.warning-inline {
+  color: #6b4a00;
 }
 
 .actions {
@@ -138,8 +82,12 @@ button:hover {
 
 button.secondary {
   color: var(--text);
-  background: var(--card-bg);
+  background: #fff;
   border-color: var(--border);
+}
+
+button.secondary:hover {
+  background: #eee;
 }
 
 button:disabled {
@@ -162,81 +110,32 @@ button:disabled {
   color: var(--error);
 }
 
-h2 .num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  margin-right: 6px;
-  font-size: 13px;
-  color: #fff;
-  background: var(--accent-hover);
-  border-radius: 50%;
-}
-
-h2 .optional {
-  font-weight: normal;
+details {
+  margin-top: 16px;
   color: var(--text-dim);
 }
 
-section .note:last-child {
-  margin-bottom: 0;
+summary {
+  cursor: pointer;
 }
 
-textarea + .note {
-  margin: 6px 0 0;
+details .note {
+  margin: 8px 0;
 }
 
-input[type="text"] {
-  width: 100%;
+#address {
+  word-break: break-all;
+}
+
+pre {
+  max-height: 220px;
+  margin: 0;
   padding: 8px;
-  font: 13px/1.4 Consolas, 'Courier New', monospace;
+  overflow: auto;
+  color: var(--text);
+  background: #fafafa;
   border: 1px solid var(--border);
   border-radius: 6px;
-}
-
-input[type="text"] + .note {
-  margin: 6px 0 0;
-}
-
-.check + .note {
-  margin: 6px 0 0;
-}
-
-/* The section the whole page leads to. */
-.send {
-  border: 2px solid var(--accent-hover);
-}
-
-.steps {
-  margin: 0 0 4px;
-  padding-left: 22px;
-}
-
-.steps li {
-  margin-bottom: 6px;
-}
-
-#again-note {
-  margin: 0;
-}
-
-.file-only {
-  margin: 16px 0 0;
-  color: var(--text-dim);
-}
-
-button.link {
-  padding: 0;
-  font-weight: normal;
-  color: var(--focus);
-  background: none;
-  border: none;
-  text-decoration: underline;
-}
-
-button.link:hover {
-  background: none;
-  color: #0047b3;
+  font: 11px/1.4 Consolas, 'Courier New', monospace;
+  white-space: pre;
 }

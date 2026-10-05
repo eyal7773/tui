@@ -402,23 +402,26 @@ Click the extension icon for:
 
 ## Report a Problem
 
-**F10** → **Report a problem** opens a small window that shows everything the report
-will hold. **Continue to GitHub** opens a new [issue](https://github.com/eyal7773/tui/issues)
-with the report already written in it: the page's address in the title (you can shorten
-it first), your description, the address and the log in the body. The extension sends
-nothing; you post the issue yourself, after signing in to GitHub. The window explains
-each step, for people who have never used GitHub, and if the report is lost while you
-make an account, **Open GitHub again** writes it in again.
+**F10** → **Report a problem** opens a small window: a text box for what happened, a box
+for a copy of the page, and two buttons. Type, then Tab to the button: once to the box,
+twice to **Send on GitHub**, three times to **Download only**. The page's address is taken
+from the tab. **What is sent**, under the buttons, shows the rest of the report.
 
-A copy of the page cannot go in a link. If you tick **Include a copy of the page**, the
-button first saves a zip to your downloads, and the steps (and the issue's edit box) say
-to drag it in. **Only save the report as a file** saves the zip without going to GitHub.
-The zip holds:
+**Send on GitHub** opens a new [issue](https://github.com/eyal7773/tui/issues) with the
+report already written in it: the page's full address in the title, your description, the
+address and the log in the body. The extension sends nothing; you post the issue yourself,
+after signing in to GitHub. Pressing it again opens the issue again, for a report lost
+while you made an account.
+
+A copy of the page cannot go in a link. With **Attach a copy of the page** ticked (it is,
+from the start), the button first saves a zip to your downloads, and the status line (and
+the issue's edit box) say to drag it in. **Download only** saves the zip without going to
+GitHub. The zip holds:
 - `problem.txt` — the page's address and your description
 - `tui-logs-*.txt` — the log of what the extension did on that page
-- `page-*.mhtml` — a copy of the page, only if you tick the box for it. It holds
-  everything on the page, so it is off by default, and Chrome asks for the optional
-  `pageCapture` permission the first time.
+- `page-*.mhtml` — a copy of the page, while the box is ticked. It holds everything on the
+  page, so untick it if something there is private. Chrome asks for the optional
+  `pageCapture` permission the first time a button is pressed with it ticked.
 
 ### The log
 

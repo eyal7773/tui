@@ -1,0 +1,18 @@
+# F10 > Report a problem is a text box and two buttons: focus starts in the description, the copy of
+# the page is ticked from the start, there is no address field, and Tab goes box, Send on GitHub,
+# Download only. The page's address is still read from the tab.
+pages/double-click-rows.html
+start:css=#file1
+key:F10
+key:ArrowDown*3
+key:Enter
+report
+report-eval:(() => { const a = document.activeElement.id, c = document.getElementById('include-page').checked, f = document.querySelectorAll('input:not([type=checkbox])').length; if (a !== 'description' || !c || f) throw new Error(a + ' ' + c + ' ' + f); return 'description, ticked, no address field'; })()
+report-key:Tab
+report-eval:(() => { if (document.activeElement.id !== 'include-page') throw new Error(document.activeElement.id); return 'box'; })()
+report-key:Tab
+report-eval:(() => { const b = document.activeElement; if (b.id !== 'send' || b.textContent !== 'Send on GitHub') throw new Error(b.id); return b.textContent; })()
+report-key:Tab
+report-eval:(() => { const b = document.activeElement; if (b.id !== 'save' || b.textContent !== 'Download only') throw new Error(b.id); return b.textContent; })()
+report-eval:(() => { const a = document.getElementById('address').textContent; if (!/double-click-rows\.html$/.test(a)) throw new Error(a); return a; })()
+report-shot:report-form

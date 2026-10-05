@@ -1,17 +1,18 @@
 /**
  * The report window, opened from "Report a problem" in the F10 menu.
  *
- * It reads the log from the tab it was opened for (tui-log.js answers in the
- * top frame) and shows every line of it. "Continue to GitHub" opens a new
- * issue with the description, the page's address and the log written in
- * (issue-link.js); the user posts it. Nothing is sent by the extension.
- * After that the same button is "Open GitHub again", for someone whose
- * report was lost while they made a GitHub account.
+ * It reads the log and the page's address from the tab it was opened for
+ * (tui-log.js answers in the top frame). "Send on GitHub" opens a new issue
+ * with the description, the address and the log written in (issue-link.js);
+ * the user posts it. Nothing is sent by the extension. Pressing it again
+ * opens the issue again, for someone whose report was lost while they made
+ * a GitHub account.
  *
- * A copy of the page cannot go in a link. When the user ticks the box (the
- * moment Chrome is asked for the pageCapture permission), the button saves a
- * zip first and the steps tell them to drag it into the issue. "Only save the
- * report as a file" saves the same zip without going to GitHub.
+ * A copy of the page cannot go in a link. The box for it is ticked from the
+ * start, and Chrome is asked for the pageCapture permission when a button is
+ * pressed, since that needs the press. With the copy, "Send on GitHub" saves
+ * a zip first and the status line says to drag it into the issue. "Download
+ * only" saves the same zip without going to GitHub.
  *
  * The files in the zip are named problem.txt, tui-logs-*.txt and
  * page-*.mhtml, which testenv/tui.js reads; keep them.
@@ -19,7 +20,7 @@
 
 const tabId = Number(new URLSearchParams(location.search).get('tab'));
 let logText = '';
-let sent = false;       // GitHub was opened once; the button now opens it again
+let pageAddress = '';
 let savedFile = '';     // the zip with the copy of the page, once saved
 let issueLink = '';     // the link last opened (testenv/tui.js reads it)
 
@@ -40,8 +41,8 @@ function readLog() {
       showLog('', 'The log could not be read: the page was closed or reloaded. You can still send your description.');
       return;
     }
-    $('site').textContent = response.site || 'this page';
-    if (!$('address').value) $('address').value = response.url || '';
+    pageAddress = response.url || '';
+    $('address').textContent = pageAddress || 'unknown';
     showLog(response.text || '');
   });
 }
@@ -55,35 +56,20 @@ function showLog(text, problem) {
 }
 
 /**
- * The steps and the button say whether there is a file to drag in, and
- * whether GitHub is already open.
+ * Asks Chrome for the permission to copy the page, if the box is ticked.
+ * Called first thing in a button's click, which is what Chrome needs to show
+ * its question; once granted, it answers at once without asking.
  */
-function showSteps() {
-  const withFile = $('include-page').checked;
-  $('step-file').hidden = !withFile;
-  $('send-heading').textContent = sent ? 'Finish on GitHub' : 'Send it';
-  $('steps-lead').textContent = sent ? 'GitHub is open in a new tab. There:' : 'When you press the button below:';
-  $('step-open').hidden = sent;
-  $('again-note').hidden = !sent;
-  if (sent) $('send').textContent = 'Open GitHub again';
-  else $('send').textContent = withFile ? 'Save the file and continue to GitHub' : 'Continue to GitHub';
-}
-
-/** Ticking the box is the moment Chrome is asked for the permission. */
-function onIncludePage(e) {
-  showSteps();
-  savedFile = '';
-  if (!e.target.checked) return;
-  chrome.permissions.request({ permissions: ['pageCapture'] }, (granted) => {
-    if (!granted) {
-      e.target.checked = false;
-      showSteps();
-      setStatus('Without that permission the report goes without a copy of the page.');
-    } else {
-      setStatus('');
-    }
+function askForCopy() {
+  if (!$('include-page').checked) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    chrome.permissions.request({ permissions: ['pageCapture'] }, (granted) => {
+      resolve(!chrome.runtime.lastError && !!granted);
+    });
   });
 }
+
+const NO_PERMISSION = 'Without Chrome\'s permission the report goes without a copy of the page.';
 
 function capturePage() {
   return new Promise((resolve, reject) => {
@@ -112,16 +98,23 @@ function description() {
   return $('description').value.trim();
 }
 
+/** Both buttons need a few words first. */
+function hasDescription() {
+  if (description()) return true;
+  setStatus('Please write a few words about what happened first.', true);
+  $('description').focus();
+  return false;
+}
+
 /**
- * Saves the zip. withPage false leaves the copy out even when the box is
- * ticked. Resolves to { name, hasPage, note }; a page that was closed or
- * turned into chrome:// cannot be copied, and the rest is still saved.
+ * Saves the zip, with a copy of the page when withPage. Resolves to
+ * { name, hasPage, note }; a page that was closed or turned into chrome://
+ * cannot be copied, and the rest is still saved.
  */
 async function saveZip(withPage) {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const zip = new JSZip();
-  const address = $('address').value.trim();
-  zip.file('problem.txt', (address ? `Page: ${address}\n\n` : '') + (description() || '(no description given)'));
+  zip.file('problem.txt', (pageAddress ? `Page: ${pageAddress}\n\n` : '') + description());
   zip.file(`tui-logs-${stamp}.txt`, logText || '(no log)');
   let hasPage = false;
   let note = '';
@@ -139,38 +132,36 @@ async function saveZip(withPage) {
 }
 
 async function send() {
-  if (!description()) {
-    setStatus('Please write a few words about what happened first.', true);
-    $('description').focus();
-    return;
-  }
+  if (!hasDescription()) return;
+  const needsCopy = $('include-page').checked && !savedFile;
+  const allowed = needsCopy ? askForCopy() : Promise.resolve(false);
   const button = $('send');
   button.disabled = true;
   try {
-    setStatus('');
-    if ($('include-page').checked && !savedFile) {
-      setStatus('Saving the file...');
-      const saved = await saveZip(true);
-      if (saved.hasPage) {
-        savedFile = saved.name;
-        $('file-name').textContent = saved.name;
-        setStatus(`Saved ${saved.name} in your downloads.`);
-      } else {
+    let note = '';
+    if (needsCopy) {
+      if (await allowed) {
+        setStatus('Saving the copy of the page...');
+        const saved = await saveZip(true);
         // Without the copy, the zip holds nothing the issue does not; no step for it.
-        $('include-page').checked = false;
-        setStatus(`${saved.note} The report goes without it.`, true);
+        if (saved.hasPage) savedFile = saved.name;
+        else note = `${saved.note} The report goes without it. `;
+      } else {
+        note = NO_PERMISSION + ' ';
       }
     }
-    // Built again each time, so "Open GitHub again" carries any edits.
+    const fileName = $('include-page').checked ? savedFile : '';
+    // Built again each time, so a second press carries any edits.
     issueLink = TuiIssueLink.issueUrl({
-      address: $('address').value,
+      address: pageAddress,
       description: description(),
       log: logText,
-      fileName: $('include-page').checked ? savedFile : ''
+      fileName: fileName
     });
     chrome.tabs.create({ url: issueLink });
-    sent = true;
-    showSteps();
+    setStatus(note + (fileName
+      ? `GitHub is open in a new tab. Drag ${fileName} from your downloads into the text box there, then press Create.`
+      : 'GitHub is open in a new tab. Press Create there to send the report.'), !!note);
   } catch (err) {
     setStatus('Something went wrong: ' + err.message, true);
   } finally {
@@ -179,12 +170,16 @@ async function send() {
 }
 
 async function saveOnly() {
+  if (!hasDescription()) return;
+  const allowed = askForCopy();
   const button = $('save');
   button.disabled = true;
-  setStatus('Saving...');
   try {
-    const saved = await saveZip($('include-page').checked);
-    setStatus(`Saved as ${saved.name} in your downloads.${saved.note ? ' ' + saved.note : ''}`, !!saved.note);
+    const withPage = await allowed;
+    setStatus('Saving...');
+    const saved = await saveZip(withPage);
+    const note = saved.note || ($('include-page').checked && !withPage ? NO_PERMISSION : '');
+    setStatus(`Saved as ${saved.name} in your downloads.${note ? ' ' + note : ''}`, !!note);
   } catch (err) {
     setStatus('The report could not be saved: ' + err.message, true);
   } finally {
@@ -194,10 +189,9 @@ async function saveOnly() {
 
 document.addEventListener('DOMContentLoaded', () => {
   $('description').focus();
-  $('include-page').addEventListener('change', onIncludePage);
+  $('include-page').addEventListener('change', () => { savedFile = ''; });
   $('send').addEventListener('click', send);
   $('save').addEventListener('click', saveOnly);
-  $('close').addEventListener('click', () => window.close());
 
   // Escape closes, except while a description is being written: there it
   // would throw the text away with one stray key.
@@ -207,6 +201,5 @@ document.addEventListener('DOMContentLoaded', () => {
     window.close();
   });
 
-  showSteps();
   readLog();
 });

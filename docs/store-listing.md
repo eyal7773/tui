@@ -17,7 +17,7 @@ things you can click or type into, by where they are on screen.
 | `storage` | The user's settings (ring colour, excluded sites, motion) and local usage counts for the stats page. |
 | `activeTab` | The popup shows and changes the setting for the site in the current tab. |
 | `notifications`, `alarms` | The weekly recap notification, which the user can turn off. |
-| `pageCapture` (optional) | Requested only when the user ticks "Include a copy of the page" in a bug report they started from the F10 menu. The copy is saved to their own downloads; nothing is sent. |
+| `pageCapture` (optional) | Requested only when the user presses a button in a bug report they started from the F10 menu, with "Attach a copy of the page" ticked. Chrome asks first, the copy is saved to their own downloads, and nothing is sent. |
 
 ## Data usage
 
@@ -28,7 +28,8 @@ Nothing is collected: no data leaves the user's computer through the extension.
   and records element shape only: tag, role, up to three class names, tabindex,
   position. No text, labels, links, ids or typed keys.
 - A bug report is a zip the user saves and chooses to attach to a GitHub issue. The
-  report window shows its whole content first. A copy of the page is off by default.
+  report window shows its content under "What is sent". A copy of the page is ticked by
+  default and can be unticked; it needs the permission Chrome asks for.
 
 So every "Data usage" category is left unticked, and all three certifications apply:
 no selling, no use unrelated to the single purpose, no use for credit decisions.

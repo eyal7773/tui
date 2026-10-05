@@ -1,4 +1,4 @@
-# F10 > Report a problem > Continue to GitHub: the issue opens with the page's address in its
+# F10 > Report a problem > Send on GitHub (with the copy of the page unticked): the issue opens with the page's address in its
 # title and the description, address and log in its body. No copy of the page was asked for,
 # so the body asks for no file.
 pages/double-click-rows.html

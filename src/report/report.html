@@ -9,98 +9,50 @@
 </head>
 
 <!--
-  Opened from "Report a problem" in the F10 menu. Everything the report holds
-  is on this page before anything leaves it, and the extension sends nothing:
-  it opens a new GitHub issue with the report written in, and the user posts
-  it. A copy of the page cannot go in a link, so it is a zip the user saves
-  and drags into the issue; the steps say so before they choose it.
-  The people using this may never have seen GitHub, so the page says what
-  happens there, step by step, before the button that goes there.
+  Opened from "Report a problem" in the F10 menu. The whole form is typing
+  the description and a few Tabs to a button: the description has focus, Tab
+  goes to the box for the copy of the page (ticked from the start), then to
+  "Send on GitHub" and "Download only". Escape closes the window.
+  The page's address is taken from the tab and never shown; it goes in the
+  issue and the zip as it is. What is sent is under "What is sent", after the
+  buttons, so it is never in the way of the Tabs.
+  The extension sends nothing: it opens a new GitHub issue with the report
+  written in, and the user posts it. A copy of the page cannot go in a link,
+  so it is a zip saved first, and the status line says to drag it in.
   The extension does not run on its own pages, so this page has to work with
-  the keyboard by itself: the description has focus, Tab goes down the page in
-  order, and Escape closes the window.
+  the keyboard by itself.
 -->
 
 <body>
   <main>
-    <h1>Report a problem</h1>
-    <p class="lead">Tell us what went wrong and we will look into it. Reports are posted on
-      <strong>GitHub</strong>, the website where TUI Navigator's problems are tracked. Nothing leaves your
-      computer until you press the last button there yourself.</p>
+    <h1 id="description-title">What happened?</h1>
+    <textarea id="description" rows="6" autofocus aria-labelledby="description-title"
+      placeholder="For example: I pressed Enter on a channel in Slack and it did not open."></textarea>
 
-    <section aria-labelledby="description-title">
-      <h2 id="description-title"><span class="num">1</span> What happened?</h2>
-      <textarea id="description" rows="5" autofocus aria-labelledby="description-title"
-        placeholder="For example: I pressed Enter twice on a file in Drive and it did not open."></textarea>
-      <p class="note">A sentence or two is enough: what you pressed, and what you expected to happen.</p>
-    </section>
+    <label class="check">
+      <input type="checkbox" id="include-page" checked aria-describedby="page-help">
+      <span>Attach a copy of the page</span>
+    </label>
+    <p class="note" id="page-help">It holds everything on the page. Untick it if something there is private.</p>
 
-    <section aria-labelledby="address-title">
-      <h2 id="address-title"><span class="num">2</span> On which page?</h2>
-      <label for="address" class="field-label">Page address</label>
-      <input id="address" type="text" spellcheck="false" placeholder="For example: mail.google.com">
-      <p class="note">It goes in the report's title, so we can open the same page.</p>
-      <p class="warning">Reports on GitHub are public. If the address has something private in it, shorten
-        it: for example, keep only <strong>mail.google.com</strong>.</p>
-    </section>
+    <div class="actions">
+      <button id="send" type="button">Send on GitHub</button>
+      <button id="save" type="button" class="secondary">Download only</button>
+    </div>
+    <p id="status" role="status"></p>
 
-    <section aria-labelledby="contents-title">
-      <h2 id="contents-title"><span class="num">3</span> What else goes in the report</h2>
-      <ul class="contents">
-        <li>
-          The extension's log from <strong id="site">this page</strong>: its last 20 events, with the
-          time of each, the keys it acted on and the elements it moved between, described by their
-          shape (tag, a few class names, position).
-          <span id="log-plain">No text, labels or links from the page.</span>
-          <span id="log-verbose" class="warning-inline" hidden>Admin mode is on, so this log also holds
-            element ids, labels, links and their opening tags.</span>
-        </li>
-        <li>The extension version, your browser's version string and the window size.</li>
-      </ul>
-      <p class="note">The extension keeps this log only in the page's memory, and only the last 20
-        events. Reloading the page clears it.</p>
-      <p class="field-label" id="log-title">The log, exactly as it will be sent</p>
-      <pre id="log" tabindex="0" aria-labelledby="log-title">Reading the log...</pre>
-    </section>
-
-    <section aria-labelledby="page-title">
-      <h2 id="page-title"><span class="num">4</span> A copy of the page <span class="optional">(optional)</span></h2>
-      <label class="check">
-        <input type="checkbox" id="include-page" aria-describedby="page-help">
-        <span>Include a copy of the page</span>
-      </label>
-      <p class="note" id="page-help">It helps us most when a problem is hard to repeat. It takes one more
-        step: a file is saved to your computer, and you drag it into the GitHub page yourself.</p>
-      <p class="warning">The copy holds everything on the page: message text, file names, anything you are
-        signed in to. Include it only if nothing on the page is private.
-        Chrome asks for permission the first time.</p>
-    </section>
-
-    <section id="send-box" aria-labelledby="send-title" class="send">
-      <h2 id="send-title"><span class="num">5</span> <span id="send-heading">Send it</span></h2>
-      <p id="steps-lead">When you press the button below:</p>
-      <ol class="steps">
-        <li id="step-open">GitHub opens in a new tab, with your report already written in it.</li>
-        <li>If GitHub asks you to sign in, sign in, or create a free account. This is needed only the
-          first time.</li>
-        <li id="step-file" hidden>Drag the file <strong id="file-name">tui-report-….zip</strong> into the
-          big text box on GitHub. Chrome shows the file at the top right of the window, under the
-          download arrow; it is also in your Downloads folder.</li>
-        <li>Press the green <strong>Create</strong> button at the bottom of the GitHub page. That is the
-          moment the report is sent.</li>
-      </ol>
-      <p id="again-note" class="note" hidden>If you created a GitHub account on the way, your report may not
-        be there any more. Press <strong>Open GitHub again</strong> and it will be written in again, with
-        any changes you made here.</p>
-      <div class="actions">
-        <button id="send" type="button">Continue to GitHub</button>
-        <button id="close" type="button" class="secondary">Close</button>
-      </div>
-      <p id="status" role="status"></p>
-    </section>
-
-    <p class="file-only">Prefer not to use GitHub?
-      <button id="save" type="button" class="link">Only save the report as a file</button></p>
+    <details>
+      <summary>What is sent</summary>
+      <p class="note">Your description, the page's address (<span id="address"></span>), the extension
+        version, your browser's version string and the window size, and the extension's log from this
+        page, exactly as below.
+        <span id="log-plain">The log has no text, labels or links from the page.</span>
+        <span id="log-verbose" class="warning-inline" hidden>Admin mode is on, so the log also holds
+          element ids, labels, links and their opening tags.</span>
+        With the box ticked, a zip with a copy of the page is saved to your downloads, and you drag it
+        into GitHub yourself.</p>
+      <pre id="log" tabindex="0" aria-label="The log">Reading the log...</pre>
+    </details>
   </main>
 
   <script src="../lib/jszip.min.js"></script>

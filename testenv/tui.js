@@ -28,9 +28,12 @@
   report           after F10 > Report a problem: read the log the report window shows
   report-has:<re>  fail unless that log matches the regular expression
   report-lacks:<re> fail if it does
-  report-send:<text> after report: write <text> as the description and press
-                   Continue to GitHub; the issue it opens (its title, then its
-                   body) becomes what report-has and report-lacks check
+  report-send:<text> after report: write <text> as the description, untick the
+                   copy of the page (Chrome's question cannot be answered here)
+                   and press Send on GitHub; the issue it opens (its title, then
+                   its body) becomes what report-has and report-lacks check
+  report-key:<key> press a key in the report window
+  report-eval:<js> run JS in the report window; fails if it throws
   report-shot[:<name>] screenshot the report window into .work/shots/
  *   login            headed only: waits until you close the window, so you can
  *                    sign in once and keep the session in the profile
@@ -336,6 +339,7 @@ async function runStep(page, step, state) {
             const win = state.reportWin;
             if (!win) throw new Error('report-send needs a report step before it');
             await win.fill('#description', arg);
+            await win.uncheck('#include-page');
             const [issue] = await Promise.all([
                 state.ctx.waitForEvent('page', { timeout: 10000 }),
                 win.click('#send')
@@ -354,6 +358,14 @@ ${state.report}`);
             await issue.close();
             break;
         }
+        case 'report-key':
+            if (!state.reportWin) throw new Error('report-key needs a report step before it');
+            await state.reportWin.keyboard.press(arg);
+            break;
+        case 'report-eval':
+            if (!state.reportWin) throw new Error('report-eval needs a report step before it');
+            console.log('  eval  ', await state.reportWin.evaluate(arg));
+            break;
         case 'report-shot': {
             if (!state.reportWin) throw new Error('report-shot needs a report step before it');
             const dir = path.join(WORK, 'shots');

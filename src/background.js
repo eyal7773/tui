@@ -133,7 +133,7 @@ function openReportWindow(tabId) {
     url: chrome.runtime.getURL(`report/report.html?tab=${tabId}`),
     type: 'popup',
     width: 620,
-    height: 780
+    height: 520
   }, (win) => {
     reportWindow = win ? { id: win.id, tabId } : null;
   });
