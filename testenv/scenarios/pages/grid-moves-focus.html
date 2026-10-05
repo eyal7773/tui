@@ -1,0 +1,33 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>A grid that moves focus on the arrows itself</title>
+<style>
+  body { font: 15px sans-serif; margin: 40px; }
+  .grid { display: grid; grid-template-columns: repeat(4, max-content); }
+  .cell { padding: 16px 12px; }
+  .tile { display: block; width: 180px; height: 122px; border: 1px solid #ddd; color: #000; text-decoration: none; }
+</style></head>
+<body>
+  <!-- An app portal: its own script moves focus to the next tile on an
+       arrow press, listening on the window so it hears the key before the
+       extension does. The tile the page had just focused was skipped as the
+       ring's own, and the arrows went to the tile two along. -->
+  <div class="grid">
+    <div class="cell"><a class="tile" id="t1" href="#1" tabindex="0">Mail</a></div>
+    <div class="cell"><a class="tile" id="t2" href="#2" tabindex="0">Calendar</a></div>
+    <div class="cell"><a class="tile" id="t3" href="#3" tabindex="0">Drive</a></div>
+    <div class="cell"><a class="tile" id="t4" href="#4" tabindex="0">Chat</a></div>
+    <div class="cell"><a class="tile" id="t5" href="#5" tabindex="0">Wiki</a></div>
+    <div class="cell"><a class="tile" id="t6" href="#6" tabindex="0">Tickets</a></div>
+    <div class="cell"><a class="tile" id="t7" href="#7" tabindex="0">Builds</a></div>
+    <div class="cell"><a class="tile" id="t8" href="#8" tabindex="0">Docs</a></div>
+  </div>
+  <script>
+    window.addEventListener('keydown', (e) => {
+      const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 4, ArrowUp: -4 }[e.key];
+      if (!step) return;
+      const tiles = Array.from(document.querySelectorAll('.tile'));
+      const i = tiles.indexOf(document.activeElement);
+      if (i >= 0 && tiles[i + step]) tiles[i + step].focus();
+    }, true);
+  </script>
+</body></html>

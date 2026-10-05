@@ -1,0 +1,17 @@
+# An app portal's grid of tiles (OneLogin) whose own script moves focus to the next tile on an arrow press, before the extension hears the key. The tile it focused was skipped as the ring's own, so the arrows went to the tile two along and two tiles of the row could never be reached.
+pages/grid-moves-focus.html
+start:css=#t1
+key:ArrowRight
+expect:css=#t2
+key:ArrowRight
+expect:css=#t3
+key:ArrowRight
+expect:css=#t4
+key:ArrowLeft
+expect:css=#t3
+key:ArrowDown
+expect:css=#t7
+key:ArrowUp
+expect:css=#t3
+key:ArrowLeft
+expect:css=#t2

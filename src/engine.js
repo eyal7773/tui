@@ -2457,6 +2457,7 @@ class SpatialEngine {
             (currentEl ? (this.isSticky(currentEl) || !!this.composedClosest(currentEl, 'header, nav, [role="banner"], [role="navigation"]')) : false);
 
         const cover = this.windowCover();
+        const focused = this.deepActiveElement();
 
         this.candidates.forEach(cand => {
             // Staying in the box the ring scrolls in (see stepUntilFocused).
@@ -2477,8 +2478,13 @@ class SpatialEngine {
                 return;
             }
 
-            // 2. Don't select the actual DOM focused element
-            if (cand === this.deepActiveElement()) {
+            // 2. Don't select the actual DOM focused element, when it is
+            //    where the ring stands or inside it. Focus anywhere else was
+            //    put there by the page: an app portal's grid of tiles moves
+            //    focus to the next tile on the same arrow press, before the
+            //    engine hears it, and skipping that tile as "self" sent the
+            //    ring to the tile two along, every time.
+            if (cand === focused && (!currentEl || this.composedContains(currentEl, focused))) {
                 return;
             }
 
@@ -2740,9 +2746,8 @@ class SpatialEngine {
     /**
      * Is the cover at (x, y) something the ring's element draws past its own
      * box? A tile lifted on focus, with a part reaching over its neighbours,
-     * lies over their middles only while it has focus. On an app portal
-     * (OneLogin) every tile beside the focused one was taken as covered, and
-     * the arrows went to the tile two along. The cover counts as spilled when
+     * lies over their middles only while it has focus, and every tile beside
+     * the focused one would be taken as covered. The cover counts as spilled when
      * the smallest box holding both it and the ring's element does not reach
      * (x, y): a dialog or a menu over the page holds what it covers.
      */
