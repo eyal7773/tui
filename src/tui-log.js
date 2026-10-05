@@ -8,7 +8,7 @@
  *   - It stays in this page's memory: the last MAX_ENTRIES events, gone on
  *     reload. Nothing is written to storage and nothing is sent anywhere. The
  *     only way out is a report the user asks for from the F10 menu, and they
- *     see every line of it before they save it.
+ *     can see every line of it before they send it.
  *   - It records the shape of the page, never its content. An element is its
  *     tag, role, a few class names, tabindex and where it is on screen: no
  *     text, labels, links, ids or data attributes. Keys are only the ones the
@@ -244,8 +244,8 @@
 
   // The report window asks, through background, when the user picks
   // "Report a problem" in the F10 menu. The log names the site by its hostname
-  // only; the full address goes to the window apart from it, where the user
-  // sees it in an edit box and decides how much of it the issue's title shows.
+  // only; the full address goes to the window apart from it, which puts it in
+  // the report's problem.txt.
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!message || message.type !== 'GET_TUI_LOG') return;
     const site = location.hostname || location.protocol.replace(':', '');

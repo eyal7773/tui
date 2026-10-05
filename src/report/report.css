@@ -80,16 +80,6 @@ button:hover {
   background: #007a36;
 }
 
-button.secondary {
-  color: var(--text);
-  background: #fff;
-  border-color: var(--border);
-}
-
-button.secondary:hover {
-  background: #eee;
-}
-
 button:disabled {
   opacity: 0.6;
   cursor: default;

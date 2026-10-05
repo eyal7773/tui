@@ -2,27 +2,25 @@
  * The report window, opened from "Report a problem" in the F10 menu.
  *
  * It reads the log and the page's address from the tab it was opened for
- * (tui-log.js answers in the top frame). "Send on GitHub" opens a new issue
- * with the description, the address and the log written in (issue-link.js);
- * the user posts it. Nothing is sent by the extension. Pressing it again
- * opens the issue again, for someone whose report was lost while they made
- * a GitHub account.
+ * (tui-log.js answers in the top frame). "Send report" puts the description,
+ * the log and, with the box ticked, a copy of the page in a zip and posts it
+ * to the report server (server/ in this repo), where it waits until the
+ * developer downloads it with scripts/pull-reports.js. Nothing is sent before
+ * the button is pressed.
  *
- * A copy of the page cannot go in a link. The box for it is ticked from the
- * start, and Chrome is asked for the pageCapture permission when a button is
- * pressed, since that needs the press. With the copy, "Send on GitHub" saves
- * a zip first and the status line says to drag it into the issue. "Download
- * only" saves the same zip without going to GitHub.
+ * The box for the copy is ticked from the start, and Chrome is asked for the
+ * pageCapture permission when the button is pressed, since that needs the
+ * press.
  *
  * The files in the zip are named problem.txt, tui-logs-*.txt and
  * page-*.mhtml, which testenv/tui.js reads; keep them.
  */
 
+const REPORT_URL = 'https://tui-reports.taliandeyal.workers.dev/reports';
+
 const tabId = Number(new URLSearchParams(location.search).get('tab'));
 let logText = '';
 let pageAddress = '';
-let savedFile = '';     // the zip with the copy of the page, once saved
-let issueLink = '';     // the link last opened (testenv/tui.js reads it)
 
 const $ = (id) => document.getElementById(id);
 
@@ -57,7 +55,7 @@ function showLog(text, problem) {
 
 /**
  * Asks Chrome for the permission to copy the page, if the box is ticked.
- * Called first thing in a button's click, which is what Chrome needs to show
+ * Called first thing in the button's click, which is what Chrome needs to show
  * its question; once granted, it answers at once without asking.
  */
 function askForCopy() {
@@ -69,7 +67,7 @@ function askForCopy() {
   });
 }
 
-const NO_PERMISSION = 'Without Chrome\'s permission the report goes without a copy of the page.';
+const NO_PERMISSION = 'Without Chrome\'s permission the report went without a copy of the page.';
 
 function capturePage() {
   return new Promise((resolve, reject) => {
@@ -83,22 +81,11 @@ function capturePage() {
   });
 }
 
-function saveBlob(blob, name) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
 function description() {
   return $('description').value.trim();
 }
 
-/** Both buttons need a few words first. */
+/** The button needs a few words first. */
 function hasDescription() {
   if (description()) return true;
   setStatus('Please write a few words about what happened first.', true);
@@ -107,91 +94,68 @@ function hasDescription() {
 }
 
 /**
- * Saves the zip, with a copy of the page when withPage. Resolves to
- * { name, hasPage, note }; a page that was closed or turned into chrome://
- * cannot be copied, and the rest is still saved.
+ * The zip, with a copy of the page when withPage. Resolves to { blob, note };
+ * a page that was closed or turned into chrome:// cannot be copied, and the
+ * rest is still sent. Compressed: the copy of the page is mostly text.
  */
-async function saveZip(withPage) {
+async function buildZip(withPage) {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const zip = new JSZip();
   zip.file('problem.txt', (pageAddress ? `Page: ${pageAddress}\n\n` : '') + description());
   zip.file(`tui-logs-${stamp}.txt`, logText || '(no log)');
-  let hasPage = false;
   let note = '';
   if (withPage) {
     try {
       zip.file(`page-${stamp}.mhtml`, await capturePage());
-      hasPage = true;
     } catch (err) {
-      note = `The copy of the page could not be made (${err.message}).`;
+      note = `The copy of the page could not be made (${err.message}), so the report went without it.`;
     }
   }
-  const name = `tui-report-${stamp}.zip`;
-  saveBlob(await zip.generateAsync({ type: 'blob' }), name);
-  return { name, hasPage, note };
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  return { blob, note };
+}
+
+async function upload(blob) {
+  let res;
+  try {
+    res = await fetch(REPORT_URL, { method: 'POST', headers: { 'Content-Type': 'application/zip' }, body: blob });
+  } catch (err) {
+    throw new Error('no connection to the report server');
+  }
+  if (res.ok) return;
+  if (res.status === 413) throw new Error('it is too large; untick the copy of the page and try again');
+  if (res.status === 429) throw new Error('too many reports were sent just now; wait a minute');
+  throw new Error(`the server answered ${res.status}`);
 }
 
 async function send() {
   if (!hasDescription()) return;
-  const needsCopy = $('include-page').checked && !savedFile;
-  const allowed = needsCopy ? askForCopy() : Promise.resolve(false);
+  const allowed = askForCopy();
   const button = $('send');
   button.disabled = true;
-  try {
-    let note = '';
-    if (needsCopy) {
-      if (await allowed) {
-        setStatus('Saving the copy of the page...');
-        const saved = await saveZip(true);
-        // Without the copy, the zip holds nothing the issue does not; no step for it.
-        if (saved.hasPage) savedFile = saved.name;
-        else note = `${saved.note} The report goes without it. `;
-      } else {
-        note = NO_PERMISSION + ' ';
-      }
-    }
-    const fileName = $('include-page').checked ? savedFile : '';
-    // Built again each time, so a second press carries any edits.
-    issueLink = TuiIssueLink.issueUrl({
-      address: pageAddress,
-      description: description(),
-      log: logText,
-      fileName: fileName
-    });
-    chrome.tabs.create({ url: issueLink });
-    setStatus(note + (fileName
-      ? `GitHub is open in a new tab. Drag ${fileName} from your downloads into the text box there, then press Create.`
-      : 'GitHub is open in a new tab. Press Create there to send the report.'), !!note);
-  } catch (err) {
-    setStatus('Something went wrong: ' + err.message, true);
-  } finally {
-    button.disabled = false;
-  }
-}
-
-async function saveOnly() {
-  if (!hasDescription()) return;
-  const allowed = askForCopy();
-  const button = $('save');
-  button.disabled = true;
+  let sent = false;
   try {
     const withPage = await allowed;
-    setStatus('Saving...');
-    const saved = await saveZip(withPage);
-    const note = saved.note || ($('include-page').checked && !withPage ? NO_PERMISSION : '');
-    setStatus(`Saved as ${saved.name} in your downloads.${note ? ' ' + note : ''}`, !!note);
+    setStatus('Sending...');
+    const built = await buildZip(withPage);
+    await upload(built.blob);
+    sent = true;
+    const note = built.note || ($('include-page').checked && !withPage ? NO_PERMISSION : '');
+    setStatus(`Thank you. Your report was sent.${note ? ' ' + note : ''}`);
   } catch (err) {
-    setStatus('The report could not be saved: ' + err.message, true);
+    setStatus(`The report could not be sent: ${err.message}. Press Send report to try again.`, true);
   } finally {
-    button.disabled = false;
+    // Sent once; changing the description or the box allows another.
+    button.disabled = sent;
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   $('description').focus();
-  $('include-page').addEventListener('change', () => { savedFile = ''; });
+  const allowAgain = () => { $('send').disabled = false; };
+  $('description').addEventListener('input', allowAgain);
+  $('include-page').addEventListener('change', allowAgain);
   $('send').addEventListener('click', send);
-  $('save').addEventListener('click', saveOnly);
 
   // Escape closes, except while a description is being written: there it
   // would throw the text away with one stray key.

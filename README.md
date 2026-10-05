@@ -403,25 +403,46 @@ Click the extension icon for:
 ## Report a Problem
 
 **F10** → **Report a problem** opens a small window: a text box for what happened, a box
-for a copy of the page, and two buttons. Type, then Tab to the button: once to the box,
-twice to **Send on GitHub**, three times to **Download only**. The page's address is taken
-from the tab. **What is sent**, under the buttons, shows the rest of the report.
+for a copy of the page, and one button. Type, then Tab twice to **Send report**. The page's
+address is taken from the tab. **What is sent**, under the button, shows the rest of the
+report. No account is needed.
 
-**Send on GitHub** opens a new [issue](https://github.com/eyal7773/tui/issues) with the
-report already written in it: the page's full address in the title, your description, the
-address and the log in the body. The extension sends nothing; you post the issue yourself,
-after signing in to GitHub. Pressing it again opens the issue again, for a report lost
-while you made an account.
-
-A copy of the page cannot go in a link. With **Attach a copy of the page** ticked (it is,
-from the start), the button first saves a zip to your downloads, and the status line (and
-the issue's edit box) say to drag it in. **Download only** saves the zip without going to
-GitHub. The zip holds:
+**Send report** posts one zip to the report server (below); nothing is sent before it is
+pressed. If it fails, the window says so and the button can be pressed again. The zip holds:
 - `problem.txt` — the page's address and your description
 - `tui-logs-*.txt` — the log of what the extension did on that page
-- `page-*.mhtml` — a copy of the page, while the box is ticked. It holds everything on the
-  page, so untick it if something there is private. Chrome asks for the optional
-  `pageCapture` permission the first time a button is pressed with it ticked.
+- `page-*.mhtml` — a copy of the page, while **Attach a copy of the page** is ticked (it is,
+  from the start). It holds everything on the page, so untick it if something there is
+  private. Chrome asks for the optional `pageCapture` permission the first time the button
+  is pressed with it ticked.
+
+### The report server
+
+`server/` is a Cloudflare Worker (`tui-reports.taliandeyal.workers.dev`) that keeps each
+report in the R2 bucket `tui-reports` until it is pulled. Anyone may post a zip to
+`POST /reports` (up to 25 MB, five a minute from one address). Listing, downloading and
+deleting (`GET /reports`, `GET` and `DELETE /reports/<id>`) need the password token,
+`Authorization: Bearer <token>`; without it they answer 404.
+
+To get the new reports:
+
+    npm run pull-reports
+
+It saves each one into `examples/` (which git ignores), prints its `problem.txt`, and
+deletes it from the server once it is on disk. Replay one with
+`node testenv/tui.js examples/<file>.zip`. The token is read from `.reports-token` at the
+repo root (git ignores it) or from `TUI_REPORTS_TOKEN`.
+
+Setting it up again (from `server/`):
+
+    npx wrangler r2 bucket create tui-reports
+    node -e "process.stdout.write(require('crypto').randomBytes(64).toString('base64url'))" > ../.reports-token
+    npx wrangler secret put PULL_TOKEN < ../.reports-token
+    npx wrangler deploy
+
+A new address goes into `REPORT_URL` in `src/report/report.js` and the default in
+`scripts/pull-reports.js`. For `npx wrangler dev`, put `PULL_TOKEN=<another token>` in
+`server/.dev.vars` (git ignores it).
 
 ### The log
 

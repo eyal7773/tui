@@ -1,0 +1,18 @@
+# F10 > Report a problem > Send report (with the copy of the page unticked): the zip posted to the
+# report server holds problem.txt with the page's address and the description, and the log, and no
+# copy of the page. The window thanks the user and the button cannot send the same report twice.
+pages/double-click-rows.html
+start:css=#file1
+key:Enter
+key:F10
+key:ArrowDown*3
+key:Enter
+report
+report-send:Enter on a row did not open the file
+report-has:^status: Thank you\. Your report was sent\.$
+report-has:^files: problem\.txt, tui-logs-[^,]*\.txt$
+report-has:^Page: file:///.*double-click-rows\.html$
+report-has:^Enter on a row did not open the file$
+report-has:enter on=.*second=false
+report-lacks:\.mhtml
+report-eval:(() => { if (!document.getElementById('send').disabled) throw new Error('enabled'); return 'sent once'; })()

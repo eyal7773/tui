@@ -5,7 +5,8 @@
   "scripts": {
     "sync-site-version": "node scripts/sync-site-version.js",
     "test": "node scripts/run-tests.js",
-    "build-icons": "node scripts/build-icons.js"
+    "build-icons": "node scripts/build-icons.js",
+    "pull-reports": "node scripts/pull-reports.js"
   },
   "private": true
 }

@@ -108,24 +108,26 @@
     </ul>
 
     <h2>What it sends</h2>
-    <p>Nothing. The extension has no server and sends no data. The one request it makes is for a
-      stylesheet: the stats page loads Bootstrap's CSS from <code>cdn.jsdelivr.net</code>, which, like
-      any web request, shows that server your IP address.</p>
+    <p>Nothing, unless you send a bug report (below). Besides a report, the one request it makes is
+      for a stylesheet: the stats page loads Bootstrap's CSS from <code>cdn.jsdelivr.net</code>, which,
+      like any web request, shows that server your IP address.</p>
 
     <h2>Bug reports</h2>
     <p><kbd>F10</kbd> → <em>Report a problem</em> opens a window where you write what happened. The
       report holds your description, the page's full address (taken from the tab, and put in the
       report's title), the log above, the extension version, your browser version and the window
       size; <em>What is sent</em>, under the buttons, shows all of it.</p>
-    <p><em>Send on GitHub</em> opens a new issue on
-      <a href="https://github.com/eyal7773/tui/issues">GitHub</a> with all of that written in. The
-      extension sends nothing: the report reaches GitHub only if you post the issue yourself. GitHub
-      issues are public, and GitHub's own privacy policy covers what you post there.</p>
+    <p>Nothing is sent until you press <em>Send report</em>. Then the report goes, as one zip file,
+      to the TUI Navigator report server (run on Cloudflare, at
+      <code>tui-reports.taliandeyal.workers.dev</code>). It is kept there only until the developer
+      downloads it, and is then deleted from the server. Reports are not made public, and no
+      account, name or email address is asked for or sent. Like any web request, sending shows the
+      server your IP address; it is used only to limit how many reports one address can send a
+      minute, and is not stored with the report.</p>
     <p><em>Attach a copy of the page</em> is ticked from the start. That copy holds everything on the
-      page, so untick it if something there is private. The first time you press a button with it
-      ticked, Chrome asks you for the <code>pageCapture</code> permission, and without it the report
-      goes without the copy. The copy is saved as a zip in your downloads, and goes to GitHub only if
-      you drag it into the issue. <em>Download only</em> saves the zip without going to GitHub.</p>
+      page, so untick it if something there is private. The first time you send with it ticked,
+      Chrome asks you for the <code>pageCapture</code> permission, and without it the report goes
+      without the copy.</p>
 
     <h2>Permissions</h2>
     <ul>
@@ -133,7 +135,7 @@
       <li><code>activeTab</code>: the popup's settings for the site you are on.</li>
       <li><code>notifications</code>, <code>alarms</code>: the weekly recap, which you can turn off.</li>
       <li><code>pageCapture</code> (optional, asked for only when you include a copy of the page in a
-        report): saving that copy.</li>
+        report): making that copy.</li>
       <li>Access to every site: the arrow keys have to work wherever you browse.</li>
     </ul>
 

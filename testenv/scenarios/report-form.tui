@@ -1,6 +1,6 @@
-# F10 > Report a problem is a text box and two buttons: focus starts in the description, the copy of
-# the page is ticked from the start, there is no address field, and Tab goes box, Send on GitHub,
-# Download only. The page's address is still read from the tab.
+# F10 > Report a problem is a text box and one button: focus starts in the description, the copy of
+# the page is ticked from the start, there is no address field, and Tab goes box, Send report, with
+# no other button. The page's address is still read from the tab.
 pages/double-click-rows.html
 start:css=#file1
 key:F10
@@ -11,8 +11,7 @@ report-eval:(() => { const a = document.activeElement.id, c = document.getElemen
 report-key:Tab
 report-eval:(() => { if (document.activeElement.id !== 'include-page') throw new Error(document.activeElement.id); return 'box'; })()
 report-key:Tab
-report-eval:(() => { const b = document.activeElement; if (b.id !== 'send' || b.textContent !== 'Send on GitHub') throw new Error(b.id); return b.textContent; })()
-report-key:Tab
-report-eval:(() => { const b = document.activeElement; if (b.id !== 'save' || b.textContent !== 'Download only') throw new Error(b.id); return b.textContent; })()
+report-eval:(() => { const b = document.activeElement; if (b.id !== 'send' || b.textContent !== 'Send report') throw new Error(b.id); return b.textContent; })()
+report-eval:(() => { const n = document.querySelectorAll('button').length; if (n !== 1) throw new Error(n + ' buttons'); return 'one button'; })()
 report-eval:(() => { const a = document.getElementById('address').textContent; if (!/double-click-rows\.html$/.test(a)) throw new Error(a); return a; })()
 report-shot:report-form

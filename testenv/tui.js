@@ -30,8 +30,11 @@
   report-lacks:<re> fail if it does
   report-send:<text> after report: write <text> as the description, untick the
                    copy of the page (Chrome's question cannot be answered here)
-                   and press Send on GitHub; the issue it opens (its title, then
-                   its body) becomes what report-has and report-lacks check
+                   and press Send report; the window's status line, then the
+                   zip's file names, problem.txt and log become what report-has
+                   and report-lacks check. The report server is a stand-in for
+                   every run, so nothing reaches the real one
+  report-server:<status> what the stand-in server answers from now on (201)
   report-key:<key> press a key in the report window
   report-eval:<js> run JS in the report window; fails if it throws
   report-shot[:<name>] screenshot the report window into .work/shots/
@@ -127,6 +130,37 @@ async function replay(ctx, archive) {
         return route.fulfill({ status: 200, headers, body: part.body });
     });
     return missing;
+}
+
+/**
+ * Stands in for the report server (server/) for the whole run, so pressing
+ * Send report never reaches the real one. Answers state.server.status (201
+ * unless report-server: changes it) and keeps the zips posted.
+ */
+async function standInServer(ctx, state) {
+    const source = fs.readFileSync(path.join(EXT, 'report/report.js'), 'utf8');
+    const match = source.match(/REPORT_URL = '([^']+)'/);
+    if (!match) return;
+    state.server = { url: match[1], status: 201, posts: [] };
+    await ctx.route(match[1], (route) => {
+        const request = route.request();
+        if (request.method() === 'POST') state.server.posts.push(request.postDataBuffer());
+        return route.fulfill({
+            status: request.method() === 'OPTIONS' ? 204 : state.server.status,
+            headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'Content-Type',
+                'content-type': 'application/json' },
+            body: request.method() === 'OPTIONS' ? '' : '{"id":"tui-report-test.zip"}'
+        });
+    });
+}
+
+/** What a posted zip holds, as text: its file names, problem.txt, then the log. */
+async function readSent(buffer) {
+    const JSZip = require(path.join(EXT, 'lib/jszip.min.js'));
+    const zip = await JSZip.loadAsync(buffer);
+    const names = Object.keys(zip.files);
+    const text = async (re) => { const n = names.find((x) => re.test(x)); return n ? zip.file(n).async('string') : ''; };
+    return `files: ${names.join(', ')}\n\n${await text(/^problem\.txt$/)}\n\n${await text(/^tui-logs-.*\.txt$/)}`;
 }
 
 // ---- Runs inside the page -------------------------------------------------
@@ -334,28 +368,28 @@ async function runStep(page, step, state) {
             console.log(`  report ${state.report.split('\n').length} lines, saved to ${file}`);
             break;
         }
+        case 'report-server':
+            if (!state.server) throw new Error('report.js has no REPORT_URL to stand in for');
+            state.server.status = Number(arg);
+            break;
         case 'report-send': {
-            // The link is the one the window opened; GitHub itself answers (a sign-in page, signed out).
+            // The stand-in server keeps what was posted; the real one is never reached.
             const win = state.reportWin;
             if (!win) throw new Error('report-send needs a report step before it');
             await win.fill('#description', arg);
             await win.uncheck('#include-page');
-            const [issue] = await Promise.all([
-                state.ctx.waitForEvent('page', { timeout: 10000 }),
-                win.click('#send')
-            ]);
-            const url = new URL(await win.evaluate(() => issueLink));
-            state.report = `title: ${url.searchParams.get('title')}
-
-${url.searchParams.get('body')}`;
-            fs.writeFileSync(path.join(WORK, 'last-report-issue.txt'), `${url.href}
-
-${state.report}`);
-            console.log(`  issue  ${url.origin}${url.pathname}, link ${url.href.length} long`);
-            console.log(`         title: ${url.searchParams.get('title')}`);
-            await issue.waitForLoadState('domcontentloaded').catch(() => {});
-            console.log(`         landed on ${issue.url().slice(0, 300)}`);
-            await issue.close();
+            const before = state.server.posts.length;
+            // Emptied, so a status left from an earlier send is not read as this one's.
+            await win.evaluate(() => { document.getElementById('status').textContent = ''; });
+            await win.click('#send');
+            await win.waitForFunction(() => !/^Sending|^$/.test(document.getElementById('status').textContent),
+                null, { timeout: 10000 });
+            const status = await win.evaluate(() => document.getElementById('status').textContent);
+            const posted = state.server.posts.slice(before);
+            console.log(`  sent   ${posted.length} post(s), server answered ${state.server.status}: ${status}`);
+            state.report = `status: ${status}\n` +
+                (posted.length ? await readSent(posted[posted.length - 1]) : '(nothing posted)');
+            fs.writeFileSync(path.join(WORK, 'last-report-sent.txt'), state.report);
             break;
         }
         case 'report-key':
@@ -417,6 +451,8 @@ async function main() {
     });
     const missing = archive ? await replay(ctx, archive) : [];
     const state = { failed: 0, shots: 0, settle: 250, headed: opts.headed, ctx: ctx };
+    // Routed after replay, so it is the one that answers the report's address.
+    await standInServer(ctx, state);
     try {
         let [sw] = ctx.serviceWorkers();
         if (!sw) sw = await ctx.waitForEvent('serviceworker', { timeout: 10000 });

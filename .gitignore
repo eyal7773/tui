@@ -2,3 +2,7 @@ dist/
 node_modules/
 examples/
 testenv/.work/
+.reports-token
+server/.dev.vars
+server/.wrangler/
+server/node_modules/

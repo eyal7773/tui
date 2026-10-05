@@ -1,0 +1,15 @@
+# F10 > Report a problem > Send report when the report server answers with an error: the window
+# says the report was not sent, keeps the description, and the button can be pressed again.
+pages/double-click-rows.html
+start:css=#file1
+key:F10
+key:ArrowDown*3
+key:Enter
+report
+report-server:500
+report-send:Enter on a row did not open the file
+report-has:^status: The report could not be sent: the server answered 500\. Press Send report to try again\.$
+report-eval:(() => { const s = document.getElementById('send'), d = document.getElementById('description').value; if (s.disabled || !d) throw new Error(s.disabled + ' ' + d); return 'can try again'; })()
+report-server:201
+report-send:Enter on a row did not open the file
+report-has:^status: Thank you\. Your report was sent\.$

@@ -10,15 +10,14 @@
 
 <!--
   Opened from "Report a problem" in the F10 menu. The whole form is typing
-  the description and a few Tabs to a button: the description has focus, Tab
+  the description and two Tabs to the button: the description has focus, Tab
   goes to the box for the copy of the page (ticked from the start), then to
-  "Send on GitHub" and "Download only". Escape closes the window.
+  "Send report". Escape closes the window.
   The page's address is taken from the tab and never shown; it goes in the
-  issue and the zip as it is. What is sent is under "What is sent", after the
-  buttons, so it is never in the way of the Tabs.
-  The extension sends nothing: it opens a new GitHub issue with the report
-  written in, and the user posts it. A copy of the page cannot go in a link,
-  so it is a zip saved first, and the status line says to drag it in.
+  report as it is. What is sent is under "What is sent", after the button, so
+  it is never in the way of the Tabs.
+  "Send report" posts a zip to the report server (report.js); nothing is sent
+  before it is pressed.
   The extension does not run on its own pages, so this page has to work with
   the keyboard by itself.
 -->
@@ -36,8 +35,7 @@
     <p class="note" id="page-help">It holds everything on the page. Untick it if something there is private.</p>
 
     <div class="actions">
-      <button id="send" type="button">Send on GitHub</button>
-      <button id="save" type="button" class="secondary">Download only</button>
+      <button id="send" type="button">Send report</button>
     </div>
     <p id="status" role="status"></p>
 
@@ -49,14 +47,14 @@
         <span id="log-plain">The log has no text, labels or links from the page.</span>
         <span id="log-verbose" class="warning-inline" hidden>Admin mode is on, so the log also holds
           element ids, labels, links and their opening tags.</span>
-        With the box ticked, a zip with a copy of the page is saved to your downloads, and you drag it
-        into GitHub yourself.</p>
+        With the box ticked, a copy of the page goes too. It is sent to the TUI Navigator report
+        server, kept there only until the developer downloads it, and then deleted. It is not
+        made public.</p>
       <pre id="log" tabindex="0" aria-label="The log">Reading the log...</pre>
     </details>
   </main>
 
   <script src="../lib/jszip.min.js"></script>
-  <script src="issue-link.js"></script>
   <script src="report.js"></script>
 </body>
 

@@ -9,7 +9,11 @@ the extension: the release zips `src/` only.
 
 ## Reproduce a bug report
 
-    node tui.js path/to/tui-report-....zip start:New key:ArrowDown expect:Home shot
+Reports sent from F10 > Report a problem wait on the report server (`server/`);
+`npm run pull-reports` at the repo root downloads them into `examples/` and
+deletes them from the server. Then:
+
+    node tui.js ../examples/tui-report-....zip start:New key:ArrowDown expect:Home shot
 
 The report's `problem.txt` is printed, and its page is replayed at its original
 URL from the saved `.mhtml`. The page is not opened as an archive file, because
@@ -31,10 +35,14 @@ reads the log the report window shows, and `report-has:<regex>` and
 `report-lacks:<regex>` check it. `scenarios/report-log.tui` uses them to make
 sure the log says what Enter did and holds nothing from the page.
 
-`report-send:<text>` writes `<text>` as the description and presses **Continue to
-GitHub**; from then on `report-has` and `report-lacks` check the issue it opened (its
-title, then its body), and the link is saved to `.work/last-report-issue.txt`.
-`scenarios/report-issue.tui` checks the title carries the address. `report-shot`
+`report-send:<text>` writes `<text>` as the description and presses **Send
+report**; from then on `report-has` and `report-lacks` check what was sent: the
+window's status line, then the zip's file names, its `problem.txt` and its log,
+also saved to `.work/last-report-sent.txt`. Every run answers the report
+server's address with a stand-in, so a scenario never posts to the real one;
+`report-server:<status>` sets what it answers (201 unless changed).
+`scenarios/report-send.tui` checks the zip carries the address and the
+description, `scenarios/report-send-fails.tui` an error answer. `report-shot`
 screenshots the report window.
 
 ## Try a live site
