@@ -95,6 +95,26 @@ test('ad iframes are recognised by slot name or ad host, not by label', () => {
   assert.equal(isAdFrame(el('div', { id: 'google_ads_iframe_x' })), false);
 });
 
+test('a frame a script filled with an ad is an ad frame (Politico)', () => {
+  const { isAdFrame } = globalThis.TuiTargetRules;
+  const framed = (inside, attrs = {}) => {
+    const frame = el('iframe', { id: 'utif_mrec5_192f6ab2', title: '3rd party advertisement container', ...attrs });
+    frame.contentDocument = { querySelectorAll: () => inside };
+    return frame;
+  };
+  assert.equal(isAdFrame(framed([el('a', { href: 'https://adclick.g.doubleclick.net/pcs/click?xai=1' })])), true);
+  assert.equal(isAdFrame(framed([el('iframe', { id: 'google_ads_iframe_/6326/x_0' })])), true);
+  // A widget the page wrote into a blank frame stays a target.
+  assert.equal(isAdFrame(framed([el('a', { href: 'https://www.example.com/story' }), el('button')])), false);
+  // So does a frame with a src of its own, whatever it holds.
+  assert.equal(isAdFrame(framed([el('a', { href: 'https://ad.doubleclick.net/x' })],
+    { src: 'https://widgets.example.com/poll' })), false);
+  // A frame from another origin cannot be read.
+  const closed = el('iframe', {});
+  Object.defineProperty(closed, 'contentDocument', { get() { throw new Error('cross-origin'); } });
+  assert.equal(isAdFrame(closed), false);
+});
+
 test('the roles that counted before still count', () => {
   ['button', 'link', 'menuitem', 'tab', 'option', 'gridcell', 'listitem'].forEach((role) => {
     assert.equal(hasInteractiveRole(el('div', { role })), true, role);

@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Ad written into a frame</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; display: grid; grid-template-columns: 400px 300px; gap: 60px; }
+  iframe { width: 300px; height: 250px; border: 0; background: #eee; }
+</style></head>
+<body>
+  <!-- An ad slot's frame with no src: the ad script writes the ad into it,
+       a click-through link to doubleclick.net. Beside it, a story. -->
+  <div>
+    <a id="story" href="#story">AfD wins state parliament speakership</a>
+    <p style="height: 300px"></p>
+    <a id="next" href="#next">Rubio calls for more information</a>
+  </div>
+  <iframe id="utif_mrec5_0d7fe149" title="3rd party advertisement container"></iframe>
+  <script>
+    const doc = document.getElementById('utif_mrec5_0d7fe149').contentDocument;
+    doc.body.innerHTML = '<a href="https://adclick.g.doubleclick.net/pcs/click?xai=1">' +
+      '<img alt="ad" width="300" height="250"></a>';
+  </script>
+</body></html>

@@ -185,7 +185,7 @@
 
   // Hosts that serve display ads into iframes. Google's slots also name the
   // frame "google_ads_iframe_...", which covers them before src is set.
-  const AD_FRAME_HOSTS = /(^|\.)(googlesyndication\.com|doubleclick\.net|amazon-adsystem\.com|adnxs\.com|criteo\.com|pubmatic\.com|rubiconproject\.com|openx\.net|moatads\.com|adsafeprotected\.com)$/i;
+  const AD_FRAME_HOSTS = /(^|\.)(googlesyndication\.com|googleadservices\.com|doubleclick\.net|amazon-adsystem\.com|adnxs\.com|criteo\.com|pubmatic\.com|rubiconproject\.com|openx\.net|moatads\.com|adsafeprotected\.com)$/i;
 
   /**
    * An iframe that holds an ad. On CNN and Yahoo these sit above and between
@@ -200,8 +200,29 @@
     if (/^google_ads_iframe/i.test(id) || /^google_ads_iframe/i.test(name)) return true;
 
     const src = el.getAttribute('src') || '';
-    const host = /^(?:https?:)?\/\/([^/:?#]+)/i.exec(src);
+    if (isAdUrl(src)) return true;
+    return (!src || src === 'about:blank') && fillsWithAd(el);
+  }
+
+  function isAdUrl(url) {
+    const host = /^(?:https?:)?\/\/([^/:?#]+)/i.exec(url || '');
     return !!host && AD_FRAME_HOSTS.test(host[1]);
+  }
+
+  /**
+   * Does a frame without a src of its own hold an ad that a script wrote
+   * into it? Politico wraps each slot in such a frame, named only by an
+   * id of its own: inside are the ad's click-through link to
+   * doubleclick.net and the ad networks' frames. Its document is the page's
+   * own, so it can be read; one that cannot is left alone.
+   */
+  function fillsWithAd(el) {
+    let doc = null;
+    try { doc = el.contentDocument; } catch (e) { return false; }
+    if (!doc || typeof doc.querySelectorAll !== 'function') return false;
+    const inside = Array.from(doc.querySelectorAll('a[href], iframe'));
+    return inside.some((node) => isAdUrl(node.getAttribute('href') || node.getAttribute('src')) ||
+      (tagOf(node) === 'IFRAME' && /^google_ads_iframe/i.test(node.getAttribute('id') || '')));
   }
 
   // Containers that move focus among their items themselves, and so may keep

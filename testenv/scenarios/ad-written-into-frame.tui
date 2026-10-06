@@ -1,0 +1,6 @@
+# ArrowRight from a story passes over an ad a script wrote into a frame with no src: the ring stopped on it (Politico's ad slots).
+pages/ad-written-into-frame.html
+start:css=#story
+key:ArrowRight
+expect-not:css=#utif_mrec5_0d7fe149
+eval:(() => { if (document.activeElement.id !== 'story') throw new Error('focus went to ' + document.activeElement.id); return 'stayed'; })()
