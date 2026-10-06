@@ -375,14 +375,32 @@ class SpatialEngine {
 
         // Update Spotlight Position
         if (this.spotlight) {
+            const origin = this.ringOrigin();
             this.spotlight.style.width = `${rect.width}px`;
             this.spotlight.style.height = `${rect.height}px`;
-            this.spotlight.style.top = `${rect.top + scrollY}px`;
-            this.spotlight.style.left = `${rect.left + scrollX}px`;
+            this.spotlight.style.top = `${rect.top + scrollY - origin.top}px`;
+            this.spotlight.style.left = `${rect.left + scrollX - origin.left}px`;
 
             // Ensure it's visible (in case it was hidden)
             this.spotlight.style.display = 'block';
         }
+    }
+
+    /**
+     * Where the ring's own coordinates start, in page coordinates. The ring
+     * sits in the body and is placed from the page's corner, which holds
+     * unless the body or the root is itself positioned or transformed: then
+     * the ring is placed from that box. LG's body is position: relative with
+     * top: 124px, and every ring sat 124px below its element.
+     */
+    ringOrigin(el = this.spotlight) {
+        for (let box = el && el.parentElement; box; box = box.parentElement) {
+            const style = window.getComputedStyle(box);
+            if (style.position === 'static' && style.transform === 'none') continue;
+            const r = box.getBoundingClientRect();
+            return { left: r.left + (window.scrollX || 0) + box.clientLeft, top: r.top + (window.scrollY || 0) + box.clientTop };
+        }
+        return { left: 0, top: 0 };
     }
 
     /**
@@ -1143,8 +1161,9 @@ class SpatialEngine {
         const below = rect.bottom + gap + hint.offsetHeight <= window.innerHeight;
         const top = below ? rect.bottom + gap : rect.top - gap - hint.offsetHeight;
         const left = Math.max(gap, Math.min(rect.left, window.innerWidth - hint.offsetWidth - gap));
-        hint.style.top = `${Math.max(gap, top) + (window.scrollY || 0)}px`;
-        hint.style.left = `${left + (window.scrollX || 0)}px`;
+        const origin = this.ringOrigin(hint);
+        hint.style.top = `${Math.max(gap, top) + (window.scrollY || 0) - origin.top}px`;
+        hint.style.left = `${left + (window.scrollX || 0) - origin.left}px`;
         requestAnimationFrame(() => hint.classList.add('tui-hint-visible'));
 
         this.hintTimer = setTimeout(() => this.hideHint(), 3000);
@@ -1432,8 +1451,9 @@ class SpatialEngine {
         const color = this.spotlight && this.spotlight.style.getPropertyValue('--tui-ring');
         if (color) this.caret.style.setProperty('--tui-ring', color);
         this.caret.classList.toggle('tui-caret-marking', this.textMode.marking);
-        this.caret.style.left = `${rect.left + (window.scrollX || 0) - 1}px`;
-        this.caret.style.top = `${rect.top + (window.scrollY || 0)}px`;
+        const origin = this.ringOrigin(this.caret);
+        this.caret.style.left = `${rect.left + (window.scrollX || 0) - 1 - origin.left}px`;
+        this.caret.style.top = `${rect.top + (window.scrollY || 0) - origin.top}px`;
         this.caret.style.height = `${rect.height}px`;
         this.caret.style.display = 'block';
     }

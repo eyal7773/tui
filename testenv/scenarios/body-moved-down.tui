@@ -1,0 +1,7 @@
+# The ring is drawn round its element when the page's body is positioned and moved: it sat 124px below every element (LG).
+pages/body-moved-down.html
+key:ArrowDown
+key:ArrowDown
+expect-ring:css=#first
+key:ArrowDown
+expect-ring:css=#second

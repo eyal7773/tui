@@ -1,0 +1,19 @@
+<!doctype html>
+<html dir="rtl"><head><meta charset="utf-8"><title>Body moved down</title>
+<style>
+  body { position: relative; top: 124px; margin: 0; font: 16px sans-serif; }
+  .bar { position: absolute; top: -124px; left: 0; right: 0; height: 124px; background: #eee; }
+  main { padding: 40px; }
+  a { display: inline-block; margin: 20px; }
+</style></head>
+<body>
+  <!-- The body is positioned and pushed 124px down, as LG's is, so a box
+       placed absolutely in it starts from the body, not the page. -->
+  <div class="bar"><a id="top" href="#top">Cookie settings</a></div>
+  <main>
+    <a id="first" href="#first">Home appliances</a>
+    <p style="height: 200px"></p>
+    <a id="second" href="#second">Learn more</a>
+    <p style="height: 1500px"></p>
+  </main>
+</body></html>
