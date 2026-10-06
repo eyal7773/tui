@@ -15,6 +15,7 @@
   <main><a id="women" href="#women">Shop women</a> <a id="men" href="#men">Shop men</a></main>
   <script>
     const bar = document.getElementById('searchbar');
-    bar.addEventListener('focus', () => document.getElementById('q').focus());
+    // A moment later, as ASOS does.
+    bar.addEventListener('focus', () => setTimeout(() => document.getElementById('q').focus(), 12));
   </script>
 </body></html>

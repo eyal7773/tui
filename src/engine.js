@@ -107,9 +107,11 @@ class SpatialEngine {
         // moved it while hearing that same key (see isUntouchedBox).
         on(document, 'focusin', (e) => {
             this.lastFocusAt = e.timeStamp;
-            if (e.target !== this.arrivedIn) this.arrivedIn = null;
+            const pulledIn = !!this.arrival && e.target === this.arrival.box && e.timeStamp - this.arrival.at < 1000;
+            if (pulledIn) this.arrivedIn = e.target;
+            else if (e.target !== this.arrivedIn) this.arrivedIn = null;
         }, { capture: true });
-        on(document, 'mousedown', () => { this.arrivedIn = null; }, { capture: true, passive: true });
+        on(document, 'mousedown', () => { this.arrival = null; this.arrivedIn = null; }, { capture: true, passive: true });
         // NOTE: We keep scroll passive and bubbling as scroll doesn't usually get trapped like keys
         // Captured on the document rather than heard on the window: scroll does
         // not bubble, so a carousel scrolling its own box (BBC's "Recommended
@@ -183,6 +185,7 @@ class SpatialEngine {
         // A text box the ring arrived at whose page pulled focus into it (see
         // focusElement), until the user enters it, types or clicks.
         this.arrivedIn = null;
+        this.arrival = null;
         this.listen();
 
         // Dynamic DOM Observer
@@ -708,6 +711,7 @@ class SpatialEngine {
             !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey;
         if (!plainArrow) {
             this.userHasActed = true;
+            this.arrival = null;
             this.arrivedIn = null;
             return false;
         }
@@ -931,6 +935,7 @@ class SpatialEngine {
                 e.stopImmediatePropagation();
 
                 const input = wrapper._tui_input;
+                this.arrival = null;
                 this.arrivedIn = null;
                 LOG.event('enter-input', { input: LOG.describe(input) });
                 input.focus();
@@ -3026,6 +3031,13 @@ class SpatialEngine {
                 // Link them so Enter key knows where to go
                 parent._tui_input = el;
 
+                // The page may answer the wrapper's focus by focusing the box
+                // itself, at once or a moment later: ASOS does, and every
+                // arrow after that stayed in its search box, as if the user
+                // had entered it. The ring only arrived there, so the arrows
+                // still step on until Enter (see the focusin listener).
+                this.arrival = { box: el, at: performance.now() };
+
                 parent.focus();
 
                 // CRITICAL FIX: Verify wrapper focus success
@@ -3035,12 +3047,6 @@ class SpatialEngine {
                     LOG.event('focus', { result: 'wrapper-refused', el: LOG.describe(el) });
                     return false; // Failed
                 }
-
-                // The page may answer the wrapper's focus by focusing the box
-                // itself: ASOS does, and every arrow after that stayed in its
-                // search box, as if the user had entered it. The ring only
-                // arrived there, so the arrows still step on until Enter.
-                this.arrivedIn = this.deepActiveElement() === el ? el : null;
 
                 // CRITICAL FIX: Ensure contenteditable elements don't auto-activate
                 // Some browsers/sites may still try to focus the contenteditable
