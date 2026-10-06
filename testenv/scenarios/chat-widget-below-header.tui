@@ -1,0 +1,7 @@
+# ArrowDown from a header button goes down the page, not to the chat widget in the corner below it (HubSpot).
+pages/chat-widget-below-header.html
+key:ArrowDown
+key:ArrowRight
+expect:css=#header-start
+key:ArrowDown
+expect:css=#hero-start

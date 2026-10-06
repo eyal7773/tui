@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Chat widget below a header</title>
+<style>
+  body { font: 16px sans-serif; margin: 0; }
+  header { position: sticky; top: 0; height: 80px; background: #fff; border-bottom: 1px solid #ccc;
+           display: flex; justify-content: space-between; align-items: center; padding: 0 60px; }
+  .hero { text-align: center; padding: 300px 0 0; }
+  .hero a { display: inline-block; padding: 16px 30px; border: 2px solid #f50; margin: 0 10px; }
+  #chat { position: fixed; right: 0; bottom: 0; width: 282px; height: 277px; border: 0; background: #eee; }
+</style></head>
+<body>
+  <!-- A chat widget pinned in the bottom right corner, straight below the
+       header's Get started button. The hero's buttons are the next thing
+       down the page. -->
+  <header>
+    <a id="logo" href="#home">Logo</a>
+    <a id="header-start" href="#start" style="margin-right: 100px">Get started free</a>
+  </header>
+  <div class="hero">
+    <a id="demo" href="#demo">Get a demo</a>
+    <a id="hero-start" href="#start2">Get started free</a>
+  </div>
+  <p style="height: 2000px"></p>
+  <iframe id="chat" title="Chat Widget" srcdoc="<button>Chat</button>"></iframe>
+</body></html>

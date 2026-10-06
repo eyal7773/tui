@@ -693,6 +693,20 @@ class SpatialEngine {
         return !(parent && this.composedClosest(parent, 'article, aside, main, section'));
     }
 
+    /**
+     * Is cand in a small box pinned at the foot of the window, such as a chat
+     * widget or a Back to Top button, apart from where the ring is? Neither
+     * a bar across the window nor a column down it.
+     */
+    isFootWidget(cand, currentEl) {
+        const floating = this.pinnedAncestor(cand);
+        if (!floating || this.composedContains(floating, currentEl)) return false;
+        const fb = floating.getBoundingClientRect();
+        const bar = fb.width >= window.innerWidth * 0.5;
+        const col = fb.height >= fb.width * 1.5 && fb.height >= window.innerHeight * 0.3;
+        return !bar && !col && fb.bottom >= window.innerHeight - 80 && fb.top > window.innerHeight * 0.3;
+    }
+
     /** The nearest ancestor-or-self that is position fixed or sticky, or null. */
     pinnedAncestor(node) {
         for (; node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
@@ -2768,6 +2782,16 @@ class SpatialEngine {
                             score += 1000;
                         }
                     }
+                } else if (targetIsSticky && currentIsSticky && currentEl && this.isFootWidget(cand, currentEl) &&
+                           !this.adjoinsRing(cand, currentRect)) {
+                    // The same widget is no nearer from a pinned header. On
+                    // HubSpot the chat window floats in the bottom right
+                    // corner, straight below the header's "Get started"
+                    // button, and ArrowDown from there went to the chat
+                    // rather than down the page. Only a widget at the foot
+                    // of the window: a header's menus hang from the top.
+                    if (this.canScrollPage(key)) return;
+                    score += 1000;
                 }
             }
 
