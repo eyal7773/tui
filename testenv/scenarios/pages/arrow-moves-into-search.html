@@ -1,0 +1,31 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Arrow moves focus into the search box</title>
+<style>
+  body { font: 16px sans-serif; margin: 0; }
+  header { display: flex; justify-content: space-between; padding: 8px 40px; background: #eee; }
+  .search { margin: 24px auto; width: 500px; }
+  .search input { width: 100%; height: 40px; }
+  nav { display: flex; gap: 12px; margin: 0 auto; width: 500px; }
+</style></head>
+<body>
+  <!-- A portal's own script hears the arrows on the window, before the
+       extension: ArrowUp from its tab bar focuses the search box. Every
+       arrow then stayed in the box, so the header above it could not be
+       reached. -->
+  <header>
+    <a id="logo" href="#home">Example portal</a>
+    <button id="profile">Profile</button>
+  </header>
+  <div class="search"><input id="search" type="text" aria-label="Search"></div>
+  <nav>
+    <button class="tab" id="tab-1">Favourites</button>
+    <button class="tab" id="tab-2">All apps</button>
+  </nav>
+  <script>
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' && document.activeElement.classList.contains('tab')) {
+        document.getElementById('search').focus();
+      }
+    }, true);
+  </script>
+</body></html>

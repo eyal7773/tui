@@ -1,0 +1,11 @@
+# A page script that moves focus into its search box on the same arrow press kept every arrow in the box, so the header above it could not be reached.
+pages/arrow-moves-into-search.html
+start:css=#tab-2
+key:ArrowLeft
+expect:css=#tab-1
+key:ArrowUp
+expect:css=.search
+key:ArrowUp
+expect:css=#logo
+key:ArrowRight
+expect:css=#profile

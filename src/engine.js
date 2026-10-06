@@ -97,6 +97,10 @@ class SpatialEngine {
             e.stopImmediatePropagation();
             this.handleInteraction(e);
         }, { capture: true });
+        // When focus last moved, so a key press can tell whether the page
+        // moved it while hearing that same key (see isUntouchedBox).
+        this.lastFocusAt = -1;
+        document.addEventListener('focusin', (e) => { this.lastFocusAt = e.timeStamp; }, { capture: true });
         // NOTE: We keep scroll passive and bubbling as scroll doesn't usually get trapped like keys
         // Captured on the document rather than heard on the window: scroll does
         // not bubble, so a carousel scrolling its own box (BBC's "Recommended
@@ -617,19 +621,24 @@ class SpatialEngine {
     }
 
     /**
-     * Is the focused text box one the page put the user in, untouched since?
-     * A portal that focuses its search box as it loads kept every arrow
-     * inside it, so the header and the profile menu above it could not be
-     * reached; a box the ring arrives at is only entered with Enter. A plain
-     * arrow before the user has done anything steps out of it instead. Any
+     * Is the focused text box one the page put the user in, rather than one
+     * they entered? A box the ring arrives at is only entered with Enter. A
+     * portal that focused its search box as it loaded kept every arrow inside
+     * it, and so did one whose own script hears the arrows before the
+     * extension: ArrowUp from its tab bar moved focus into the search box,
+     * and from there the header and the profile menu could not be reached.
+     * A plain arrow before the user has done anything, or one whose own
+     * press moved focus, steps out instead, from where the ring stands. Any
      * other key is typing, and from then on the box keeps its arrows.
      */
     isUntouchedBox(e) {
-        if (this.userHasActed) return false;
         const plainArrow = !!e.key && e.key.startsWith('Arrow') &&
             !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey;
-        if (!plainArrow) this.userHasActed = true;
-        return plainArrow;
+        if (!plainArrow) {
+            this.userHasActed = true;
+            return false;
+        }
+        return !this.userHasActed || this.lastFocusAt >= e.timeStamp;
     }
 
     /**

@@ -1,0 +1,11 @@
+# The search box a page script moved focus to is still entered with Enter, and then the arrows move the caret.
+pages/arrow-moves-into-search.html
+start:css=#tab-2
+key:ArrowLeft
+key:ArrowUp
+key:Enter
+type:mail
+key:ArrowLeft
+expect-not:css=#profile
+expect-not:css=#logo
+eval:document.activeElement.id + ' caret at ' + document.activeElement.selectionStart
