@@ -1,0 +1,6 @@
+# Once the user types in a text box the page focused, the arrows move the caret again.
+pages/page-focused-search.html
+type:mail
+key:ArrowLeft
+expect-not:css=#logo
+eval:document.activeElement.id + ' caret at ' + document.activeElement.selectionStart

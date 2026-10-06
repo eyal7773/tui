@@ -617,6 +617,22 @@ class SpatialEngine {
     }
 
     /**
+     * Is the focused text box one the page put the user in, untouched since?
+     * A portal that focuses its search box as it loads kept every arrow
+     * inside it, so the header and the profile menu above it could not be
+     * reached; a box the ring arrives at is only entered with Enter. A plain
+     * arrow before the user has done anything steps out of it instead. Any
+     * other key is typing, and from then on the box keeps its arrows.
+     */
+    isUntouchedBox(e) {
+        if (this.userHasActed) return false;
+        const plainArrow = !!e.key && e.key.startsWith('Arrow') &&
+            !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey;
+        if (!plainArrow) this.userHasActed = true;
+        return plainArrow;
+    }
+
+    /**
      * Is cand inside a pinned box that lies right against the ring's box? A
      * menu opened from a button is placed fixed under it, and it is that
      * button's next step, not a floating widget to be passed over. On Argo CD
@@ -727,7 +743,7 @@ class SpatialEngine {
         // Nor does a text box out of sight: Merriam-Webster autofocuses a
         // search box parked above the window, and the first ArrowDown went
         // to a box the user could not see.
-        if (this.shouldTrapArrows(active) && !this.isOutOfSight(active)) {
+        if (this.shouldTrapArrows(active) && !this.isOutOfSight(active) && !this.isUntouchedBox(e)) {
             if (e.key === 'Escape') {
                 // Return focus to wrapper if possible, otherwise blur
                 const parent = active.parentElement;

@@ -1,0 +1,6 @@
+# A text box the page focused as it loaded kept every arrow, so the header above it could not be reached.
+pages/page-focused-search.html
+key:ArrowUp
+expect:css=#logo
+key:ArrowRight
+expect:css=#profile
