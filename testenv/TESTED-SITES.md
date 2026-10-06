@@ -210,11 +210,46 @@ and a recheck.
 | WebMD | webmd.com | Topic lists, story cards | - |
 | NHS | nhs.uk | Full-width service links | - |
 | Allrecipes | allrecipes.com | Recipe card rows | - |
+| Food Network | foodnetwork.com | Newsletter modal keeps the ring | - |
+| Serious Eats | seriouseats.com | Full-width lead photo link, card rows | - |
+| trivago | trivago.com | Search form, deal rows | - |
+| Agoda | agoda.com | Search form, promo cards | - |
+| United | united.com | Booking form, ad card rows | - |
+| Delta | delta.com | OneTrust banner that focuses itself: the arrows step into it | - |
+| Southwest | southwest.com | Booking panel, feedback tab pinned on the right | - |
+| Uber | uber.com | City buttons, carousel arrows | - |
+| Lyft | lyft.com | Hero buttons, product sections | - |
+| Healthline | healthline.com | Closed menu kept inert over the page: ArrowDown spent every try on its buttons and the ring never moved | 75b9789 |
+| Instacart | instacart.com | Store cards, delivery rows | - |
+| Walgreens | walgreens.com | Promo rows, footer | - |
+| Ulta Beauty | ulta.com | Category rows, product carousels | - |
+| Gap | gap.com | Full-window promo links, slide arrows | - |
+| ASOS | asos.com | Search box its page focuses when the ring arrives kept every arrow; search mode then dims the page | 09521b0, 9cd33e2 |
+| Nordstrom | nordstrom.com | Page rewrites its document after load now and then: the arrows stopped working | 1a707d9 |
+| Zalando | zalando.com | Country chooser, footer links | - |
+| Newegg | newegg.com | Deal rows, category menu | - |
+| B&H | bhphotovideo.com | Hero tiles, Shop Now buttons | - |
+| Lenovo | lenovo.com | Cookie dialog over a dimmed page keeps the ring | - |
+| ASUS | asus.com | Large product tiles | - |
+| Logitech | logitech.com | Product rows | - |
+| Sony | sony.com | Story rows | - |
+| PlayStation | playstation.com | Full-width banner, carousel buttons | - |
+| Xbox | xbox.com | Game Pass tiles, console links | - |
+| LG | lg.com | Body positioned 124px down: every ring sat 124px below its element (right-to-left edition) | 42709c9 |
+| Nintendo | nintendo.com | Region chooser, game tiles | - |
+| EA | ea.com | TrustArc consent strip, game tiles | - |
+| Roblox | roblox.com | Login header, language combobox at the foot | - |
+| Chess.com | chess.com | Sidebar, Get Started buttons | - |
+| Lichess | lichess.org | Game lobby, side links | - |
+| ESPNcricinfo | espncricinfo.com | Story rows, score cards | - |
+| Goal | goal.com | Story cards, match strip | - |
+| Bleacher Report | bleacherreport.com | Score strip, story cards shifting as the page loads | - |
+| FIFA | fifa.com | OneTrust consent card over a dimmed page keeps the ring | - |
 
 ## Blocked (not counted)
 
 Answered the harness with a bot check, so the page itself was never seen:
-Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed out), Oracle (error page), Adidas (bot block), Macy's (access denied), Zillow (captcha), AliExpress (reCAPTCHA), The Telegraph (access denied), The Economist (human check).
+Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed out), Oracle (error page), Adidas (bot block), Macy's (access denied), Zillow (captcha), AliExpress (reCAPTCHA), The Telegraph (access denied), The Economist (human check), Skyscanner (captcha), DoorDash (Cloudflare check), Kroger (too many requests), Uniqlo (access denied), CVS (US only).
 
 ## Tested, no scenario
 
