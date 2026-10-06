@@ -1,0 +1,20 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Wrapper focus pulled into the box</title>
+<style>
+  body { font: 16px sans-serif; margin: 0; }
+  .bar { padding: 8px 40px; text-align: right; }
+  #searchbar { margin: 10px 420px; }
+  #q { width: 760px; padding: 8px; }
+  main { padding: 60px 420px; }
+</style></head>
+<body>
+  <!-- Whenever the search box's container takes focus, the page's script
+       passes it on to the box itself, as ASOS does. -->
+  <div class="bar"><a id="app" href="#app">Download our new app</a></div>
+  <div id="searchbar"><input id="q" type="search" placeholder="Search for items and brands"></div>
+  <main><a id="women" href="#women">Shop women</a> <a id="men" href="#men">Shop men</a></main>
+  <script>
+    const bar = document.getElementById('searchbar');
+    bar.addEventListener('focus', () => document.getElementById('q').focus());
+  </script>
+</body></html>

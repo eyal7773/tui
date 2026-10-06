@@ -1,0 +1,14 @@
+# The ring arriving at a search box whose page pulls focus into it steps on with the next arrow; typing stays in it: every arrow stayed in the box (ASOS).
+pages/wrapper-focus-pulled-in.html
+key:ArrowDown
+expect:css=#app
+key:ArrowDown
+expect:css=#q
+key:ArrowDown
+expect:css=#women
+key:ArrowUp
+expect:css=#q
+key:Enter
+type:jeans
+key:ArrowDown
+expect:css=#q
