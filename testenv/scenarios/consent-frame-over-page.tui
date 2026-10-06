@@ -1,0 +1,12 @@
+# ArrowDown past the last button of a consent dialog in a frame over the whole window keeps the ring on that button: no ring was left anywhere (Formula 1).
+pages/consent-frame-over-page.html
+key:ArrowDown
+key:ArrowDown*4
+wait:300
+expect:css=#manage
+key:ArrowDown
+wait:300
+expect:css=#manage
+key:ArrowUp
+wait:300
+expect:css=#essential

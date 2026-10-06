@@ -128,6 +128,7 @@ class SpatialEngine {
             else if ('tuiFrameEnter' in data) this.acceptFrameEntry(e);
             else if ('tuiFrameAccept' in data) this.handleFrameAccept(e);
             else if ('tuiFrameStep' in data) this.stepInFromEdge(e);
+            else if ('tuiFrameBack' in data) this.takeRingBack(e);
         });
 
         // Passive interaction listeners to sync state without interference
@@ -3183,6 +3184,7 @@ class SpatialEngine {
         if (!box && this.isSubframe && this.leaveFrame(key)) return;
         if (!box && this.isOverCoveredPage(current)) {
             LOG.event('stay', { why: 'over-covered-page' });
+            this.stepStayed = true;
             return;
         }
         // The user is scrolling on, away from where the ring arrived: a
@@ -3457,7 +3459,27 @@ class SpatialEngine {
             this.frameExitOrigin = { el: frame, rect: { left, right, top, bottom, width: right - left, height: bottom - top } };
         }
         this.userHasActed = true;
+        this.stepStayed = false;
         this.navigate(key);
+        // Nothing out here either, and the page is covered: the ring goes
+        // back to where it was in the frame. Formula 1's consent dialog is a
+        // frame over the whole window, and ArrowDown past its last button
+        // left no ring anywhere.
+        if (this.stepStayed && this.lastActiveElement === frame && frame.contentWindow) {
+            frame.focus();
+            frame.contentWindow.postMessage({ tuiFrameBack: key }, '*');
+            LOG.event('frame-back', { key: key, frame: LOG.describe(frame) });
+        }
+    }
+
+    /** The frame's half of a step its parent could not take: the ring comes back. */
+    takeRingBack(e) {
+        if (e.source !== window.parent || !this.isEnabled) return;
+        const last = this.lastActiveElement;
+        if (!last || !last.isConnected) return;
+        this.isActiveMode = true;
+        try { last.focus({ preventScroll: true }); } catch (err) { /* the ring still shows */ }
+        this.highlight(last);
     }
 
     broadcastStatus() {

@@ -1,0 +1,14 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Consent frame over the page</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  iframe { position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+</style></head>
+<body>
+  <!-- A consent dialog drawn in a frame over the whole window, as Formula 1's
+       is. The page behind cannot be reached. -->
+  <a href="#a">Latest news</a>
+  <p style="height: 2000px"></p>
+  <a href="#b">Results</a>
+  <iframe id="consent" title="Consent" src="consent-frame-inner.html"></iframe>
+</body></html>
