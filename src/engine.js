@@ -615,9 +615,12 @@ class SpatialEngine {
      * ArrowDown past its last link scrolled the page behind 300px.
      */
     isOverCoveredPage(el) {
-        if (!el || el === document.body || el === document.documentElement) return false;
-        const pinned = this.pinnedAncestor(el);
-        return !!pinned && window.getComputedStyle(pinned).position === 'fixed' && !!this.windowCover();
+        // Any fixed box up the chain: Yahoo's consent dialog keeps its
+        // buttons in a sticky row inside the fixed one.
+        for (let node = el; node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
+            if (node.nodeType === 1 && window.getComputedStyle(node).position === 'fixed') return !!this.windowCover();
+        }
+        return false;
     }
 
     /**

@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Dialog with sticky buttons</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  #consent { position: fixed; inset: 0; background: rgba(0,0,0,.2); }
+  #box { position: relative; margin: 100px auto; width: 500px; background: #fff; padding: 20px; }
+  #buttons { position: sticky; bottom: 0; background: #fff; padding: 10px 0; }
+</style></head>
+<body>
+  <!-- A consent dialog on a fixed backdrop over a long page, its buttons in
+       a sticky row inside it. The page behind cannot be reached. -->
+  <a href="#s1">Story one</a>
+  <p style="height: 2700px"></p>
+  <a href="#s2">Story two</a>
+  <div id="consent">
+    <div id="box">
+      <p>We value your privacy. <a id="partners" href="#partners">Our partners</a></p>
+      <div id="buttons"><button id="reject">Reject all</button> <button id="accept">Accept all</button></div>
+    </div>
+  </div>
+</body></html>

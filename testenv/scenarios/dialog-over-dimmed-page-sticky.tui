@@ -1,0 +1,6 @@
+# ArrowDown past a consent dialog's buttons, in a sticky row inside its fixed backdrop, stays put: it scrolled the page behind (Yahoo Finance).
+pages/dialog-sticky-buttons.html
+key:ArrowDown
+key:ArrowDown*4
+expect:css=#accept
+eval:(() => { if (scrollY) throw new Error('the page behind scrolled to ' + scrollY); return scrollY; })()
