@@ -170,6 +170,46 @@ and a recheck.
 | Squarespace | squarespace.com | Feature tabs, slide carousel buttons | - |
 | Wix | wix.com | Video hero buttons, cookie strip, sticky header menus | - |
 | GoDaddy | godaddy.com | Domain search, tabbed offers, animated cards | - |
+| HubSpot | hubspot.com | Chat widget in the bottom corner took ArrowDown from the pinned header | ec192dc |
+| Atlassian | atlassian.com | Product cards, tabbed sections | - |
+| Notion | notion.com | Customer logo row, large "Try it" cards | - |
+| Figma | figma.com | Video frames, event bar pinned at the foot | - |
+| Canva | canva.com | Template previews, feature cards | - |
+| Trello | trello.com | Feature tabs, carousel | - |
+| Asana | asana.com | Card carousel and its arrows | - |
+| monday.com | monday.com | Product cards, slide buttons | - |
+| Twilio | twilio.com | Consent dialog over the page keeps the ring | - |
+| Stripe | stripe.com | Hero, cookie strip, product rows | - |
+| Zendesk | zendesk.com | Long animated stretch: once the ring slid up behind the pinned header, ArrowDown jumped back up to the header's menu | b690cc2 |
+| Docker | docker.com | OneTrust strip at the foot keeps the ring, Down scrolls the page under it | - |
+| Kubernetes | kubernetes.io | Hero buttons, case study rows | - |
+| React | react.dev | Code examples, video cards | - |
+| Vue.js | vuejs.org | Hero, sponsor rows | - |
+| Rust | rust-lang.org | Full-width buttons, section links | - |
+| PHP | php.net | News column, sidebar | - |
+| Kotlin | kotlinlang.org | Cookie dialog over a dimmed page keeps the ring | - |
+| Microsoft Learn | learn.microsoft.com | Alert bar, link lists, footer | - |
+| Google Cloud | cloud.google.com | Product accordion, floating "Ask" button | - |
+| DigitalOcean | digitalocean.com | TrustArc consent strip, product cards | - |
+| Heroku | heroku.com | Hero, customer rows, footer | - |
+| Vercel | vercel.com | Pinned scroll-through hero with nothing to step to: Down scrolls on | - |
+| Netlify | netlify.com | Animated panel with nothing to step to; floating cookie card reached with Up | - |
+| JetBrains | jetbrains.com | Cookie dialog over a dimmed page keeps the ring | - |
+| Visual Studio Code | code.visualstudio.com | Download dropdown button, feature links | - |
+| SourceForge | sourceforge.net | Project lists, dismissable bar | - |
+| Bitbucket | bitbucket.org | Video controls, content blocks | - |
+| Ubuntu | ubuntu.com | Product cards, full-width links | - |
+| Debian | debian.org | News column, "More..." links | - |
+| Go | go.dev | Closed menu drawer's link at exactly the window's right edge took ArrowRight off the page | 02fddcf |
+| Fandom | fandom.com | Wiki cards, trending rows | - |
+| wikiHow | wikihow.com | Article cards, closable bar | - |
+| Quizlet | quizlet.com | Ketch consent card over a dimmed page keeps the ring | - |
+| Duolingo | duolingo.com | Long animated stretch: Down scrolls on to the app store buttons | - |
+| TED | ted.com | Talk cards, rows | - |
+| Mayo Clinic | mayoclinic.org | Link lists, language button | - |
+| WebMD | webmd.com | Topic lists, story cards | - |
+| NHS | nhs.uk | Full-width service links | - |
+| Allrecipes | allrecipes.com | Recipe card rows | - |
 
 ## Blocked (not counted)
 
