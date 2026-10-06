@@ -1,0 +1,7 @@
+# The arrows still work after the page rewrites its document with document.open(): they only scrolled, as if the extension were gone (Nordstrom, now and then).
+pages/document-rewritten.html
+wait:2500
+key:ArrowDown
+expect:css=#one
+key:ArrowDown
+expect:css=#two

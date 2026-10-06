@@ -73,25 +73,31 @@ class SpatialEngine {
         }
     }
 
-    init() {
-        console.log('[TUI Spatial] Initializing...');
-        this.loadSettings();
-
-        // Create Spotlight Element
-        this.createSpotlight();
-
+    /**
+     * Listens on the document and the window. Run again when the page
+     * rewrites its document (see watchDocument): document.open() erases
+     * every listener on both. The handlers are made once and kept, so a
+     * second run adds nothing where the listeners are still in place.
+     */
+    listen() {
+        const handlers = this.handlers || (this.handlers = new Map());
+        let n = 0;
+        const on = (target, type, fn, options) => {
+            const key = n++;
+            if (!handlers.has(key)) handlers.set(key, fn);
+            target.addEventListener(type, handlers.get(key), options);
+        };
         // Use Capture Phase to intercept events before the page traps them
         // A key whose press the engine took has its release taken too. The
         // page never saw the keydown, so it must not act on the keyup either:
         // Wikipedia toggles its menu checkbox on Enter's keyup, which undid the
         // click Enter had just made, and the menu never opened.
-        this.swallowedKeys = new Set();
-        document.addEventListener('keydown', (e) => {
+        on(document, 'keydown', (e) => {
             const wasPrevented = e.defaultPrevented;
             this.handleKeydown(e);
             if (!wasPrevented && e.defaultPrevented) this.swallowedKeys.add(e.key);
         }, { capture: true });
-        document.addEventListener('keyup', (e) => {
+        on(document, 'keyup', (e) => {
             if (!this.swallowedKeys.delete(e.key)) return;
             e.preventDefault();
             e.stopImmediatePropagation();
@@ -99,25 +105,21 @@ class SpatialEngine {
         }, { capture: true });
         // When focus last moved, so a key press can tell whether the page
         // moved it while hearing that same key (see isUntouchedBox).
-        this.lastFocusAt = -1;
-        document.addEventListener('focusin', (e) => {
+        on(document, 'focusin', (e) => {
             this.lastFocusAt = e.timeStamp;
             if (e.target !== this.arrivedIn) this.arrivedIn = null;
         }, { capture: true });
-        // A text box the ring arrived at whose page pulled focus into it (see
-        // focusElement), until the user enters it, types or clicks.
-        this.arrivedIn = null;
-        document.addEventListener('mousedown', () => { this.arrivedIn = null; }, { capture: true, passive: true });
+        on(document, 'mousedown', () => { this.arrivedIn = null; }, { capture: true, passive: true });
         // NOTE: We keep scroll passive and bubbling as scroll doesn't usually get trapped like keys
         // Captured on the document rather than heard on the window: scroll does
         // not bubble, so a carousel scrolling its own box (BBC's "Recommended
         // audio") never reached a window listener and the ring was left where
         // the card had been until something else moved it.
-        document.addEventListener('scroll', () => this.handleScroll(), { passive: true, capture: true });
+        on(document, 'scroll', () => this.handleScroll(), { passive: true, capture: true });
 
         // A frame the ring stepped into hands the keyboard back (leaveFrame),
         // and a frame that holds the page is stepped into (offerFrameEntry).
-        window.addEventListener('message', (e) => {
+        on(window, 'message', (e) => {
             const data = e.data;
             if (!data || typeof data !== 'object') return;
             if ('tuiFrameExit' in data) this.handleFrameExit(e);
@@ -127,15 +129,61 @@ class SpatialEngine {
         });
 
         // Passive interaction listeners to sync state without interference
-        document.addEventListener('mousedown', (e) => this.handleInteraction(e), { passive: true });
-        document.addEventListener('click', (e) => this.handleInteraction(e), { passive: true });
-        document.addEventListener('keyup', (e) => this.handleInteraction(e), { passive: true });
+        on(document, 'mousedown', (e) => this.handleInteraction(e), { passive: true });
+        on(document, 'click', (e) => this.handleInteraction(e), { passive: true });
+        on(document, 'keyup', (e) => this.handleInteraction(e), { passive: true });
 
         // Handle window resize to update spotlight position if needed
-        window.addEventListener('resize', () => {
+        on(window, 'resize', () => {
             if (this.textMode) this.updateCaret();
             else if (this.lastActiveElement) this.highlight(this.lastActiveElement);
         });
+
+    }
+
+    /**
+     * Picks the page back up after it rewrote its whole document. Nordstrom's
+     * page does that after it loads, now and then: document.open() erases
+     * every listener and the new document holds nothing of ours, so the
+     * arrows only scrolled the page as if the extension were not there. The
+     * document node itself stays, and an observer on it sees its root
+     * element replaced.
+     */
+    watchDocument() {
+        const pickUp = () => {
+            if (this.watchedRoot === document.documentElement || !document.documentElement) return;
+            // The rewritten page is still being written: wait for its body.
+            if (!document.body) {
+                document.addEventListener('DOMContentLoaded', pickUp, { once: true });
+                return;
+            }
+            this.watchedRoot = document.documentElement;
+            this.listen();
+            this.observer.observe(document.body, this.observerOptions);
+            if (this.bodyResizeObserver) this.bodyResizeObserver.observe(document.body);
+            this.createSpotlight();
+            this.injectMenu();
+            this.candidatesDirty = true;
+            LOG.event('document-rewritten', {});
+        };
+        this.watchedRoot = document.documentElement;
+        this.documentObserver = new MutationObserver(pickUp);
+        this.documentObserver.observe(document, { childList: true });
+    }
+
+    init() {
+        console.log('[TUI Spatial] Initializing...');
+        this.loadSettings();
+
+        // Create Spotlight Element
+        this.createSpotlight();
+
+        this.swallowedKeys = new Set();
+        this.lastFocusAt = -1;
+        // A text box the ring arrived at whose page pulled focus into it (see
+        // focusElement), until the user enters it, types or clicks.
+        this.arrivedIn = null;
+        this.listen();
 
         // Dynamic DOM Observer
         // Marks candidates dirty so we re-scan when DOM changes
@@ -162,6 +210,7 @@ class SpatialEngine {
             attributeFilter: ['style', 'class', 'hidden', 'disabled']
         };
         this.observer.observe(document.body, this.observerOptions);
+        this.watchDocument();
 
         // An image that finishes loading shifts the page without any mutation;
         // the body growing is the sign of it.

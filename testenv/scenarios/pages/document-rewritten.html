@@ -1,0 +1,17 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Document rewritten</title></head>
+<body>
+  <!-- After it loads, the page rewrites its whole document with
+       document.open() and write(), which erases every listener on the
+       document and the window. Nordstrom's page does this now and then. -->
+  <a id="old" href="#old">Before</a>
+  <script>
+    setTimeout(() => {
+      document.open();
+      document.write('<!doctype html><html><body style="font:16px sans-serif;margin:40px">' +
+        '<a id="one" href="#one">One</a><p style="height:300px"></p><a id="two" href="#two">Two</a>' +
+        '<p style="height:2000px"></p></body></html>');
+      document.close();
+    }, 1000);
+  </script>
+</body></html>
