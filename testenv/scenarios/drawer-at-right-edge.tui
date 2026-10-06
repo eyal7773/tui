@@ -1,0 +1,7 @@
+# ArrowRight never steps into a closed drawer whose links start at exactly the window's right edge, out of sight (go.dev).
+pages/drawer-at-right-edge.html
+key:ArrowDown
+expect:css=#logo
+key:ArrowRight
+expect-not:css=#drawer-learn
+expect-not:css=#drawer-home

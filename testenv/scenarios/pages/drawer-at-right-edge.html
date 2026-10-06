@@ -1,0 +1,20 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Drawer at the right edge</title>
+<style>
+  body { font: 16px sans-serif; margin: 0; overflow-x: hidden; }
+  header { position: fixed; top: 0; left: 0; right: 0; height: 64px; background: #fff; border-bottom: 1px solid #ccc; padding: 20px 24px; box-sizing: border-box; }
+  #drawer { position: fixed; top: 0; left: 100%; width: 300px; height: 100vh; background: #eef; }
+  #drawer a { display: block; width: 114px; height: 64px; }
+  #cookies { position: fixed; left: 0; right: 0; bottom: 0; height: 56px; background: #333; color: #fff;
+             display: flex; justify-content: flex-end; align-items: center; gap: 20px; padding-right: 254px; }
+  #cookies a, #cookies button { color: #fff; }
+</style></head>
+<body>
+  <!-- A closed menu drawer parked just past the right edge of the window,
+       its home link at exactly x = the window's width. A cookie strip at
+       the foot ends with its Okay button. -->
+  <header><a id="logo" href="#home">Logo</a></header>
+  <div id="drawer"><a id="drawer-home" href="#home" tabindex="-1"></a><a id="drawer-learn" href="#learn">Learn</a></div>
+  <main style="padding: 120px 24px"><a id="story" href="#story">Get started</a><p style="height: 2000px"></p></main>
+  <div id="cookies"><a id="more" href="#more">Learn more.</a><button id="okay">Okay</button></div>
+</body></html>

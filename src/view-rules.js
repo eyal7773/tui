@@ -68,7 +68,10 @@
     if (!band) return true;   // no window to measure against; do not filter
 
     if (rect.bottom < band.top || rect.top > band.bottom) return false;
-    if (rect.right < band.left || rect.left > band.right) return false;
+    // Sideways it must overlap the window: go.dev parks its menu drawer's
+    // home link at exactly the right edge, not one pixel of it in sight, and
+    // ArrowRight from the cookie strip's Okay button put the ring there.
+    if (rect.right <= band.left || rect.left >= band.right) return false;
 
     return true;
   }

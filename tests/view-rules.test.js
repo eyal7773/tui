@@ -84,6 +84,9 @@ test('a drawer parked off to the side stays unreachable', () => {
   // the same margin as the fold would make them navigable while closed.
   assert.equal(withinReach(r(VIEW.width + 1, 100, 300, 600), VIEW), false);
   assert.equal(withinReach(r(-320, 100, 300, 600), VIEW), false);
+  // Right against the edge, outside it: go.dev's drawer link.
+  assert.equal(withinReach(r(VIEW.width, 0, 114, 64), VIEW), false);
+  assert.equal(withinReach(r(-114, 0, 114, 64), VIEW), false);
 });
 
 test('a rectangle touching a side edge still counts', () => {
