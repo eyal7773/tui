@@ -1,0 +1,8 @@
+# ArrowDown past the last link of a dialog over a dimmed page stays put: it scrolled the page behind the backdrop 300px a press (The Independent's membership offer).
+pages/dialog-over-dimmed-page.html
+key:ArrowDown
+key:ArrowDown*3
+expect:css=#login
+key:ArrowDown*2
+expect:css=#login
+eval:(() => { if (scrollY) throw new Error('the page behind scrolled to ' + scrollY); return scrollY; })()

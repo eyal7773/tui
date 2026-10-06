@@ -1,0 +1,28 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Dialog over a dimmed page</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  .story { display: block; margin: 20px 0; }
+  #backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); }
+  #offer { position: fixed; top: 150px; left: 50%; width: 420px; margin-left: -210px;
+           background: #7a0d1e; color: #fff; padding: 30px; text-align: center; }
+  #offer a, #offer button { color: #fff; }
+</style></head>
+<body>
+  <!-- A membership offer over a long page that a backdrop dims, the backdrop
+       and the offer two separate fixed boxes. Nothing behind can be reached,
+       so scrolling the page behind only moves what the user cannot use. -->
+  <a class="story" href="#s1">Story one</a>
+  <p style="height: 900px"></p>
+  <a class="story" href="#s2">Story two</a>
+  <p style="height: 900px"></p>
+  <a class="story" href="#s3">Story three</a>
+  <p style="height: 900px"></p>
+  <div id="backdrop"></div>
+  <div id="offer">
+    <button id="close" aria-label="Close">×</button>
+    <p>Join for $1</p>
+    <a id="join" href="#join">Become a member</a>
+    <p>Already a member? <a id="login" href="#login">Log in</a></p>
+  </div>
+</body></html>

@@ -608,6 +608,19 @@ class SpatialEngine {
     }
 
     /**
+     * Is el in a box pinned over a page that a backdrop covers? Scrolling
+     * the page then moves nothing the user can reach: the box stays where it
+     * is and the page slides by under the backdrop. The Independent's
+     * membership offer sits fixed over its dimmed front page, and each
+     * ArrowDown past its last link scrolled the page behind 300px.
+     */
+    isOverCoveredPage(el) {
+        if (!el || el === document.body || el === document.documentElement) return false;
+        const pinned = this.pinnedAncestor(el);
+        return !!pinned && window.getComputedStyle(pinned).position === 'fixed' && !!this.windowCover();
+    }
+
+    /**
      * Is el somewhere the user cannot see? Forbes focuses a link parked off
      * the right edge of the window as it loads, and the first ArrowDown
      * started from there, landing on its moving headline ticker instead of
@@ -1666,7 +1679,7 @@ class SpatialEngine {
                 success = true;
             } else {
                 // 5. Off-screen handling (scroll) - Only if NO candidate found
-                this.handleOffScreen(key, scrollBox || (current && this.scrollBoxOf(current, key)));
+                this.handleOffScreen(key, scrollBox || (current && this.scrollBoxOf(current, key)), current);
                 success = true; // Treat scroll as "success" to stop retrying
                 // Metric Tracking
                 this.safeSendMessage({
@@ -3018,8 +3031,12 @@ class SpatialEngine {
         return true;
     }
 
-    handleOffScreen(key, box) {
+    handleOffScreen(key, box, current) {
         if (!box && this.isSubframe && this.leaveFrame(key)) return;
+        if (!box && this.isOverCoveredPage(current)) {
+            LOG.event('stay', { why: 'over-covered-page' });
+            return;
+        }
         // The user is scrolling on, away from where the ring arrived: a
         // layout shift must not pull the page back to it (keepArrivalInView).
         // Cloudflare's animated hero shifts the layout all the time, and
