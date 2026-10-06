@@ -1,0 +1,6 @@
+# ArrowDown passes over a closed menu kept inert over the page: every try went to its buttons, each refused, and the ring never moved (Healthline).
+pages/inert-menu-over-page.html
+key:ArrowDown
+expect:css=#logo
+key:ArrowDown
+expect:css=#story

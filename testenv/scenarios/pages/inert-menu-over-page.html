@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Inert menu over the page</title>
+<style>
+  body { font: 16px sans-serif; margin: 0; }
+  header { position: fixed; top: 0; left: 0; right: 0; height: 400px; background: #fff; padding: 24px 48px; box-sizing: border-box; border-bottom: 1px solid #ccc; }
+  #menu { position: fixed; z-index: 2; top: 72px; left: 0; right: 0; background: #f4f4f4; }
+  #menu button { display: block; width: 1290px; margin: 0 0 0 55px; height: 40px; }
+  main { padding: 600px 150px 0; }
+</style></head>
+<body>
+  <!-- A menu the page has made inert: in the DOM and on screen, but nothing
+       in it can take focus. Healthline lays its closed menu over the page
+       this way; pages also make everything behind an open dialog inert. -->
+  <header><a id="logo" href="#home">Healthline home</a><div style="height: 330px; margin-top: 30px; background: #cde"></div></header>
+  <div id="menu" inert>
+    <button>Conditions</button><button>Well-being</button><button>Tools</button>
+    <button>Medications</button><button>Product Reviews</button><button>Resources</button>
+    <button>Find a doctor</button><button>Newsletters</button>
+  </div>
+  <main><a id="story" href="#story">What time should you go to sleep?</a><p style="height: 1200px"></p></main>
+</body></html>

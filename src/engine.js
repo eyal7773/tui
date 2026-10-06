@@ -2318,6 +2318,12 @@ class SpatialEngine {
                 }
             }
 
+            // Nothing inside an inert subtree can take focus. Healthline keeps
+            // its closed menu laid over the page as an inert box, and ArrowDown
+            // from the logo spent every try on its buttons, each refused, so
+            // the ring never moved.
+            if (this.composedClosest(el, '[inert]')) return false;
+
             // Near enough to the screen to be worth navigating to?
             // Not the viewport exactly: the next row down a column usually sits
             // just past the bottom edge, and clipping it there made ArrowDown
