@@ -8,6 +8,7 @@
   <meta name="description"
     content="A Chrome extension that turns search results, tables and lists into a keyboard-navigable interface, with a focus ring you can actually see.">
   <link rel="icon" href="icon.png">
+  <link rel="stylesheet" href="benefit/benefit-figure.css">
   <meta property="og:title" content="TUI Navigator">
   <meta property="og:description" content="Arrow keys, on every website.">
   <meta property="og:type" content="website">
@@ -251,6 +252,26 @@
       max-width: 64ch;
     }
 
+    /* ---- body figure (benefit/benefit-figure.css) ---- */
+
+    #week-figure {
+      --bf-accent: var(--phosphor);
+      --bf-ink: var(--ink);
+      --bf-dim: var(--ink-dim);
+      --bf-rule: var(--rule);
+      margin: 1.5rem 0 0;
+    }
+
+    #week-figure .bf-num {
+      font-family: var(--mono);
+    }
+
+    .week-note {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: var(--ink-dim);
+    }
+
     /* ---- install ---- */
 
     ol.steps {
@@ -444,6 +465,17 @@
           one. Click a row, then press <b>&darr; &uarr; &larr; &rarr;</b>.</p>
       </div>
     </div>
+
+    <section id="spared">
+      <h2>what it spares you</h2>
+      <p>A mouse keeps the hand gripping, the wrist bent and the arm reaching out to the side.
+        With the arrow keys the hands stay where they type. Here is roughly what an ordinary
+        week of browsing with the extension spares your body.</p>
+      <div id="week-figure"></div>
+      <p class="week-note">The week is an example, not anyone's data: five working days, opening
+        about 80 links and pressing about 400 arrows a day. The extension's stats page shows the
+        same figure for your own browsing, counted on your computer and never sent anywhere.</p>
+    </section>
 
     <section id="install">
       <h2>install</h2>
@@ -653,6 +685,25 @@
         paint(target);
         target.focus({ preventScroll: true });
       });
+    })();
+  </script>
+  <script src="benefit/benefit-rules.js"></script>
+  <script src="benefit/benefit-figure.js"></script>
+  <script>
+    // The typical week, drawn at once so the page does not jump, and played
+    // the first time it scrolls into view.
+    (function () {
+      var box = document.getElementById('week-figure');
+      if (!box || !window.TuiBenefitFigure) return;
+      var week = TuiBenefitRules.typicalWeek();
+      TuiBenefitFigure.render(box, week);
+      if (!('IntersectionObserver' in window)) return;
+      var seen = new IntersectionObserver(function (entries) {
+        if (!entries[0].isIntersecting) return;
+        seen.disconnect();
+        TuiBenefitFigure.render(box, week, { animate: true });
+      }, { threshold: 0.4 });
+      seen.observe(box);
     })();
   </script>
 </body>

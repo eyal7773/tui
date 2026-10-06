@@ -1,5 +1,6 @@
-// The recap decision lives in its own file so it can be tested without Chrome.
-importScripts('recap-rules.js');
+// The recap decision and the benefit figures live in their own files so they
+// can be tested without Chrome.
+importScripts('recap-rules.js', 'benefit-rules.js');
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('TUI Navigator installed.');
@@ -31,6 +32,10 @@ function initStorage() {
       keySequences: {},
       hourlyActivity: {},
       weekdayActivity: {},
+      // Runs of keys, each one a reach for the mouse that did not happen, and
+      // the day-by-day counts behind the dashboard's "today" (benefit-rules.js).
+      navBursts: 0,
+      dailyBenefits: {},
       // Weekly recap. installedAt is set here rather than on the first action,
       // because an install that is never used still ages. Anyone already running
       // an older build gets today's date, so their first week starts now.
@@ -46,16 +51,7 @@ function initStorage() {
       chrome.storage.local.set(missing);
     }
     // Sync in-memory cache from storage
-    localCache.totalActions = result.totalActions ?? defaults.totalActions;
-    localCache.pagesOpened = result.pagesOpened ?? defaults.pagesOpened;
-    localCache.keyBreakdown = result.keyBreakdown ?? { ...defaults.keyBreakdown };
-    localCache.dailyActions = result.dailyActions ?? {};
-    localCache.firstUseDate = result.firstUseDate ?? null;
-    localCache.sessionCount = result.sessionCount ?? 0;
-    localCache.keySequences = result.keySequences ?? {};
-    localCache.hourlyActivity = result.hourlyActivity ?? {};
-    localCache.weekdayActivity = result.weekdayActivity ?? {};
-    isInitialized = true;
+    fillCache(result);
   });
 }
 
@@ -162,15 +158,18 @@ const localCache = {
   sessionCount: 0,
   keySequences: {},
   hourlyActivity: {},
-  weekdayActivity: {}
+  weekdayActivity: {},
+  navBursts: 0,
+  dailyBenefits: {}
 };
 let isInitialized = false;
 
-// Rolling 2-key buffer for 3-key sequence tracking
-let lastTwoKeys = [];
+// When the last counted key came, to tell where a run of keys begins. Lost
+// when the worker sleeps, which only happens after a pause longer than a run's.
+let lastActionAt = null;
 
-// Initialize cache on service worker load
-chrome.storage.local.get(null, (result) => {
+/** Loads the in-memory cache from what storage holds. */
+function fillCache(result) {
   localCache.totalActions = result.totalActions ?? 0;
   localCache.pagesOpened = result.pagesOpened ?? 0;
   localCache.keyBreakdown = result.keyBreakdown ?? { ArrowUp: 0, ArrowDown: 0, ArrowLeft: 0, ArrowRight: 0 };
@@ -180,8 +179,16 @@ chrome.storage.local.get(null, (result) => {
   localCache.keySequences = result.keySequences ?? {};
   localCache.hourlyActivity = result.hourlyActivity ?? {};
   localCache.weekdayActivity = result.weekdayActivity ?? {};
+  localCache.navBursts = result.navBursts ?? 0;
+  localCache.dailyBenefits = result.dailyBenefits ?? {};
   isInitialized = true;
-});
+}
+
+// Rolling 2-key buffer for 3-key sequence tracking
+let lastTwoKeys = [];
+
+// Initialize cache on service worker load
+chrome.storage.local.get(null, fillCache);
 
 function updateBadge(tabId, state) {
   if (state.supported && state.enabled) {
@@ -204,16 +211,7 @@ function handleMetricEvent(payload) {
   if (!isInitialized) {
     // Retry once init completes
     chrome.storage.local.get(null, (result) => {
-      localCache.totalActions = result.totalActions ?? 0;
-      localCache.pagesOpened = result.pagesOpened ?? 0;
-      localCache.keyBreakdown = result.keyBreakdown ?? { ArrowUp: 0, ArrowDown: 0, ArrowLeft: 0, ArrowRight: 0 };
-      localCache.dailyActions = result.dailyActions ?? {};
-      localCache.firstUseDate = result.firstUseDate ?? null;
-      localCache.sessionCount = result.sessionCount ?? 0;
-      localCache.keySequences = result.keySequences ?? {};
-      localCache.hourlyActivity = result.hourlyActivity ?? {};
-      localCache.weekdayActivity = result.weekdayActivity ?? {};
-      isInitialized = true;
+      fillCache(result);
       handleMetricEvent(payload);
     });
     return;
@@ -239,6 +237,17 @@ function handleMetricEvent(payload) {
   if (payload.action === 'ENTER') {
     localCache.pagesOpened++;
   }
+
+  // What the keys spared the body (benefit-rules.js).
+  const rules = TuiBenefitRules;
+  const reach = rules.startsNewBurst(lastActionAt, now.getTime());
+  lastActionAt = now.getTime();
+  if (reach) localCache.navBursts++;
+  rules.addToDay(localCache.dailyBenefits, now, {
+    click: payload.action === 'ENTER',
+    arrow: payload.action === 'NAVIGATE' && localCache.keyBreakdown[payload.key] !== undefined,
+    reach
+  });
 
   // Daily activity + prune to 30 days
   localCache.dailyActions[today] = (localCache.dailyActions[today] || 0) + 1;
@@ -283,7 +292,9 @@ function handleMetricEvent(payload) {
     firstUseDate: localCache.firstUseDate,
     keySequences: localCache.keySequences,
     hourlyActivity: localCache.hourlyActivity,
-    weekdayActivity: localCache.weekdayActivity
+    weekdayActivity: localCache.weekdayActivity,
+    navBursts: localCache.navBursts,
+    dailyBenefits: localCache.dailyBenefits
   });
 }
 

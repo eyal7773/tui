@@ -38,7 +38,9 @@ function loadStats() {
     'sessionCount',
     'keySequences',
     'hourlyActivity',
-    'weekdayActivity'
+    'weekdayActivity',
+    'navBursts',
+    'dailyBenefits'
   ], (result) => {
     const totalActions  = result.totalActions  || 0;
     const pagesOpened   = result.pagesOpened   || 0;
@@ -57,6 +59,9 @@ function loadStats() {
     const daysUsing     = firstUseDate
       ? Math.max(1, Math.round((Date.now() - new Date(firstUseDate).getTime()) / 86400000))
       : 0;
+
+    // First, so it is on screen before the charts are drawn.
+    renderBenefits(result);
 
     // Header
     document.getElementById('days-subtitle').textContent =
@@ -99,6 +104,24 @@ function loadStats() {
 }
 
 // ── Helpers ──────────────────────────────────────────────
+
+/**
+ * The body figure. It plays the first time the page opens each day and is
+ * still after that: a reward seen on every visit stops being one.
+ */
+function renderBenefits(stats) {
+  const now = new Date();
+  const { total, today } = TuiBenefitRules.fromStats(stats, now);
+  const day = now.toISOString().slice(0, 10);
+  let played = null;
+  try { played = localStorage.getItem('tui-benefit-played'); } catch (e) { /* storage off: play */ }
+  TuiBenefitFigure.render(document.getElementById('benefit-figure'), total, {
+    today,
+    animate: played !== day,
+    emptyText: 'Every key press counts. Use the arrows and Enter on any page, and this fills in.'
+  });
+  try { localStorage.setItem('tui-benefit-played', day); } catch (e) { /* only means it plays again */ }
+}
 
 function getPrideMessage(total) {
   if (total < 10)   return 'Getting started — every keystroke counts.';

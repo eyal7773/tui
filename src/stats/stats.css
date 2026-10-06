@@ -280,3 +280,11 @@ body {
     gap: 16px;
   }
 }
+
+/* ── Body figure (benefit-figure.css) ── */
+#benefit-figure {
+  --bf-accent: var(--accent);
+  --bf-ink: var(--text);
+  --bf-dim: var(--text-dim);
+  --bf-rule: var(--bar-dim);
+}

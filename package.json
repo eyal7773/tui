@@ -6,7 +6,8 @@
     "sync-site-version": "node scripts/sync-site-version.js",
     "test": "node scripts/run-tests.js",
     "build-icons": "node scripts/build-icons.js",
-    "pull-reports": "node scripts/pull-reports.js"
+    "pull-reports": "node scripts/pull-reports.js",
+    "sync-site-figure": "node scripts/sync-site-figure.js"
   },
   "private": true
 }
