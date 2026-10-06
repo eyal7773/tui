@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Card header beside a pinned bar</title>
+<style>
+  body { font: 16px sans-serif; margin: 0; }
+  #top { position: fixed; top: 0; left: 0; right: 0; height: 100px; background: #fff;
+         border-bottom: 1px solid #ccc; display: flex; justify-content: space-between; align-items: center; padding: 0 80px; }
+  main { padding: 140px 80px 0; width: 600px; }
+  article { margin-bottom: 60px; }
+  article header a { font-size: 32px; display: block; }
+  .art { height: 400px; background: #63c; }
+</style></head>
+<body>
+  <!-- Each story's headline is in the article's own <header>, which is the
+       card's heading, not the page's banner. Nothing lies to its right but
+       the pinned bar's search button far above. -->
+  <header id="top">
+    <button id="topics">All topics</button>
+    <button id="search">Search</button>
+  </header>
+  <main>
+    <article>
+      <header><a id="first" href="#a">Trump's PAC won't pay taxpayers back</a></header>
+      <div class="art"></div>
+    </article>
+    <article>
+      <header><a id="second" href="#b">AI tools flood into underground markets</a></header>
+      <div class="art"></div>
+    </article>
+  </main>
+</body></html>

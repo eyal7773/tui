@@ -1,0 +1,6 @@
+# ArrowRight from a story headline in its article's <header>, nothing beside it, stays: it climbed into the pinned header's Search button (Axios).
+pages/card-header-beside-pinned-bar.html
+start:css=#second
+key:ArrowRight
+expect-not:css=#search
+eval:(() => { if (document.activeElement.id !== 'second') throw new Error('focus left for ' + document.activeElement.id); return 'stayed'; })()

@@ -675,6 +675,21 @@ class SpatialEngine {
             (along && box.right <= ringRect.left + gap && box.right >= ringRect.left - gap);
     }
 
+    /**
+     * Is el in the page's own header or navigation? A <header> inside an
+     * article, aside, main or section is only the heading of that card, not
+     * the page's banner. Axios puts each story's headline in one, and taken
+     * for the masthead it let ArrowRight from a headline with nothing beside
+     * it climb 400px up into the pinned header's Search button.
+     */
+    inPageBar(el) {
+        if (this.composedClosest(el, 'nav, [role="banner"], [role="navigation"]')) return true;
+        const header = this.composedClosest(el, 'header');
+        if (!header) return false;
+        const parent = this.composedParent(header);
+        return !(parent && this.composedClosest(parent, 'article, aside, main, section'));
+    }
+
     /** The nearest ancestor-or-self that is position fixed or sticky, or null. */
     pinnedAncestor(node) {
         for (; node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
@@ -2492,7 +2507,7 @@ class SpatialEngine {
         // is the first thing it meets. Penalised, ArrowDown from AWS's header
         // passed the frame's own toolbar for a table heading below it.
         const currentIsSticky = this.enteringFrame ||
-            (currentEl ? (this.isSticky(currentEl) || !!this.composedClosest(currentEl, 'header, nav, [role="banner"], [role="navigation"]')) : false);
+            (currentEl ? (this.isSticky(currentEl) || this.inPageBar(currentEl)) : false);
 
         const cover = this.windowCover();
         const focused = this.deepActiveElement();
