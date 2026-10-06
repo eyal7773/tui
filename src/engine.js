@@ -1611,8 +1611,17 @@ class SpatialEngine {
             // that had slid out of sight, and the page jumped back up.
             // In a box that scrolls on its own, the edge is the box's: Gmail
             // scrolls an open message inside the page, not the page itself.
+            // A bar pinned over the window's edge hides what is under it,
+            // so the edge is the bar's: on Zendesk, ArrowDown from a button
+            // scrolled up behind the pinned header went to the header's
+            // menu, as if that were below it.
             if (currentRect && mode !== 'extreme') {
                 const view = this.visibleBand(current);
+                if (current && current !== document.body) {
+                    const covered = this.coveredEdges(current);
+                    view.top = Math.max(view.top, covered.top);
+                    view.bottom = Math.min(view.bottom, window.innerHeight - covered.bottom);
+                }
                 const edge = key === 'ArrowDown' && currentRect.bottom <= view.top ? view.top
                     : key === 'ArrowUp' && currentRect.top >= view.bottom ? view.bottom : null;
                 if (edge !== null) {

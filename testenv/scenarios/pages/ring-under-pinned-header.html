@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Ring under a pinned header</title>
+<style>
+  body { font: 16px sans-serif; margin: 0; }
+  header { position: sticky; top: 0; height: 80px; background: #fff; border-bottom: 1px solid #ccc;
+           display: flex; gap: 40px; align-items: center; padding: 0 60px; z-index: 1; }
+  .hero { padding: 200px 0 0 560px; }
+  .hero a { display: inline-block; padding: 14px 24px; background: #111; color: #fff; }
+</style></head>
+<body>
+  <!-- A header pinned over the top of the window, a button, then a long
+       stretch of animation with nothing to step to. Scrolled on, the
+       button slides up behind the header. -->
+  <header>
+    <a id="logo" href="#home">Logo</a>
+    <span id="menu" role="menuitem" tabindex="0" style="margin-left: 460px">Solutions</span>
+    <a id="pricing" href="#pricing">Pricing</a>
+  </header>
+  <div class="hero"><a id="explore" href="#platform">Explore the platform</a></div>
+  <div style="height: 3000px"></div>
+  <a id="after" href="#after" style="margin-left: 560px">Customer stories</a>
+  <p style="height: 600px"></p>
+</body></html>

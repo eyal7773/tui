@@ -1,0 +1,8 @@
+# ArrowDown from a button scrolled up behind a pinned header goes on from under the header, not to the header's menu (Zendesk).
+pages/ring-under-pinned-header.html
+start:css=#explore
+key:ArrowDown*2
+key:ArrowDown
+expect-not:css=#menu
+expect-not:css=#pricing
+eval:(() => { if (scrollY < 600) throw new Error('the page went back up to ' + scrollY); return scrollY; })()
