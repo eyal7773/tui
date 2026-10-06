@@ -16,30 +16,71 @@
 (function (root) {
   'use strict';
 
-  const SVG_NS = 'http://www.w3.org/2000/svg';
-
-  // Front view, drawn in strokes so it takes the page's colours. The mouse
-  // and the arm reaching for it are the ghost: what does not happen.
+  // Someone at ease at their desk, drawn in the page's own colours. The
+  // twist is the extension's green focus ring: it steps from the wrist to the
+  // forearm to the shoulder the way it steps through a page, and it is what
+  // marks a place on the body. The mouse beside the keyboard has nothing to
+  // do and has fallen asleep; the arm that would have reached for it is the
+  // dashed ghost that fades away.
   const FIGURE = `
-    <svg class="bf-figure" viewBox="0 0 240 220" role="img"
-         aria-label="A person at a keyboard. Wrist, forearm and shoulder are highlighted; a reach for the mouse fades away.">
+    <svg class="bf-figure" viewBox="0 0 260 232" role="img"
+         aria-label="A person at a keyboard, smiling with eyes closed. A green focus ring marks the wrist, the forearm and the shoulder; the mouse beside the keyboard is asleep.">
+      <defs>
+        <filter id="bf-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2.5" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
+
+      <g class="bf-desk">
+        <rect class="bf-faint" x="8" y="198" width="244" height="30" rx="6" />
+        <path class="bf-line" d="M8 198 L252 198" />
+      </g>
+
+      <g class="bf-mug">
+        <path class="bf-steam" d="M40 160 C35 152 45 148 40 140" />
+        <path class="bf-steam bf-steam-2" d="M50 162 C45 154 55 150 50 142" />
+        <path class="bf-skin" d="M32 168 L58 168 L56 196 Q56 198 54 198 L36 198 Q34 198 34 196 Z" />
+        <path class="bf-line" d="M58 174 Q68 174 66 184 Q64 190 57 189" />
+      </g>
+
       <g class="bf-ghost">
-        <path d="M156 86 L196 140 L210 180" />
-        <rect x="202" y="178" width="16" height="24" rx="8" />
+        <path d="M156 104 C178 122 196 150 204 178" />
       </g>
+
+      <g class="bf-sleeper">
+        <path class="bf-line" d="M224 192 C234 192 238 196 248 196" />
+        <path class="bf-skin" d="M190 197 C189 186 197 180 207 180 C217 180 225 186 224 197 Z" />
+        <path class="bf-line" d="M207 180 L207 188" />
+        <path class="bf-line" d="M196 192 Q199 194 202 192" />
+        <text class="bf-z bf-z1" x="222" y="160">z</text>
+        <text class="bf-z bf-z2" x="232" y="146">z</text>
+        <text class="bf-z bf-z3" x="242" y="128">Z</text>
+      </g>
+
+      <g class="bf-person">
+        <path class="bf-sweater" d="M78 198 C78 150 80 116 96 104 Q120 94 144 104 C160 116 162 150 162 198 Z" />
+        <path class="bf-skin" d="M112 82 L112 98 Q120 103 128 98 L128 82 Z" />
+        <circle class="bf-skin" cx="120" cy="62" r="25" />
+        <path class="bf-hair" d="M95 60 C93 44 104 35 118 35 C134 34 147 43 145 58 C140 52 134 49 127 50 C120 44 108 46 101 52 C98 54 96 57 95 60 Z" />
+        <path class="bf-line" d="M117 36 C114 29 120 25 125 29" />
+        <path class="bf-line" d="M107 66 Q111 70 115 66" />
+        <path class="bf-line" d="M125 66 Q129 70 133 66" />
+        <path class="bf-line" d="M114 76 Q120 81 126 76" />
+        <circle class="bf-blush" cx="104" cy="73" r="4" />
+        <circle class="bf-blush" cx="136" cy="73" r="4" />
+        <path class="bf-arm" d="M96 108 C84 126 80 146 84 156 C88 168 94 178 100 186" />
+        <path class="bf-arm" d="M144 108 C156 126 160 146 156 156 C152 168 146 178 140 186" />
+        <rect class="bf-skin" x="76" y="186" width="88" height="12" rx="3" />
+        <path class="bf-keys" d="M84 192 L156 192" />
+        <circle class="bf-skin" cx="100" cy="187" r="6" />
+        <circle class="bf-skin" cx="140" cy="187" r="6" />
+      </g>
+
       <g class="bf-zones">
-        <circle class="bf-zone-shoulder" cx="156" cy="86" r="14" />
-        <line class="bf-zone-forearm" x1="168" y1="150" x2="146" y2="176" />
-        <circle class="bf-zone-wrist" cx="140" cy="186" r="9" />
-      </g>
-      <g class="bf-body">
-        <circle cx="120" cy="36" r="20" />
-        <path d="M120 56 L120 68" />
-        <path d="M92 168 L84 86 Q120 66 156 86 L148 168" />
-        <path d="M84 86 L70 148 L100 186" />
-        <path d="M156 86 L170 148 L140 186" />
-        <rect x="84" y="186" width="72" height="11" rx="3" />
-        <path d="M24 204 L216 204" />
+        <rect class="bf-ring bf-zone-wrist" x="128" y="175" width="25" height="24" rx="7" />
+        <rect class="bf-ring bf-zone-forearm" x="141" y="128" width="27" height="46" rx="10" />
+        <rect class="bf-ring bf-zone-shoulder" x="130" y="94" width="32" height="30" rx="9" />
       </g>
     </svg>`;
 

@@ -287,4 +287,5 @@ body {
   --bf-ink: var(--text);
   --bf-dim: var(--text-dim);
   --bf-rule: var(--bar-dim);
+  --bf-bg: var(--card-bg);
 }
