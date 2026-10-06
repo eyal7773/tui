@@ -144,11 +144,37 @@ and a recheck.
 | Netflix | netflix.com | Title cards, FAQ accordion | - |
 | Wolfram Alpha | wolframalpha.com | Autofocused input keeps the arrows until Escape, by design | - |
 | Cloudflare | cloudflare.com | Animated hero pulled every scroll back to its button; after scrolling, Down started above the window | 0bfa451 |
+| Instagram | instagram.com | Login form, footer link rows | - |
+| Facebook | facebook.com | Login form, footer language and link rows | - |
+| X | x.com | Login box the page focuses: the arrows step out of it | - |
+| TikTok | tiktok.com | Sidebar, video action buttons, ring following the feed as it snaps | - |
+| Daily Mail | dailymail.co.uk | Lead photo in an inline link, story columns | - |
+| The Independent | independent.co.uk | Membership offer over a dimmed page: ArrowDown past its last link scrolled the page behind | 21d861c |
+| New York Post | nypost.com | Story columns, lead photo links | - |
+| Axios | axios.com | Headline in its article's own `<header>`: ArrowRight with nothing beside it climbed into the pinned masthead | dd3dc63 |
+| Vox | vox.com | Story columns, rows of cards | - |
+| TIME | time.com | Section rows, newsletter buttons | - |
+| HuffPost | huffpost.com | Splash story, side column, toast | - |
+| BuzzFeed | buzzfeed.com | Numbered list cards, tabbed feed | - |
+| Business Insider | businessinsider.com | Story columns, section labels | - |
+| Investopedia | investopedia.com | Ticker frame, hero links, rate cards | - |
+| MarketWatch | marketwatch.com | Subscription offer in a frame over the page is ringed; Enter steps in | - |
+| Yahoo Finance | finance.yahoo.com | Consent dialog with a sticky button row over a dimmed page: ArrowDown past it scrolled the page behind | 21d861c, bf91fff |
+| Politico | politico.com | Ad written by a script into a frame with no src: the ring stopped on it | f206f81 |
+| Coinbase | coinbase.com | Price cards, asset rows | - |
+| CoinMarketCap | coinmarketcap.com | OneTrust strip focused below the window until a scroll slides it in; then its buttons | - |
+| Chase | chase.com | Full-width promo links, product cards | - |
+| Bank of America | bankofamerica.com | Sign-in panel, promo rows | - |
+| American Express | americanexpress.com | Card offers, rows | - |
+| Shopify | shopify.com | Tabs as `span[role=tab]`, store links | - |
+| Squarespace | squarespace.com | Feature tabs, slide carousel buttons | - |
+| Wix | wix.com | Video hero buttons, cookie strip, sticky header menus | - |
+| GoDaddy | godaddy.com | Domain search, tabbed offers, animated cards | - |
 
 ## Blocked (not counted)
 
 Answered the harness with a bot check, so the page itself was never seen:
-Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed out), Oracle (error page), Adidas (bot block), Macy's (access denied), Zillow (captcha).
+Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed out), Oracle (error page), Adidas (bot block), Macy's (access denied), Zillow (captcha), AliExpress (reCAPTCHA), The Telegraph (access denied), The Economist (human check).
 
 ## Tested, no scenario
 
