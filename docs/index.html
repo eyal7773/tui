@@ -259,7 +259,7 @@
       --bf-ink: var(--ink);
       --bf-dim: var(--ink-dim);
       --bf-rule: var(--rule);
-      --bf-bg: var(--paper);
+      --bf-bg: var(--panel);
       margin: 1.5rem 0 0;
     }
 
@@ -697,12 +697,13 @@
       var box = document.getElementById('week-figure');
       if (!box || !window.TuiBenefitFigure) return;
       var week = TuiBenefitRules.typicalWeek();
-      TuiBenefitFigure.render(box, week);
+      var images = 'benefit/body/';
+      TuiBenefitFigure.render(box, week, { images: images });
       if (!('IntersectionObserver' in window)) return;
       var seen = new IntersectionObserver(function (entries) {
         if (!entries[0].isIntersecting) return;
         seen.disconnect();
-        TuiBenefitFigure.render(box, week, { animate: true });
+        TuiBenefitFigure.render(box, week, { animate: true, images: images });
       }, { threshold: 0.4 });
       seen.observe(box);
     })();

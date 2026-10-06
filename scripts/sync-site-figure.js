@@ -16,7 +16,13 @@ const files = [
   ['src/stats/benefit-figure.css', 'benefit-figure.css']
 ];
 
-fs.mkdirSync(target, { recursive: true });
+// The pictures, rendered by testenv/render-body.js.
+const body = path.join(root, 'src', 'stats', 'body');
+for (const name of fs.readdirSync(body)) {
+  files.push([`src/stats/body/${name}`, `body/${name}`]);
+}
+
+fs.mkdirSync(path.join(target, 'body'), { recursive: true });
 for (const [from, name] of files) {
   fs.copyFileSync(path.join(root, from), path.join(target, name));
   console.log(`${from} -> docs/benefit/${name}`);

@@ -1,169 +1,17 @@
 /*
  * The body figure (benefit-figure.js). Colours come from the page through
  * five variables, so the stats page and the website each keep their own:
- *   --bf-accent  the focus ring, the sweater and the numbers
+ *   --bf-accent  the numbers, the glow behind each picture
  *   --bf-ink     text
- *   --bf-dim     secondary text and the outlines
- *   --bf-rule    the ghost and dividers
- *   --bf-bg      the surface the figure sits on, to fill shapes with
+ *   --bf-dim     secondary text
+ *   --bf-rule    borders and underlines
+ *   --bf-bg      the cards' surface
  * Shared with the website (docs/), copied there by scripts/sync-site-figure.js.
  */
 
 .bf {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1.5rem 2rem;
   color: var(--bf-ink);
 }
-
-.bf-art {
-  flex: 0 0 auto;
-  width: 230px;
-  max-width: 100%;
-  margin: 0 auto;
-}
-
-.bf-figure {
-  display: block;
-  width: 100%;
-  height: auto;
-  overflow: visible;
-}
-
-.bf-side {
-  flex: 1 1 18rem;
-  min-width: 0;
-}
-
-/* ── The figure ── */
-
-.bf-figure .bf-line,
-.bf-figure .bf-skin,
-.bf-figure .bf-hair,
-.bf-figure .bf-sweater,
-.bf-figure .bf-arm,
-.bf-figure .bf-keys,
-.bf-figure .bf-steam {
-  stroke: var(--bf-dim);
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.bf-figure .bf-line { fill: none; }
-.bf-figure .bf-skin { fill: var(--bf-bg); }
-.bf-figure .bf-faint { fill: var(--bf-dim); opacity: 0.07; }
-.bf-figure .bf-hair { fill: var(--bf-dim); }
-.bf-figure .bf-blush { fill: var(--bf-accent); opacity: 0.25; }
-.bf-figure .bf-sweater { fill: color-mix(in srgb, var(--bf-accent) 22%, var(--bf-bg)); }
-
-/* An arm is a thick sweater-coloured stroke inside a thin outline: the
-   outline is drawn first, as a shadow of the same path. */
-.bf-figure .bf-arm {
-  fill: none;
-  stroke: color-mix(in srgb, var(--bf-accent) 34%, var(--bf-bg));
-  stroke-width: 13;
-  paint-order: stroke;
-  filter: drop-shadow(0 0 0.6px var(--bf-dim)) drop-shadow(0 0 0.6px var(--bf-dim));
-}
-
-.bf-figure .bf-keys {
-  fill: none;
-  stroke-width: 2;
-  stroke-dasharray: 3 4;
-  opacity: 0.6;
-}
-
-.bf-figure .bf-steam {
-  fill: none;
-  stroke-width: 2;
-  opacity: 0.45;
-  animation: bf-steam 3.2s ease-in-out infinite;
-}
-
-.bf-figure .bf-steam-2 { animation-delay: 1.6s; }
-
-.bf-figure .bf-z {
-  fill: var(--bf-dim);
-  font: 600 11px ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
-  opacity: 0;
-  animation: bf-z 3.6s ease-in-out infinite;
-}
-
-.bf-figure .bf-z2 { font-size: 13px; animation-delay: 1.2s; }
-.bf-figure .bf-z3 { font-size: 16px; animation-delay: 2.4s; }
-
-.bf-ghost path {
-  fill: none;
-  stroke: var(--bf-dim);
-  stroke-width: 2.5;
-  stroke-dasharray: 5 6;
-  stroke-linecap: round;
-  opacity: 0;
-}
-
-/* The focus ring: the extension's own. Like the real one there is only
-   ever one, on the wrist until a row puts it on that row's place. */
-.bf-ring {
-  fill: var(--bf-accent);
-  fill-opacity: 0.08;
-  stroke: var(--bf-accent);
-  stroke-width: 2.5;
-  opacity: 0;
-  filter: url(#bf-glow);
-  transition: opacity 0.15s ease;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.bf:not([data-on]) .bf-zone-wrist,
-.bf[data-on="wrist"] .bf-zone-wrist,
-.bf[data-on="forearm"] .bf-zone-forearm,
-.bf[data-on="shoulder"] .bf-zone-shoulder {
-  opacity: 1;
-}
-
-/* ── Played once: the reach fades, the ring steps up the arm and comes
-   back to the wrist when the class is taken off ── */
-
-.bf-play .bf-ghost path {
-  animation: bf-ghost 1.2s ease-out both;
-}
-
-.bf-play .bf-ring {
-  animation: bf-step 0.45s ease-out both;
-}
-
-.bf-play .bf-zone-wrist    { animation-delay: 0.6s; }
-.bf-play .bf-zone-forearm  { animation-delay: 1s; }
-.bf-play .bf-zone-shoulder { animation-delay: 1.4s; }
-
-@keyframes bf-ghost {
-  0%   { opacity: 0.8; }
-  40%  { opacity: 0.8; }
-  100% { opacity: 0; }
-}
-
-@keyframes bf-step {
-  0%   { opacity: 0; transform: scale(1.3); }
-  25%  { opacity: 1; transform: scale(1); }
-  80%  { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1); }
-}
-
-@keyframes bf-z {
-  0%   { opacity: 0;   transform: translate(0, 4px); }
-  30%  { opacity: 0.7; }
-  100% { opacity: 0;   transform: translate(4px, -10px); }
-}
-
-@keyframes bf-steam {
-  0%, 100% { opacity: 0.15; transform: translateY(2px); }
-  50%      { opacity: 0.5;  transform: translateY(-2px); }
-}
-
-/* ── The rows ── */
 
 .bf-empty {
   margin: 0 0 0.75rem;
@@ -171,38 +19,108 @@
   font-style: italic;
 }
 
-.bf-rows {
+.bf-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
+  gap: 0.9rem;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.bf-row {
-  padding: 0.6rem 0.75rem;
-  border-left: 3px solid transparent;
-  border-radius: 4px;
+.bf-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bf-bg);
+  border: 1px solid var(--bf-rule);
+  border-radius: 12px;
+  overflow: hidden;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.bf-row + .bf-row {
-  margin-top: 0.25rem;
+.bf-card:hover,
+.bf-card:focus {
+  border-color: var(--bf-accent);
+  box-shadow: 0 0 0 1px var(--bf-accent);
 }
 
-.bf-row:hover,
-.bf-row:focus {
-  border-left-color: var(--bf-accent);
+/* ── The picture: three stacked layers ── */
+
+.bf-stage {
+  position: relative;
+  aspect-ratio: 6 / 5;
+  background: radial-gradient(110% 85% at 50% 40%,
+    color-mix(in srgb, var(--bf-accent) 9%, var(--bf-bg)) 0%, var(--bf-bg) 72%);
+}
+
+.bf-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* At rest the warm place stays marked, softer: it was spared, not hurt. */
+.bf-heat { opacity: 0.6; transition: opacity 0.3s ease; }
+
+.bf-ring { transition: filter 0.2s ease; }
+
+.bf-card:hover .bf-heat,
+.bf-card:focus .bf-heat {
+  opacity: 1;
+}
+
+.bf-card:hover .bf-ring,
+.bf-card:focus .bf-ring {
+  filter: drop-shadow(0 0 6px var(--bf-accent));
+}
+
+/* ── Played once: warm first, the ring arrives, the warmth fades ── */
+
+.bf-play .bf-heat {
+  animation: bf-cool 1.3s ease-in-out both;
+}
+
+.bf-play .bf-ring {
+  animation: bf-arrive 0.55s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+}
+
+.bf-play .bf-card:nth-child(1) .bf-ring { animation-delay: 0.4s; }
+.bf-play .bf-card:nth-child(2) .bf-ring { animation-delay: 0.9s; }
+.bf-play .bf-card:nth-child(3) .bf-ring { animation-delay: 1.4s; }
+
+.bf-play .bf-card:nth-child(1) .bf-heat { animation-delay: 0.6s; }
+.bf-play .bf-card:nth-child(2) .bf-heat { animation-delay: 1.1s; }
+.bf-play .bf-card:nth-child(3) .bf-heat { animation-delay: 1.6s; }
+
+@keyframes bf-arrive {
+  0%   { opacity: 0; transform: scale(1.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bf-cool {
+  0%   { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* ── The text ── */
+
+.bf-text {
+  padding: 0.75rem 0.9rem 0.9rem;
+  border-top: 1px solid var(--bf-rule);
 }
 
 .bf-row-title {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--bf-dim);
 }
 
 .bf-value {
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1.35;
 }
 
@@ -215,7 +133,7 @@
 
 .bf-extra,
 .bf-today {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--bf-dim);
 }
 
@@ -225,7 +143,7 @@
 }
 
 .bf-why {
-  margin-top: 0.15rem;
+  margin-top: 0.4rem;
   font-size: 0.72rem;
   line-height: 1.4;
   color: var(--bf-dim);
@@ -255,12 +173,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bf-play .bf-ghost path,
-  .bf-play .bf-ring,
-  .bf-figure .bf-steam,
-  .bf-figure .bf-z {
+  .bf-play .bf-heat,
+  .bf-play .bf-ring {
     animation: none;
   }
-
-  .bf-figure .bf-z { opacity: 0.5; }
 }

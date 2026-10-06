@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Body figure renderer</title>
+<!--
+  Draws the three body parts of the stats page's figure (wrist, forearm,
+  shoulder) as mannequins and hands each back as three transparent layers:
+    calm  the part, untouched
+    heat  the same, warm where a mouse loads it
+    ring  the extension's focus ring around that place, hidden where the
+          body is in front of it
+  render-body.js opens this page and saves the layers as images; the
+  extension itself never loads three.js.
+-->
+</head>
+<body>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+const WIDTH = 600, HEIGHT = 500;
+const BASE = new THREE.Color('#e8c2a0');   // clay mannequin
+const JOINT = new THREE.Color('#dcb08c');
+const HOT = new THREE.Color('#ff6a4d');
+const RING = new THREE.Color('#00cc66');
+
+const clay = () => new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.55, metalness: 0 });
+
+function part(geo, base = BASE) {
+  const m = new THREE.Mesh(geo, clay());
+  m.userData.paint = base;
+  return m;
+}
+
+/** A capsule lying along +X from 0 to len. */
+function bone(len, r, base) {
+  const g = new THREE.CapsuleGeometry(r, Math.max(0.01, len - r), 8, 20);
+  g.rotateZ(-Math.PI / 2);
+  g.translate(len / 2, 0, 0);
+  return part(g, base);
+}
+
+/** A lathe along +X from a profile of [x, radius] pairs. */
+function limb(profile, flatten = 1) {
+  const g = new THREE.LatheGeometry(profile.map(([x, r]) => new THREE.Vector2(r, x)), 40);
+  g.rotateZ(-Math.PI / 2);
+  g.scale(1, 1, flatten);
+  return part(g);
+}
+
+/** Colours every painted mesh in `root`: its base colour, warming toward HOT
+ *  near `spot.center` (world space) by `amount`, 0 for none. */
+function paint(root, spot, amount) {
+  root.updateMatrixWorld(true);
+  root.traverse(obj => {
+    if (!obj.isMesh || !obj.userData.paint) return;
+    const pos = obj.geometry.attributes.position;
+    const colors = new Float32Array(pos.count * 3);
+    const v = new THREE.Vector3(), c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(obj.matrixWorld).sub(spot.center).divide(spot.scale);
+      const t = Math.max(0, 1 - v.length() / spot.radius);
+      c.copy(obj.userData.paint).lerp(HOT, t * t * (3 - 2 * t) * 0.95 * amount);
+      colors.set([c.r, c.g, c.b], i * 3);
+    }
+    obj.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  });
+}
+
+/** The extension's ring around an axis, with a soft glow. */
+function ring(radius, axis) {
+  const grp = new THREE.Group();
+  grp.add(new THREE.Mesh(new THREE.TorusGeometry(radius, 0.09, 16, 96),
+    new THREE.MeshBasicMaterial({ color: RING, transparent: true, opacity: 0.22, depthWrite: false })));
+  grp.add(new THREE.Mesh(new THREE.TorusGeometry(radius, 0.028, 16, 96),
+    new THREE.MeshBasicMaterial({ color: RING })));
+  grp.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), axis.clone().normalize());
+  grp.userData.isRing = true;
+  return grp;
+}
+
+function contactShadow(w, d) {
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 128;
+  const x = cv.getContext('2d');
+  const gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(0,0,0,0.28)');
+  gr.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = gr;
+  x.fillRect(0, 0, 128, 128);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2;
+  m.userData.isShadow = true;
+  return m;
+}
+
+/** A mannequin hand along +X, palm down (-Y), wrist at the origin. */
+function buildHand(curl = 1) {
+  const hand = new THREE.Group();
+  const wrist = part(new THREE.SphereGeometry(0.37, 32, 24), JOINT);
+  wrist.scale.set(0.85, 0.72, 1.12);
+  hand.add(wrist);
+  const palm = part(new RoundedBoxGeometry(1.22, 0.34, 1.08, 6, 0.16));
+  palm.position.x = 0.66;
+  palm.rotation.z = -0.06;
+  hand.add(palm);
+  const fingers = [[-0.39, 0.40, 0.1], [-0.13, 0.48, 0], [0.13, 0.46, 0.02], [0.39, 0.36, 0.14]];
+  for (const [z, len, back] of fingers) {
+    let parent = new THREE.Group();
+    parent.position.set(1.22 - back, -0.04, z);
+    parent.rotation.y = z * 0.12;
+    hand.add(parent);
+    [len, len * 0.7, len * 0.55].forEach((l, i) => {
+      const joint = new THREE.Group();
+      joint.rotation.z = -(0.18 + i * 0.26) * curl;
+      joint.add(bone(l + 0.08, 0.105 - i * 0.008));
+      parent.add(joint);
+      const next = new THREE.Group();
+      next.position.x = l;
+      joint.add(next);
+      parent = next;
+    });
+  }
+  const thumb = new THREE.Group();
+  thumb.position.set(0.25, -0.08, 0.5);
+  thumb.rotation.set(0.35, -0.75, -0.25);
+  hand.add(thumb);
+  thumb.add(bone(0.5, 0.13));
+  const tip = new THREE.Group();
+  tip.position.x = 0.48;
+  tip.rotation.y = -0.3;
+  tip.add(bone(0.36, 0.115));
+  thumb.add(tip);
+  return hand;
+}
+
+// Each part: the model, where the camera stands, and the warm spot.
+const PARTS = {
+  // The carpal tunnel: palm side of the wrist, palm turned toward us.
+  wrist() {
+    const root = new THREE.Group();
+    const arm = new THREE.Group();
+    arm.add(limb([[-2.4, 0.46], [-1.6, 0.45], [-0.9, 0.40], [-0.25, 0.34], [-0.15, 0.0]], 1.25));
+    const hand = buildHand(1);
+    hand.position.x = -0.1;
+    hand.rotation.z = -0.12;
+    arm.add(hand);
+    const r = ring(0.53, new THREE.Vector3(1, 0, 0));
+    r.position.x = -0.12;
+    r.scale.set(1, 0.8, 1.12);
+    arm.add(r);
+    arm.rotation.set(-0.95, -0.35, 0);
+    arm.position.x = 0.1;
+    root.add(arm);
+    const sh = contactShadow(4.6, 2.2);
+    sh.position.y = -1.35;
+    root.add(sh);
+    root.updateMatrixWorld(true);
+    return {
+      root,
+      camera: [new THREE.Vector3(0.2, 1.1, 7.3), new THREE.Vector3(0.15, -0.1, 0)],
+      spot: { center: new THREE.Vector3(-0.15, -0.3, 0).applyMatrix4(arm.matrixWorld), radius: 0.72, scale: new THREE.Vector3(1.35, 1, 1) }
+    };
+  },
+
+  // The extensors along the top of the forearm, near the elbow.
+  forearm() {
+    const root = new THREE.Group();
+    const arm = new THREE.Group();
+    arm.add(limb([[0, 0.0], [0.05, 0.31], [0.4, 0.32], [1.0, 0.40], [1.7, 0.50], [2.2, 0.50], [2.6, 0.42], [2.75, 0.0]], 1.12));
+    const elbow = part(new THREE.SphereGeometry(0.43, 32, 24), JOINT);
+    elbow.position.x = 2.62;
+    arm.add(elbow);
+    const upper = new THREE.Group();
+    upper.position.x = 2.62;
+    upper.rotation.z = 1.05;
+    upper.add(limb([[0, 0.42], [0.7, 0.5], [1.3, 0.5], [1.5, 0.0]], 1));
+    arm.add(upper);
+    const hand = buildHand(0.8);
+    hand.rotation.y = Math.PI;
+    arm.add(hand);
+    const r = ring(0.62, new THREE.Vector3(1, 0, 0));
+    r.position.x = 1.75;
+    r.scale.set(1, 1, 1.12);
+    arm.add(r);
+    arm.rotation.set(0, 0.75, 0.12);
+    root.add(arm);
+    const sh = contactShadow(5.5, 2.4);
+    sh.position.set(1, -1.0, 0);
+    root.add(sh);
+    root.updateMatrixWorld(true);
+    return {
+      root,
+      camera: [new THREE.Vector3(0.8, 2.2, 9.8), new THREE.Vector3(0.75, 0.2, 0)],
+      spot: { center: new THREE.Vector3(1.75, 0.42, 0).applyMatrix4(arm.matrixWorld), radius: 0.9, scale: new THREE.Vector3(1.6, 1, 1) }
+    };
+  },
+
+  // The upper trapezius and the shoulder on the mouse side.
+  shoulder() {
+    const root = new THREE.Group();
+    const body = new THREE.Group();
+    const torso = new THREE.LatheGeometry([[0.0, -1.7], [0.82, -1.7], [0.9, -0.8], [1.04, 0.1], [1.0, 0.55], [0.78, 0.86], [0.4, 1.0], [0.0, 1.02]]
+      .map(([r, y]) => new THREE.Vector2(r, y)), 48);
+    torso.scale(1, 1, 0.58);
+    body.add(part(torso));
+    const neck = part(new THREE.CylinderGeometry(0.27, 0.31, 0.6, 28));
+    neck.position.y = 1.22;
+    body.add(neck);
+    const head = part(new THREE.SphereGeometry(0.56, 40, 30));
+    head.scale.set(0.88, 1.05, 0.95);
+    head.position.y = 1.95;
+    body.add(head);
+    for (const side of [-1, 1]) {
+      const delt = part(new THREE.SphereGeometry(0.38, 32, 24), JOINT);
+      delt.position.set(side * 1.0, 0.66, 0);
+      body.add(delt);
+      const arm = new THREE.Group();
+      arm.position.set(side * 1.02, 0.62, 0);
+      arm.rotation.z = side > 0 ? -1.2 : -Math.PI + 1.42;
+      arm.add(limb([[0, 0.34], [0.7, 0.36], [1.35, 0.3], [1.5, 0.0]], 1));
+      body.add(arm);
+    }
+    const r = ring(0.48, new THREE.Vector3(1, -0.15, 0));
+    r.position.set(1.02, 0.66, 0);
+    body.add(r);
+    body.rotation.y = -0.45;
+    root.add(body);
+    const sh = contactShadow(3.6, 1.6);
+    sh.position.y = -1.75;
+    root.add(sh);
+    root.updateMatrixWorld(true);
+    return {
+      root,
+      camera: [new THREE.Vector3(2.6, 1.5, 8.6), new THREE.Vector3(0.2, 0.35, 0)],
+      spot: { center: new THREE.Vector3(0.72, 0.85, 0).applyMatrix4(body.matrixWorld), radius: 0.85, scale: new THREE.Vector3(1.3, 0.9, 1.2) }
+    };
+  }
+};
+
+const canvas = document.createElement('canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(WIDTH, HEIGHT, false);
+renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+
+function lights(scene) {
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa6b8, 1.4));
+  const key = new THREE.DirectionalLight(0xfff3e6, 2.6);
+  key.position.set(-3, 5, 4);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0xcfe8ff, 1.6);
+  rim.position.set(4, 2, -4);
+  scene.add(rim);
+}
+
+/** Turns the ring, the body's colour and the shadow on or off. A body that
+ *  draws no colour still writes depth, so it hides the ring behind it. */
+function layer(root, { ring: showRing, body: showBody, shadow: showShadow }) {
+  root.traverse(obj => {
+    if (obj.userData.isRing) obj.visible = showRing;
+    if (obj.userData.isShadow) obj.visible = showShadow;
+    if (obj.isMesh && obj.userData.paint) obj.material.colorWrite = showBody;
+  });
+}
+
+window.renderAll = function () {
+  const out = {};
+  for (const [name, build] of Object.entries(PARTS)) {
+    const scene = new THREE.Scene();
+    lights(scene);
+    const { root, camera: [pos, target], spot } = build();
+    scene.add(root);
+    const camera = new THREE.PerspectiveCamera(30, WIDTH / HEIGHT, 0.1, 100);
+    camera.position.copy(pos);
+    camera.lookAt(target);
+
+    const shot = () => { renderer.render(scene, camera); return canvas.toDataURL('image/webp', 0.9); };
+    layer(root, { ring: false, body: true, shadow: true });
+    paint(root, spot, 0);
+    out[`${name}-calm`] = shot();
+    paint(root, spot, 1);
+    out[`${name}-heat`] = shot();
+    // The body draws nothing but still stands in front of the ring.
+    layer(root, { ring: true, body: false, shadow: false });
+    out[`${name}-ring`] = shot();
+  }
+  return out;
+};
+window.rendererReady = true;
+</script>
+</body>
+</html>

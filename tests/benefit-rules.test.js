@@ -98,4 +98,22 @@ test('the website carries the same copies of the shared files', () => {
   for (const [from, to] of pairs) {
     assert.equal(read(to), read(from), `${to} differs from ${from}: run npm run sync-site-figure`);
   }
+  // The pictures, byte for byte, and no stale ones left on the site.
+  const body = (dir) => fs.readdirSync(path.join(root, dir)).sort();
+  assert.deepEqual(body('docs/benefit/body'), body('src/stats/body'), 'run npm run sync-site-figure');
+  for (const name of body('src/stats/body')) {
+    const a = fs.readFileSync(path.join(root, 'src/stats/body', name));
+    const b = fs.readFileSync(path.join(root, 'docs/benefit/body', name));
+    assert.ok(a.equals(b), `docs/benefit/body/${name} differs: run npm run sync-site-figure`);
+  }
+});
+
+test('every card has its three pictures', () => {
+  require('../src/stats/benefit-figure.js');
+  const dir = path.join(__dirname, '..', 'src', 'stats', 'body');
+  for (const row of globalThis.TuiBenefitFigure.ROWS) {
+    for (const layer of ['calm', 'heat', 'ring']) {
+      assert.ok(fs.existsSync(path.join(dir, `${row.zone}-${layer}.webp`)), `${row.zone}-${layer}.webp is missing`);
+    }
+  }
 });
