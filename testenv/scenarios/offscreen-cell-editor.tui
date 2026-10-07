@@ -1,0 +1,8 @@
+# A spreadsheet's cell editor sits out of sight; once the user clicked the grid, the arrows belong to the cells.
+pages/offscreen-cell-editor.html
+click:css=#grid
+key:ArrowRight
+key:ArrowDown
+expect-not:Share
+expect-not:Menu
+eval:(() => { const at = [...document.querySelectorAll('#grid div')].findIndex(c => c.classList.contains('sel')); if (at !== 5 || document.activeElement.id !== 'editor') throw new Error('the cell did not move: ' + at + ', focus on ' + document.activeElement.textContent); return 'cell ' + at; })()

@@ -1,0 +1,36 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Grid with an editor out of sight</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  #toolbar button { margin-right: 8px; }
+  #grid { display: grid; grid-template-columns: repeat(4, 80px); margin-top: 20px; }
+  #grid div { border: 1px solid #ccc; height: 30px; }
+  #grid div.sel { outline: 2px solid green; }
+  /* The editor the grid types into, parked far above the window. */
+  #editor { position: absolute; top: -9998px; left: 4px; width: 0; height: 30px; }
+</style></head>
+<body>
+  <!-- A spreadsheet draws its cells itself and keeps the focus in a text box
+       parked out of sight; its arrows move the selected cell. -->
+  <div id="toolbar"><button>Share</button><button>Menu</button></div>
+  <div id="grid"></div>
+  <div id="editor" class="cell-editor" role="textbox" tabindex="0" contenteditable="true"></div>
+  <script>
+    const grid = document.getElementById('grid');
+    for (let i = 0; i < 12; i++) grid.appendChild(document.createElement('div'));
+    let at = 0;
+    const show = () => [...grid.children].forEach((c, i) => c.classList.toggle('sel', i === at));
+    show();
+    grid.addEventListener('mousedown', e => {
+      e.preventDefault();
+      document.getElementById('editor').focus();
+    });
+    document.getElementById('editor').addEventListener('keydown', e => {
+      const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 4, ArrowUp: -4 }[e.key];
+      if (step === undefined) return;
+      e.preventDefault();
+      at = Math.max(0, Math.min(11, at + step));
+      show();
+    });
+  </script>
+</body></html>

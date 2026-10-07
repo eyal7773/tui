@@ -875,10 +875,12 @@ class SpatialEngine {
 
         // BUG FIX: Only trap navigation if the input actually USES arrow keys (Text, Select, etc.)
         // Simple buttons (submit, reset, button) should NOT trap navigation.
-        // Nor does a text box out of sight: Merriam-Webster autofocuses a
-        // search box parked above the window, and the first ArrowDown went
-        // to a box the user could not see.
-        if (this.shouldTrapArrows(active) && !this.isOutOfSight(active) && !this.isUntouchedBox(e)) {
+        // A box out of sight keeps its arrows once the user is in it: a
+        // spreadsheet types into an editor parked far above the window, and
+        // its arrows move between the cells. One the page focused by itself
+        // (Merriam-Webster's search box above the window) is left by
+        // isUntouchedBox.
+        if (this.shouldTrapArrows(active) && !this.isUntouchedBox(e)) {
             if (e.key === 'Escape') {
                 // Return focus to wrapper if possible, otherwise blur
                 const parent = active.parentElement;

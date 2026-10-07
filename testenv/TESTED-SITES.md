@@ -27,6 +27,7 @@ and a recheck.
 | Gmail | open message (report zip + local page) | Message taller than the window is one focusable list item: arrows step into it, and the message's own scroll box scrolls before ArrowDown leaves for the folders | message-in-scroll-box | the commit adding the scenario |
 | GitHub | pull request diff (local page) | Review thread's buttons inside a grid cell | github-review-thread | 2f1d227 |
 | Google Drive | drive.google.com (report zip + local page) | Sidebar tree with one tabindex, file grid, Enter twice opens a file | drive-new-down-home, double-enter | 864664e, 3aa87f0, 3280ca5, 9a9f926 |
+| Google Sheets | a spreadsheet (report zip + local page) | Cell editor parked out of sight: once the user clicked the grid, the arrows move between cells | offscreen-cell-editor | (pending) |
 | Hacker News | news.ycombinator.com | ArrowLeft from the leftmost upvote arrow climbing up | hackernews-left-edge | 83fb8f7 |
 | MDN | developer.mozilla.org/.../Elements/button | Enter into a live-example iframe and back out; ring hidden before first key | mdn-frame-round-trip | f461870, 6a65389 |
 | Microsoft | microsoft.com/en-us | Floating Back to Top button; stacked full-width panels | microsoft-back-to-top | ee1c3a4, c419971 |
@@ -85,7 +86,7 @@ and a recheck.
 | Britannica | britannica.com | Feature cards, list rows | - |
 | Dictionary.com | dictionary.com | Autofocused search box keeps the arrows until Escape, by design | - |
 | Goodreads | goodreads.com | Book covers in inline links, genre columns | - |
-| Merriam-Webster | merriam-webster.com | Autofocused search box out of sight kept the arrows | f52b150 |
+| Merriam-Webster | merriam-webster.com, /dictionary/<word> | Autofocused search box kept the arrows; rechecked 2026-10-07 after a box out of sight keeps its arrows once the user is in it | f52b150, (pending) |
 | Rotten Tomatoes | rottentomatoes.com | First press went to a card half off the edge, behind the cookie backdrop | f52b150 |
 | Metacritic | metacritic.com | Score cards, video list | - |
 | IGN | ign.com | Right-to-left edition: sidebar, feature cards | - |
