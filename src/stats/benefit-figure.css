@@ -77,32 +77,83 @@
   filter: drop-shadow(0 0 6px var(--bf-accent));
 }
 
-/* ── Played once: warm first, the ring arrives, the warmth fades ── */
+/* ── Played in a loop: warm first, the ring arrives, the warmth fades;
+      then the ring lets go and the warmth comes back, and again ── */
 
 .bf-play .bf-heat {
-  animation: bf-cool 1.3s ease-in-out both;
+  animation: bf-cool 6s ease-in-out infinite both;
 }
 
 .bf-play .bf-ring {
-  animation: bf-arrive 0.55s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+  animation: bf-arrive 6s infinite both;
 }
 
-.bf-play .bf-card:nth-child(1) .bf-ring { animation-delay: 0.4s; }
-.bf-play .bf-card:nth-child(2) .bf-ring { animation-delay: 0.9s; }
-.bf-play .bf-card:nth-child(3) .bf-ring { animation-delay: 1.4s; }
+.bf-play .bf-card:nth-child(2) .bf-layer { animation-delay: 0.5s; }
+.bf-play .bf-card:nth-child(3) .bf-layer { animation-delay: 1s; }
 
-.bf-play .bf-card:nth-child(1) .bf-heat { animation-delay: 0.6s; }
-.bf-play .bf-card:nth-child(2) .bf-heat { animation-delay: 1.1s; }
-.bf-play .bf-card:nth-child(3) .bf-heat { animation-delay: 1.6s; }
+/* Stopped, each picture holds where it was. */
+.bf-paused .bf-layer {
+  animation-play-state: paused;
+}
+
+/* A card under the pointer or the focus shows its marked state, still. */
+.bf-play .bf-card:hover .bf-layer,
+.bf-play .bf-card:focus .bf-layer {
+  animation: none;
+}
 
 @keyframes bf-arrive {
-  0%   { opacity: 0; transform: scale(1.5); }
-  100% { opacity: 1; transform: scale(1); }
+  0%   { opacity: 0; transform: scale(1.5);
+         animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1.2); }
+  9%   { opacity: 1; transform: scale(1); }
+  78%  { opacity: 1; transform: scale(1); animation-timing-function: ease-in; }
+  90%  { opacity: 0; transform: scale(1.5); }
+  100% { opacity: 0; transform: scale(1.5); }
 }
 
 @keyframes bf-cool {
   0%   { opacity: 1; }
-  100% { opacity: 0.6; }
+  4%   { opacity: 1; }
+  26%  { opacity: 0.6; }
+  80%  { opacity: 0.6; }
+  92%  { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+/* ── Stop / play ── */
+
+.bf-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 0.5rem;
+}
+
+.bf-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--bf-dim);
+  background: var(--bf-bg);
+  border: 1px solid var(--bf-rule);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.bf-toggle:hover,
+.bf-toggle:focus-visible {
+  color: var(--bf-ink);
+  border-color: var(--bf-accent);
+  outline: none;
+}
+
+.bf-toggle-icon {
+  width: 0.7rem;
+  height: 0.7rem;
+  fill: currentColor;
 }
 
 /* ── The text ── */
@@ -176,5 +227,9 @@
   .bf-play .bf-heat,
   .bf-play .bf-ring {
     animation: none;
+  }
+
+  .bf-controls {
+    display: none;
   }
 }

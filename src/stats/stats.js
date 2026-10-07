@@ -106,8 +106,9 @@ function loadStats() {
 // ── Helpers ──────────────────────────────────────────────
 
 /**
- * The body figure. It plays the first time the page opens each day and is
- * still after that: a reward seen on every visit stops being one.
+ * The body figure. Its pictures play in a loop until the reader stops them;
+ * the numbers count up only the first time the page opens each day: a
+ * reward seen on every visit stops being one.
  */
 function renderBenefits(stats) {
   const now = new Date();
@@ -117,7 +118,8 @@ function renderBenefits(stats) {
   try { played = localStorage.getItem('tui-benefit-played'); } catch (e) { /* storage off: play */ }
   TuiBenefitFigure.render(document.getElementById('benefit-figure'), total, {
     today,
-    animate: played !== day,
+    animate: true,
+    countUp: played !== day,
     emptyText: 'Every key press counts. Use the arrows and Enter on any page, and this fills in.'
   });
   try { localStorage.setItem('tui-benefit-played', day); } catch (e) { /* only means it plays again */ }

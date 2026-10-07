@@ -2,7 +2,7 @@
  * The body figure: one card for each place the keys spare (wrist, forearm,
  * shoulder), each with a picture of that part and what was spared.
  *
- *   TuiBenefitFigure.render(container, figures, { today, animate, images })
+ *   TuiBenefitFigure.render(container, figures, { today, animate, countUp, images })
  *
  * `figures` and `today` come from TuiBenefitRules.computeBenefits(). Without
  * `today` the cards show no "today" line (the website's typical week).
@@ -12,8 +12,10 @@
  * testenv/render-body.js: the part, the same part warm where a mouse loads
  * it, and the extension's focus ring around that place. With `animate` the
  * warm part shows first, the ring arrives, and the warmth fades to a trace,
- * one card after another, while the numbers count up; a reader who asked for
- * less motion gets the end state straight away.
+ * one card after another; then the ring lets go and it starts again, until
+ * the reader presses Stop (remembered for the next visit) or Play again.
+ * The numbers count up once, unless `countUp` is false. A reader who asked
+ * for less motion gets the end state straight away and no button.
  *
  * Shared by the stats page and the website (docs/, copied there by
  * scripts/sync-site-figure.js), so it needs nothing but benefit-rules.js.
@@ -62,6 +64,56 @@
     if (className) node.className = className;
     if (text) node.textContent = text;
     return node;
+  }
+
+  const STOPPED_KEY = 'tui-benefit-stopped';
+
+  function wasStopped() {
+    try { return root.localStorage.getItem(STOPPED_KEY) === '1'; } catch (e) { return false; }
+  }
+
+  function rememberStopped(stopped) {
+    try {
+      if (stopped) root.localStorage.setItem(STOPPED_KEY, '1');
+      else root.localStorage.removeItem(STOPPED_KEY);
+    } catch (e) { /* storage off: only this visit remembers */ }
+  }
+
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const ICONS = {
+    stop: 'M3 3h10v10H3z',
+    play: 'M4 2.5v11l9.5-5.5z'
+  };
+
+  /** The Stop / Play button; it pauses the pictures where they are. */
+  function playToggle(box) {
+    const bar = el('div', 'bf-controls');
+    const button = el('button', 'bf-toggle');
+    button.type = 'button';
+    const icon = document.createElementNS(SVG_NS, 'svg');
+    icon.setAttribute('class', 'bf-toggle-icon');
+    icon.setAttribute('viewBox', '0 0 16 16');
+    icon.setAttribute('aria-hidden', 'true');
+    const path = document.createElementNS(SVG_NS, 'path');
+    icon.appendChild(path);
+    const label = el('span');
+    button.appendChild(icon);
+    button.appendChild(label);
+
+    function show(stopped) {
+      box.classList.toggle('bf-paused', stopped);
+      path.setAttribute('d', stopped ? ICONS.play : ICONS.stop);
+      label.textContent = stopped ? 'Play' : 'Stop';
+      button.setAttribute('aria-label', stopped ? 'Play the animation' : 'Stop the animation');
+    }
+    button.addEventListener('click', () => {
+      const stopped = !box.classList.contains('bf-paused');
+      show(stopped);
+      rememberStopped(stopped);
+    });
+    show(wasStopped());
+    bar.appendChild(button);
+    return bar;
   }
 
   function reducedMotion() {
@@ -162,10 +214,8 @@
 
     if (opts.animate && !empty && !reducedMotion()) {
       box.classList.add('bf-play');
-      countUp(counters, 1400);
-      // A finished animation still holds its last frame, which would beat
-      // the hover state of a card.
-      setTimeout(() => box.classList.remove('bf-play'), 3200);
+      box.insertBefore(playToggle(box), cards);
+      if (opts.countUp !== false) countUp(counters, 1400);
     }
     return box;
   }

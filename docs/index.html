@@ -691,14 +691,15 @@
   <script src="benefit/benefit-rules.js"></script>
   <script src="benefit/benefit-figure.js"></script>
   <script>
-    // The typical week, drawn at once so the page does not jump, and played
-    // the first time it scrolls into view.
+    // The typical week, drawn at once (Stop button and all) so the page does
+    // not jump, and started over, numbers counting up, the first time it
+    // scrolls into view.
     (function () {
       var box = document.getElementById('week-figure');
       if (!box || !window.TuiBenefitFigure) return;
       var week = TuiBenefitRules.typicalWeek();
       var images = 'benefit/body/';
-      TuiBenefitFigure.render(box, week, { images: images });
+      TuiBenefitFigure.render(box, week, { animate: true, countUp: false, images: images });
       if (!('IntersectionObserver' in window)) return;
       var seen = new IntersectionObserver(function (entries) {
         if (!entries[0].isIntersecting) return;
