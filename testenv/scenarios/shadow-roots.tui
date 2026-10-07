@@ -1,0 +1,11 @@
+# Links inside shadow roots, open or closed, on a custom element or a plain tag, nested too: the arrows reach each one.
+pages/shadow-roots.html
+start:Plain link
+key:ArrowDown
+eval:ringAround('Open custom link')
+key:ArrowDown
+eval:ringAround('Closed div link')
+key:ArrowDown
+eval:ringAround('Nested closed link')
+key:ArrowDown
+expect:Last plain link

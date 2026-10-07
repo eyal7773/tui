@@ -1,0 +1,40 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Links inside shadow roots</title>
+<style>body { font: 16px sans-serif; margin: 40px; } p, div, x-card { display: block; margin: 0 0 24px; }</style>
+</head>
+<body>
+  <!-- Pages built from web components keep their links in shadow roots, open
+       or closed, on custom elements or on plain tags, nested or not. Every
+       one of them is reached by the arrows. -->
+  <p><a id="top" href="#top">Plain link</a></p>
+  <x-card id="open-card"></x-card>
+  <div id="closed-div"></div>
+  <x-shell id="nested"></x-shell>
+  <p><a id="bottom" href="#bottom">Last plain link</a></p>
+  <script>
+    const link = (text) => { const a = document.createElement('a'); a.href = '#' + text; a.textContent = text; return a; };
+    document.getElementById('open-card').attachShadow({ mode: 'open' }).appendChild(link('Open custom link'));
+    document.getElementById('closed-div').attachShadow({ mode: 'closed' }).appendChild(link('Closed div link'));
+    const outer = document.getElementById('nested').attachShadow({ mode: 'closed' });
+    const inner = document.createElement('section');
+    outer.appendChild(inner);
+    inner.attachShadow({ mode: 'closed' }).appendChild(link('Nested closed link'));
+
+    // The test looks for elements in the document only, so the page says
+    // whether the ring is drawn around one of the links in a root.
+    const hosts = {
+      'Open custom link': document.getElementById('open-card'),
+      'Closed div link': document.getElementById('closed-div'),
+      'Nested closed link': document.getElementById('nested')
+    };
+    window.ringAround = (text) => {
+      const ring = document.getElementById('tui-spotlight').getBoundingClientRect();
+      const host = hosts[text].getBoundingClientRect();
+      // The link is the first thing in its host, 17px tall.
+      const inside = ring.top <= host.top + 2 && ring.bottom >= host.top + 15 &&
+        ring.left <= host.left + 2 && ring.width < 400;
+      if (!inside) throw new Error('the ring is not around "' + text + '": ' + JSON.stringify(ring));
+      return 'ring around ' + text;
+    };
+  </script>
+</body></html>

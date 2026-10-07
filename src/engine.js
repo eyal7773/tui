@@ -9,6 +9,15 @@ const LOG = window.TuiLog || {
     event() {}, detail() {}, error() {}, describe: () => '', verbose: false
 };
 
+// The HTML elements attachShadow accepts, besides custom elements (a name
+// with a hyphen). No other element can host a shadow root.
+const HTML_NS = 'http://www.w3.org/1999/xhtml';
+const SHADOW_HOSTS = new Set([
+    'article', 'aside', 'blockquote', 'body', 'div', 'footer',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'main', 'nav', 'p',
+    'section', 'span'
+]);
+
 class SpatialEngine {
     constructor(options = {}) {
         // Running inside an iframe (see the start of the engine at the bottom
@@ -2055,6 +2064,12 @@ class SpatialEngine {
     /** The shadow root hosted by el, open or closed, or null. */
     shadowRootOf(el) {
         if (el.shadowRoot) return el.shadowRoot;
+        // Asking the extension API is the costly part of a refresh: it was
+        // asked about each of Wikipedia's thousands of elements on every
+        // press. Only a custom element or one of a few tags can host a root
+        // (attachShadow throws on the rest), so the rest are not asked.
+        if (el.namespaceURI !== HTML_NS ||
+            (!el.localName.includes('-') && !SHADOW_HOSTS.has(el.localName))) return null;
         try {
             // Content scripts may read closed roots too (Cloudflare's
             // challenge checkbox lives in one).
