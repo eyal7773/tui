@@ -1,0 +1,19 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Consent card that focuses itself</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  #dim { position: fixed; inset: 0; background: rgba(0,0,0,.4); }
+  #card { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; padding: 20px 40px; }
+</style></head>
+<body>
+  <!-- A consent card at the foot of a dimmed page that focuses its own
+       Cookie Policy link as it loads, its last link, as Olympics.com's does. -->
+  <a href="#a">Medals</a>
+  <p style="height: 2000px"></p>
+  <div id="dim"></div>
+  <div id="card" role="dialog" aria-modal="true" aria-label="Cookies">
+    <button id="accept">Accept all</button>
+    <p>We use cookies. <a id="policy" href="#policy">Cookie Policy</a></p>
+  </div>
+  <script>document.getElementById('policy').focus();</script>
+</body></html>

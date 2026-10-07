@@ -1,0 +1,6 @@
+# ArrowDown from a consent card's link that the page focused, with nothing below it, shows the ring there: on a dimmed page the press stayed and no ring was drawn (Olympics.com).
+pages/consent-card-focused.html
+key:ArrowDown
+expect-ring:css=#policy
+key:ArrowUp
+expect:css=#accept

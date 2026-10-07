@@ -3185,6 +3185,13 @@ class SpatialEngine {
         if (!box && this.isOverCoveredPage(current)) {
             LOG.event('stay', { why: 'over-covered-page' });
             this.stepStayed = true;
+            // The ring shows where it stays. Olympics.com's consent card
+            // focuses its own link as it loads, and the press that stayed on
+            // it was the first: no ring was ever drawn.
+            if (current && current !== document.body && current.isConnected) {
+                this.lastActiveElement = current;
+                this.highlight(current);
+            }
             return;
         }
         // The user is scrolling on, away from where the ring arrived: a
@@ -3467,6 +3474,8 @@ class SpatialEngine {
         // left no ring anywhere.
         if (this.stepStayed && this.lastActiveElement === frame && frame.contentWindow) {
             frame.focus();
+            if (this.spotlight) this.spotlight.style.display = 'none';
+            this.isActiveMode = false;
             frame.contentWindow.postMessage({ tuiFrameBack: key }, '*');
             LOG.event('frame-back', { key: key, frame: LOG.describe(frame) });
         }
