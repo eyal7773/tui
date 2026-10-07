@@ -1,0 +1,6 @@
+# An answer shown by :target when its link is followed (CSS alone): ArrowDown from the question steps into it.
+pages/target-section.html
+start:css=#question
+key:Enter
+key:ArrowDown
+expect:css=#answer-link

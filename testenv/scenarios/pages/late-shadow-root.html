@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>A shadow root attached later</title>
+<style>body { font: 16px sans-serif; margin: 40px; } #card { display: block; margin: 20px 0; } main { margin-top: 40px; }</style>
+</head>
+<body>
+  <!-- A component that attaches its shadow root after the page loaded, with
+       nothing in the document changing: no observer hears it. -->
+  <a id="top" href="#top">Top link</a>
+  <div id="card"></div>
+  <main><a id="story" href="#story">A story further down</a></main>
+  <script>
+    let link;
+    // After the first key, so the extension has already looked the page over.
+    window.addEventListener('keydown', () => setTimeout(() => {
+      const root = document.getElementById('card').attachShadow({ mode: 'closed' });
+      link = document.createElement('a');
+      link.href = '#inside';
+      link.textContent = 'Link inside the card';
+      root.appendChild(link);
+    }, 300), { capture: true, once: true });
+    // The root is closed, so the page says whether the ring is around its link.
+    window.ringAroundCard = () => {
+      const ring = document.getElementById('tui-spotlight').getBoundingClientRect();
+      const r = link.getBoundingClientRect();
+      const inside = Math.abs(ring.top - r.top) < 6 && Math.abs(ring.left - r.left) < 6 && ring.width < 400;
+      if (!inside) throw new Error('the ring is not around the card link: ' + JSON.stringify(ring));
+      return 'ring around the card link';
+    };
+  </script>
+</body></html>

@@ -1,0 +1,16 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>A tabindex given later</title>
+<style>body { font: 16px sans-serif; margin: 40px; } .row { padding: 10px 0; } main { margin-top: 40px; }</style>
+</head>
+<body>
+  <!-- A list that turns its rows into targets later, with a tabindex and
+       no class or style changing (roving focus starts like this). -->
+  <a id="top" href="#top">Top link</a>
+  <div id="list"><div class="row" id="row-one" role="button">First row</div><div class="row" role="button">Second row</div></div>
+  <main><a id="story" href="#story">A story further down</a></main>
+  <script>
+    // After the first key, so the extension has already looked the page over.
+    window.addEventListener('keydown', () => setTimeout(() =>
+      document.querySelectorAll('.row').forEach(r => r.setAttribute('tabindex', '0')), 300), { capture: true, once: true });
+  </script>
+</body></html>

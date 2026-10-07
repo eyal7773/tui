@@ -1,0 +1,8 @@
+# A shadow root attached after the first press, with nothing else changing: within a couple of seconds ArrowDown reaches its link.
+pages/late-shadow-root.html
+start:css=#top
+key:ArrowRight
+wait:2500
+start:css=#top
+key:ArrowDown
+eval:ringAroundCard()

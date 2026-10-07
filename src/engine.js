@@ -12,6 +12,10 @@ const LOG = window.TuiLog || {
 // The HTML elements attachShadow accepts, besides custom elements (a name
 // with a hyphen). No other element can host a shadow root.
 const HTML_NS = 'http://www.w3.org/1999/xhtml';
+
+// How long the search for targets is trusted when nothing on the page
+// changed (see discover).
+const DISCOVERY_MAX_AGE_MS = 2000;
 const SHADOW_HOSTS = new Set([
     'article', 'aside', 'blockquote', 'body', 'div', 'footer',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'main', 'nav', 'p',
@@ -170,9 +174,10 @@ class SpatialEngine {
                 return;
             }
             this.watchedRoot = document.documentElement;
-            this.pointerScanDirty = true;
+            this.discoveryDirty = true;
             this.listen();
             this.observer.observe(document.body, this.observerOptions);
+            this.discoveryObserver.observe(document.body, this.discoveryObserverOptions);
             if (this.bodyResizeObserver) this.bodyResizeObserver.observe(document.body);
             this.createSpotlight();
             this.injectMenu();
@@ -203,9 +208,9 @@ class SpatialEngine {
         // Marks candidates dirty so we re-scan when DOM changes
         this.observer = new MutationObserver((records) => {
             this.candidatesDirty = true;
-            // The ring writes its own style on every move; the pointer scan
-            // (see pointerTargets) is only redone when the page changed.
-            if (records.some(r => r.target !== this.spotlight)) this.pointerScanDirty = true;
+            // The ring writes its own style on every move; finding the
+            // targets (see discover) is only redone when the page changed.
+            if (records.some(r => r.target !== this.spotlight)) this.discoveryDirty = true;
 
             // Sync with active element if it changed effectively during DOM updates
             // (e.g. "New Chat" clicked -> DOM updates -> input gets focus)
@@ -227,6 +232,22 @@ class SpatialEngine {
             attributeFilter: ['style', 'class', 'hidden', 'disabled']
         };
         this.observer.observe(document.body, this.observerOptions);
+
+        // What makes an element a target at all, and nothing the ring or the
+        // scroll care about: a page moving its tabindex from row to row
+        // (roving focus) adds a target with no class or style changing. Kept
+        // apart from the observer above, which also moves the ring and
+        // reads the extension's own tabindex on the element it focuses.
+        this.discoveryObserver = new MutationObserver(() => {
+            this.discoveryDirty = true;
+            this.candidatesDirty = true;
+        });
+        this.discoveryObserverOptions = {
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['tabindex', 'role', 'href', 'contenteditable']
+        };
+        this.discoveryObserver.observe(document.body, this.discoveryObserverOptions);
         this.watchDocument();
 
         // An image that finishes loading shifts the page without any mutation;
@@ -2095,16 +2116,12 @@ class SpatialEngine {
      * on is the target, unless a control inside or around it already is one.
      * focusElement gives it a tabindex on arrival, and Enter clicks it.
      *
-     * Reading every element's style is costly, and the ring moving changes
-     * nothing here, so the scan is kept until the page itself changes
-     * (pointerScanDirty). What it keeps is checked again on each refresh:
-     * still on the page, not already a candidate, shown, not a whole region.
+     * Reading every element's style is costly, so the scan is part of what
+     * discover keeps until the page changes. What it kept is checked again
+     * on each refresh: still on the page, not already a candidate, shown,
+     * not a whole region.
      */
-    pointerTargets(scopes, known) {
-        if (this.pointerScanDirty !== false || !this.pointerScan) {
-            this.pointerScan = this.scanPointerTargets(scopes);
-            this.pointerScanDirty = false;
-        }
+    pointerTargets(known) {
         const viewportArea = window.innerWidth * window.innerHeight;
         const found = [];
         for (const el of this.pointerScan) {
@@ -2162,6 +2179,7 @@ class SpatialEngine {
             if (scope === document || this.observedRoots.has(scope)) return;
             this.observedRoots.add(scope);
             this.observer.observe(scope, this.observerOptions);
+            if (this.discoveryObserver) this.discoveryObserver.observe(scope, this.discoveryObserverOptions);
         });
     }
 
@@ -2334,11 +2352,25 @@ class SpatialEngine {
         return false;
     }
 
-    refreshCandidates() {
-        if (!this.candidatesDirty) return;
+    /**
+     * Step A of refreshCandidates: every element that could be a target. It
+     * depends on the DOM alone, so it is kept until the page changes
+     * (discoveryDirty, set by the observers for any change but the ring's
+     * own style). Whether each one is shown, how big and where is up to the
+     * CSS, which can change with no element changing (a submenu opened by
+     * :focus-within), so the filter that reads it runs on every refresh.
+     *
+     * Moving the ring used to count as a change, and the whole page was
+     * searched again on every press: on a long Wikipedia article that was
+     * most of the time a press took. A shadow root attached with no change
+     * around it is not seen by the observers, so the search is also redone
+     * once it is DISCOVERY_MAX_AGE_MS old.
+     */
+    discover() {
+        const fresh = this.discoveryDirty === false && this.discovered &&
+            performance.now() - this.discoveredAt < DISCOVERY_MAX_AGE_MS;
+        if (fresh) return this.discovered;
 
-        // Step A: Candidate Discovery
-        // 1. Semantic Elements & Potential Targets
         // NOTE: We MUST include tabindex="-1" because many modern apps (like WhatsApp) manage focus programmatically
         // on list items using roving tabindex, usually setting them to -1 when not active.
         // NOTE: We include 'label' because modern UIs use labels as interactive controls (dropdowns, custom checkboxes, toggles)
@@ -2363,7 +2395,25 @@ class SpatialEngine {
                 known.add(target);
                 all.push(target);
             });
-            this.pointerTargets(scopes, known).forEach(target => all.push(target));
+        }
+        this.pointerScan = targetRules ? this.scanPointerTargets(scopes) : [];
+
+        this.discovered = all;
+        this.discoveredAt = performance.now();
+        this.discoveryDirty = false;
+        return all;
+    }
+
+    refreshCandidates() {
+        if (!this.candidatesDirty) return;
+
+        // Step A: what could be a target (see discover), kept while the page
+        // does not change; then what it kept, checked against the page as
+        // it is drawn now.
+        const targetRules = window.TuiTargetRules;
+        let all = this.discover().filter(el => el.isConnected);
+        if (targetRules) {
+            this.pointerTargets(new Set(all)).forEach(target => all.push(target));
         }
 
         // 2. Filter candidates

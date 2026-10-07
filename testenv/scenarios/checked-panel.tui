@@ -1,0 +1,9 @@
+# A panel shown by a checked checkbox (CSS alone, no element changes): Enter on its label opens it, and ArrowDown steps into it.
+pages/checked-panel.html
+start:css=#top
+key:ArrowDown
+expect:css=#toggle
+key:Enter
+eval:(() => { if (!document.getElementById('toggle').checked) throw new Error('Enter did not check the box'); return 'panel open'; })()
+key:ArrowDown
+expect:css=#panel-first

@@ -1,0 +1,15 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Section opened by :target</title>
+<style>
+  body { font: 16px sans-serif; margin: 40px; }
+  .answer { display: none; }
+  /* The address's #fragment shows the answer; no element changes. */
+  #shipping:target .answer { display: block; }
+  main { margin-top: 40px; }
+</style></head>
+<body>
+  <!-- Questions whose answers open with the address's #fragment, CSS alone. -->
+  <a id="question" href="#shipping">How long does shipping take?</a>
+  <section id="shipping"><div class="answer"><a id="answer-link" href="#rates">See the rates</a></div></section>
+  <main><a id="story" href="#story">A story further down</a></main>
+</body></html>

@@ -1,0 +1,8 @@
+# Rows given a tabindex after the first press, with nothing else changing: the next ArrowDown reaches them.
+pages/late-tabindex.html
+start:css=#top
+key:ArrowRight
+wait:700
+start:css=#top
+key:ArrowDown
+expect:css=#row-one
