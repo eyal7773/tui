@@ -1,0 +1,7 @@
+# A submenu shown by :focus-within changes no element: ArrowDown from its item still steps into it.
+pages/css-only-menu.html
+start:css=#top
+key:ArrowDown
+expect:css=#products
+key:ArrowDown
+expect:css=#first-item

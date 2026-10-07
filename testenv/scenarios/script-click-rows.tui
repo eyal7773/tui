@@ -1,0 +1,12 @@
+# Rows a script makes clickable, with only the pointer cursor to show it: ArrowDown from the search box steps through them, a row added later included, and Enter opens one.
+pages/script-click-rows.html
+start:css=#search
+key:ArrowDown
+expect:Green tea
+wait:1600
+key:ArrowDown
+expect:Black tea
+key:ArrowDown
+expect:White tea
+key:Enter
+eval:(() => { const t = document.getElementById('opened').textContent; if (t !== 'opened White tea') throw new Error('Enter did not open the row: ' + t); return t; })()

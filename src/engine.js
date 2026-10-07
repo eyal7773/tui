@@ -170,6 +170,7 @@ class SpatialEngine {
                 return;
             }
             this.watchedRoot = document.documentElement;
+            this.pointerScanDirty = true;
             this.listen();
             this.observer.observe(document.body, this.observerOptions);
             if (this.bodyResizeObserver) this.bodyResizeObserver.observe(document.body);
@@ -202,6 +203,9 @@ class SpatialEngine {
         // Marks candidates dirty so we re-scan when DOM changes
         this.observer = new MutationObserver((records) => {
             this.candidatesDirty = true;
+            // The ring writes its own style on every move; the pointer scan
+            // (see pointerTargets) is only redone when the page changed.
+            if (records.some(r => r.target !== this.spotlight)) this.pointerScanDirty = true;
 
             // Sync with active element if it changed effectively during DOM updates
             // (e.g. "New Chat" clicked -> DOM updates -> input gets focus)
@@ -2082,6 +2086,74 @@ class SpatialEngine {
         return null;
     }
 
+    /**
+     * Rows and cards that a page makes clickable with a script alone: no
+     * link, no button, no tabindex, no role, only the pointer cursor that
+     * says a click does something. A list of results whose rows were <tr>
+     * elements like that was never reached: ArrowDown from the search box
+     * above it went to the side menu. The element the pointer cursor starts
+     * on is the target, unless a control inside or around it already is one.
+     * focusElement gives it a tabindex on arrival, and Enter clicks it.
+     *
+     * Reading every element's style is costly, and the ring moving changes
+     * nothing here, so the scan is kept until the page itself changes
+     * (pointerScanDirty). What it keeps is checked again on each refresh:
+     * still on the page, not already a candidate, shown, not a whole region.
+     */
+    pointerTargets(scopes, known) {
+        if (this.pointerScanDirty !== false || !this.pointerScan) {
+            this.pointerScan = this.scanPointerTargets(scopes);
+            this.pointerScanDirty = false;
+        }
+        const viewportArea = window.innerWidth * window.innerHeight;
+        const found = [];
+        for (const el of this.pointerScan) {
+            if (!el.isConnected || known.has(el)) continue;
+            const rect = el.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0 || rect.width * rect.height > viewportArea * 0.2) continue;
+            el._tui_pointer_target = true;
+            known.add(el);
+            found.push(el);
+        }
+        return found;
+    }
+
+    /** Every element the pointer cursor starts on, with nothing clickable in or around it. */
+    scanPointerTargets(scopes) {
+        const rules = window.TuiTargetRules;
+        const controls = 'a[href], button, input, select, textarea, label, summary, iframe, ' +
+            '[role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="option"], ' +
+            '[role="treeitem"], [role="checkbox"], [role="radio"], [role="switch"], ' +
+            '[contenteditable]:not([contenteditable="false"])';
+        // The extension's own menu has pointer rows too.
+        const ours = '#tui-menu-container, #tui-hint, #tui-text-badge';
+        const found = [];
+        const cursorOf = new Map();
+        const cursor = (el) => {
+            if (!cursorOf.has(el)) cursorOf.set(el, window.getComputedStyle(el).cursor);
+            return cursorOf.get(el);
+        };
+        // Inside a control nothing else is a target, so its subtree is passed over.
+        const skip = (el) => {
+            if (el.matches(controls) || el.matches(ours)) return NodeFilter.FILTER_REJECT;
+            if (!rules.isGenericTag(el)) return NodeFilter.FILTER_SKIP;
+            return cursor(el) === 'pointer' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+        };
+        for (const scope of scopes) {
+            // A shadow root inside a control or our UI belongs to it.
+            if (scope.host && this.composedClosest(scope.host, controls + ', ' + ours)) continue;
+            const walker = document.createTreeWalker(scope, NodeFilter.SHOW_ELEMENT, skip);
+            for (let el = walker.nextNode(); el; el = walker.nextNode()) {
+                const parent = this.composedParent(el);
+                if (parent && parent.nodeType === 1 && cursor(parent) === 'pointer') continue;
+                if (el.querySelector(controls)) continue;
+                if (!el.textContent.trim() && !el.querySelector('img, svg')) continue;
+                found.push(el);
+            }
+        }
+        return found;
+    }
+
     /** Starts watching shadow roots the observer does not cover yet. */
     observeShadowRoots(scopes) {
         if (!this.observer) return;
@@ -2291,6 +2363,7 @@ class SpatialEngine {
                 known.add(target);
                 all.push(target);
             });
+            this.pointerTargets(scopes, known).forEach(target => all.push(target));
         }
 
         // 2. Filter candidates
@@ -3104,7 +3177,7 @@ class SpatialEngine {
         // 3. Normal Focus
         // An item whose container owns focus has no tabindex, and focus() on it
         // would do nothing. Give it one, the way the widget itself would.
-        if (el._tui_owned_item && !el.hasAttribute('tabindex')) {
+        if ((el._tui_owned_item || el._tui_pointer_target) && !el.hasAttribute('tabindex')) {
             el.setAttribute('tabindex', '-1');
         }
         const focusBefore = this.deepActiveElement();
