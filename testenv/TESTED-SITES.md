@@ -245,11 +245,17 @@ and a recheck.
 | Goal | goal.com | Story cards, match strip | - |
 | Bleacher Report | bleacherreport.com | Score strip, story cards shifting as the page loads | - |
 | FIFA | fifa.com | OneTrust consent card over a dimmed page keeps the ring | - |
+| Formula 1 | formula1.com | Consent dialog in a frame over the whole window: ArrowDown past its last button left no ring anywhere | 9252eff |
+| Crunchyroll | crunchyroll.com | Hero carousel, series rows | - |
+| Time and Date | timeanddate.com | Tool tiles, link rows | - |
+| Kickstarter | kickstarter.com | Project cards in rows, category menu | - |
+| Patreon | patreon.com | Long animated stretch: Down scrolls on to the next section | - |
+| Olympics | olympics.com | Modal consent card that focuses its own link: the press that stayed on it drew no ring | d9486bc |
 
 ## Blocked (not counted)
 
 Answered the harness with a bot check, so the page itself was never seen:
-Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed out), Oracle (error page), Adidas (bot block), Macy's (access denied), Zillow (captcha), AliExpress (reCAPTCHA), The Telegraph (access denied), The Economist (human check), Skyscanner (captcha), DoorDash (Cloudflare check), Kroger (too many requests), Uniqlo (access denied), CVS (US only).
+Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed out), Oracle (error page), Adidas (bot block), Macy's (access denied), Zillow (captcha), AliExpress (reCAPTCHA), The Telegraph (access denied), The Economist (human check), Skyscanner (captcha), DoorDash (Cloudflare check), Kroger (too many requests), Uniqlo (access denied), CVS (US only), Letterboxd (security check), Genius (human check).
 
 ## Tested, no scenario
 
