@@ -81,15 +81,15 @@
       then the ring lets go and the warmth comes back, and again ── */
 
 .bf-play .bf-heat {
-  animation: bf-cool 6s ease-in-out infinite both;
+  animation: bf-cool 3s ease-in-out infinite both;
 }
 
 .bf-play .bf-ring {
-  animation: bf-arrive 6s infinite both;
+  animation: bf-arrive 3s infinite both;
 }
 
-.bf-play .bf-card:nth-child(2) .bf-layer { animation-delay: 0.5s; }
-.bf-play .bf-card:nth-child(3) .bf-layer { animation-delay: 1s; }
+.bf-play .bf-card:nth-child(2) .bf-layer { animation-delay: 0.25s; }
+.bf-play .bf-card:nth-child(3) .bf-layer { animation-delay: 0.5s; }
 
 /* Stopped, each picture holds where it was. */
 .bf-paused .bf-layer {
