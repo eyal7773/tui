@@ -1,0 +1,37 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Links inside a treegrid's plain cells</title>
+<style>
+  body { font: 15px sans-serif; margin: 40px; }
+  table { border-collapse: collapse; width: 900px; }
+  th, td { text-align: left; font-weight: normal; padding: 14px 12px; border-bottom: 1px solid #ddd; }
+  .name { color: #06c; cursor: pointer; }
+  .sub th { padding-left: 36px; }
+  .row { display: flex; align-items: center; gap: 4px; }
+  .row button { border: 0; background: none; width: 16px; padding: 0; }
+</style></head>
+<body>
+  <!-- A cloud sign-in portal's account list: a table made a treegrid, whose
+       cells are plain <th> and <td>. An opened account shows its role links,
+       kept out of the tab order with tabindex=-1, and ArrowDown went from the
+       account's name past them to the next account. -->
+  <a href="#top">Portal home</a>
+  <table role="treegrid" tabindex="-1">
+    <thead><tr><th>Account name</th><th>Account ID</th><th>Email</th></tr></thead>
+    <tbody>
+      <tr aria-level="1" aria-expanded="true">
+        <th><div class="row"><button tabindex="-1" aria-label="Collapse">&#9662;</button>
+            <div role="button" tabindex="0" class="name" id="acct1">Lantern Labs</div></div></th>
+        <td>100000000001</td><td>owner@lantern.example</td>
+      </tr>
+      <tr aria-level="2" class="sub">
+        <th><div><a href="#role" tabindex="-1" id="role1">Gardener</a></div></th>
+        <td><a href="#keys" tabindex="-1" id="keys1">Access keys</a></td><td></td>
+      </tr>
+      <tr aria-level="1" aria-expanded="false">
+        <th><div class="row"><button tabindex="-1" aria-label="Expand">&#9656;</button>
+            <div role="button" tabindex="0" class="name" id="acct2">Lantern Labs Test</div></div></th>
+        <td>100000000002</td><td>test@lantern.example</td>
+      </tr>
+    </tbody>
+  </table>
+</body></html>

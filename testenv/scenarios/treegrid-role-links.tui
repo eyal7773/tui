@@ -1,0 +1,9 @@
+# A table made a treegrid (a cloud sign-in portal's accounts): an opened account's links, tabindex=-1 in plain <th>/<td> cells, were skipped, so ArrowDown went from the account's name to the next account. A grid's own <td> and <th> are its cells.
+pages/treegrid-role-links.html
+start:css=#acct1
+key:ArrowDown
+expect:css=#role1
+key:ArrowDown
+expect:css=#acct2
+key:ArrowUp
+expect:css=#role1

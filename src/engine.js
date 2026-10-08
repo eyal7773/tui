@@ -3151,7 +3151,14 @@ class SpatialEngine {
     }
 
     isInGridCell(el) {
-        return !!(el.parentElement && el.parentElement.closest('[role="gridcell"]'));
+        const parent = el.parentElement;
+        if (!parent) return false;
+        if (parent.closest('[role="gridcell"]')) return true;
+        // A table made a grid has cells by its <td> and <th> alone. AWS's
+        // access portal lists accounts in a treegrid, and an opened account's
+        // role links (tabindex=-1 in a plain <th>) were skipped by ArrowDown.
+        const cell = parent.closest('td, th, [role="rowheader"]');
+        return !!(cell && cell.closest('[role="grid"], [role="treegrid"]'));
     }
 
     /**
