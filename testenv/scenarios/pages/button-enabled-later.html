@@ -1,0 +1,20 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>A button enabled after a moment</title>
+<style>
+  body { font: 15px sans-serif; margin: 40px; }
+  .dialog { width: 360px; border: 1px solid #ccc; padding: 16px; }
+  .footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+</style></head>
+<body>
+  <!-- A deploy form: its Deploy button is disabled while the form loads. The
+       ring that met it then was refused, and from then on the arrows never
+       reached it, enabled or not. -->
+  <div class="dialog">
+    <label>Branch <input id="branch" value="main"></label>
+    <div class="footer">
+      <button id="cancel">Cancel</button>
+      <button id="deploy" disabled>Deploy</button>
+      <button id="close" aria-label="Close">&#10005;</button>
+    </div>
+  </div>
+</body></html>

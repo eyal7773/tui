@@ -1,0 +1,8 @@
+# A deploy form's Deploy button, disabled for a moment: the ring that met it then was refused, and it was never reached again once enabled (it was skipped for good, and given a tabindex=-1 that hid it). A refusal counts for that key press only.
+pages/button-enabled-later.html
+start:css=#cancel
+key:ArrowRight
+eval:document.getElementById('deploy').disabled = false
+start:css=#cancel
+key:ArrowRight
+expect:css=#deploy

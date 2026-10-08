@@ -64,7 +64,7 @@ class SpatialEngine {
         this.isNavigating = false;
         this.observer = null;
         this.focusMonitorInterval = null;
-        this.failedFocusElements = new Set(); // Track elements that recently failed to receive focus
+        this.failedFocusElements = new Set(); // Elements that refused focus during this key press
         this.steppedTo = null; // Where the last arrow step landed, as opposed to focus the page placed
         this.leavingBar = null; // The bottom bar a step down is leaving (see belowBottomBar)
         this.leftBar = null; // The bottom bar the ring stepped down out of, passed by after
@@ -1651,6 +1651,11 @@ class SpatialEngine {
             firstPress: firstPress || undefined
         });
 
+        // What refused focus is skipped for the rest of this press only. A
+        // button refuses while it is disabled, and a form's Deploy button,
+        // disabled for a moment, was never reached again once enabled.
+        this.failedFocusElements.clear();
+
         try {
             this.stepUntilFocused(key, mode, firstPress);
         } catch (err) {
@@ -2431,7 +2436,9 @@ class SpatialEngine {
 
             // FILTER: Negative Tabindex on native controls (unless part of a widget)
             // This excludes helper inputs used by libraries (e.g. Jira, React-Select)
-            if (el.getAttribute('tabindex') === '-1') {
+            // A -1 the engine gave the element itself (see focusElement) says
+            // nothing about the page hiding it.
+            if (el.getAttribute('tabindex') === '-1' && !el._tui_tabindex) {
                 // Allow if currently focused (user is already there)
                 if (this.deepActiveElement() !== el) {
                     const tagName = el.tagName;
@@ -3244,6 +3251,7 @@ class SpatialEngine {
         // would do nothing. Give it one, the way the widget itself would.
         if ((el._tui_owned_item || el._tui_pointer_target) && !el.hasAttribute('tabindex')) {
             el.setAttribute('tabindex', '-1');
+            el._tui_tabindex = true;
         }
         const focusBefore = this.deepActiveElement();
         el.focus();
@@ -3254,9 +3262,12 @@ class SpatialEngine {
         // tabindex, it takes focus like the control it stands for.
         // (Chrome reports tabIndex 0 for such a link, so the attribute decides.)
         // Only when focus went nowhere at all: a label hands it to its input.
+        // Nor for a disabled control, which refuses focus for that alone,
+        // and would keep the -1 once enabled (see the candidate filter).
         if (this.deepActiveElement() === focusBefore && focusBefore !== el &&
-            el.tagName !== 'LABEL' && !el.hasAttribute('tabindex')) {
+            el.tagName !== 'LABEL' && !el.disabled && !el.hasAttribute('tabindex')) {
             el.setAttribute('tabindex', '-1');
+            el._tui_tabindex = true;
             el.focus();
         }
 
