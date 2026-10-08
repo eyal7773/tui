@@ -80,7 +80,7 @@ and a recheck.
 | National Geographic | nationalgeographic.com | Story list, card row | - |
 | Khan Academy | khanacademy.org | Cookie card that declares itself modal keeps the first press; course grid | - |
 | Coursera | coursera.org | Hero carousel dots, course cards | - |
-| Udemy | udemy.com | Top banner, category cards, course carousel | - |
+| Udemy | udemy.com; Udemy Business home (report zip + local page) | Top banner, category cards, course carousel; "My learning" menu opened over the topics row: ArrowDown enters it, not the topic hidden under it | menu-over-row | 160fbdb |
 | Harvard | harvard.edu | Tall story cards, video link | - |
 | MIT | mit.edu | Page CSS gave the ring a 15px margin: it sat below every element | dcefb0b |
 | Stanford | stanford.edu | Story cards, video player controls | - |
