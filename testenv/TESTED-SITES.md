@@ -22,6 +22,7 @@ and a recheck.
 | Amazon | amazon.com/s?k=headphones, amazon.com/dp/B09XSDMT4F | See-through `<input>` buttons, inline-link colour swatches, carousel "next slide" disappearing under the ring | amazon-result-swatches, amazon-thumbnails | 9dfa9a9, df11f9d, af9135b |
 | Argo CD | argocd application tree (report zip + local page) | Menu opened from a node's three-dots button, pinned under it outside the scrolling tree: ArrowDown enters it | menu-opened-from-button | 3aca213 |
 | AWS console | us-east-1.console.aws.amazon.com/ec2 Instances (local page) | Page drawn into one big frame: arrows step into it level with where they start, and back out the same way | page-frame, mdn-frame-round-trip | 78e9c88 |
+| AWS access portal | awsapps.com/start accounts list (report zip + local page) | Treegrid of accounts with plain <th>/<td> cells: ArrowDown from an opened account reaches its role links (tabindex=-1) | treegrid-role-links | 63d3412 |
 | Admin dashboard | an internal results list (report zip + local page) | Rows a script makes clickable, with only the pointer cursor (no link, tabindex or role): ArrowDown from the search box steps through them, Enter opens one; a submenu shown by CSS alone still reached | script-click-rows, css-only-menu | 9787f18 |
 | Booking.com | booking.com | Destination field's label stealing the arrows; 1x1 "travelling for work" checkbox | booking-destination | 4edb195, bb6550e |
 | eBay | ebay.com/sch/i.html?_nkw=headphones | Carousel back arrow hidden at opacity 0 over the links | ebay-hidden-carousel-arrow | e16f060 |
