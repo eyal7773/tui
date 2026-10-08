@@ -24,6 +24,10 @@ let pageAddress = '';
 
 const $ = (id) => document.getElementById(id);
 
+// How long the thanks stays before the window closes itself.
+const CLOSE_AFTER_MS = 1500;
+const CLOSE_AFTER_NOTE_MS = 5000;
+
 function setStatus(text, isError = false) {
   $('status').textContent = text;
   $('status').classList.toggle('error', isError);
@@ -142,6 +146,9 @@ async function send() {
     sent = true;
     const note = built.note || ($('include-page').checked && !withPage ? NO_PERMISSION : '');
     setStatus(`Thank you. Your report was sent.${note ? ' ' + note : ''}`);
+    // The window was opened for this report alone; once it is sent it goes,
+    // after long enough to read the thanks (and the note, when there is one).
+    setTimeout(() => window.close(), note ? CLOSE_AFTER_NOTE_MS : CLOSE_AFTER_MS);
   } catch (err) {
     setStatus(`The report could not be sent: ${err.message}. Press Send report to try again.`, true);
   } finally {

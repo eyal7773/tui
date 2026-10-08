@@ -43,7 +43,8 @@ server's address with a stand-in, so a scenario never posts to the real one;
 `report-server:<status>` sets what it answers (201 unless changed).
 `scenarios/report-send.tui` checks the zip carries the address and the
 description, `scenarios/report-send-fails.tui` an error answer. `report-shot`
-screenshots the report window.
+screenshots the report window, and `report-closed` checks that it closes
+itself after a report is sent.
 
 ## Try a live site
 

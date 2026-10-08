@@ -35,6 +35,7 @@
                    and report-lacks check. The report server is a stand-in for
                    every run, so nothing reaches the real one
   report-server:<status> what the stand-in server answers from now on (201)
+  report-closed[:<ms>] fail unless the report window closes within <ms> (3000)
   report-key:<key> press a key in the report window
   report-eval:<js> run JS in the report window; fails if it throws
   report-shot[:<name>] screenshot the report window into .work/shots/
@@ -390,6 +391,15 @@ async function runStep(page, step, state) {
             state.report = `status: ${status}\n` +
                 (posted.length ? await readSent(posted[posted.length - 1]) : '(nothing posted)');
             fs.writeFileSync(path.join(WORK, 'last-report-sent.txt'), state.report);
+            break;
+        }
+        case 'report-closed': {
+            // The window closes itself once a report is sent.
+            if (!state.reportWin) throw new Error('report-closed needs a report step before it');
+            const closed = state.reportWin.isClosed() ||
+                await state.reportWin.waitForEvent('close', { timeout: Number(arg) || 3000 }).then(() => true, () => false);
+            if (closed) console.log('  PASS   the report window closed');
+            else { console.log('  FAIL   the report window is still open'); state.failed++; }
             break;
         }
         case 'report-key':
