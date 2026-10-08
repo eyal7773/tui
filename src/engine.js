@@ -3076,6 +3076,14 @@ class SpatialEngine {
         let common = currentEl;
         while (common && !this.composedContains(common, cover)) common = this.composedParent(common);
         if (!common || common === document.body || common === document.documentElement) return false;
+        // A cover holding stops of its own is no spill but a menu the ring
+        // opened, there to be stepped into, and it hides what lies under it.
+        // Udemy's "My learning" opens its course list over the row of topics
+        // below, and ArrowDown went to the topic hidden under the first course.
+        if (cover === common) return false;
+        let branch = cover;
+        while (this.composedParent(branch) !== common) branch = this.composedParent(branch);
+        if (this.candidates.some(c => this.composedContains(branch, c))) return false;
         const box = common.getBoundingClientRect();
         return x < box.left || x > box.right || y < box.top || y > box.bottom;
     }

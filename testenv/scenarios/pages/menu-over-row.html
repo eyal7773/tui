@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Menu opened over the next row</title>
+<style>
+  body { font: 15px sans-serif; margin: 0; }
+  header { position: relative; z-index: 10; display: flex; justify-content: flex-end; gap: 16px; padding: 16px 40px; }
+  header a { color: #000; }
+  .wrap { position: relative; display: inline-block; }
+  /* The menu opens with the focus on its button, and drops over the row of
+     topics below the header, wider than the button that opened it. */
+  .menu { display: none; position: absolute; top: calc(100% + 16px); right: -40px; width: 280px; background: #fff;
+          border: 1px solid #ccc; padding: 40px 8px 8px; }
+  .wrap:focus-within .menu { display: block; }
+  .menu a { display: block; padding: 12px 8px; }
+  nav { display: flex; justify-content: flex-end; gap: 20px; padding: 24px 40px; border-top: 1px solid #ddd; }
+  main { padding: 40px; }
+</style></head>
+<body>
+  <!-- A learning site's "My courses" menu: ArrowDown from its button went to
+       the topic hidden under the menu's first course, never into the menu. -->
+  <header>
+    <a href="#teach" id="teach">Teach</a>
+    <span class="wrap">
+      <a href="#mine" id="mine">My courses</a>
+      <div class="menu">
+        <a href="#c1" id="c1">Baking Bread at Home</a>
+        <a href="#c2" id="c2">Birdwatching for Beginners</a>
+        <a href="#all" id="all">See all my courses</a>
+      </div>
+    </span>
+  </header>
+  <nav>
+    <a href="#t1">Gardening</a>
+    <a href="#t2">Woodwork</a>
+    <a href="#t3" id="t3">Pottery and Ceramics</a>
+    <a href="#t4" id="t4">Watercolour Painting</a>
+  </nav>
+  <main><a href="#more">Browse every topic</a></main>
+</body></html>

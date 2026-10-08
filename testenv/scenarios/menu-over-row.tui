@@ -1,0 +1,7 @@
+# A menu its button opens over the row below (a learning site's course list): ArrowDown from the button went to the link hidden under the menu's first item, as if the menu were part of the button that goes when the ring leaves. A menu with stops of its own is stepped into.
+pages/menu-over-row.html
+start:css=#mine
+key:ArrowDown
+expect:css=#c1
+key:ArrowDown
+expect:css=#c2
