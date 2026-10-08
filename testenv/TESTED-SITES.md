@@ -24,6 +24,7 @@ and a recheck.
 | AWS console | us-east-1.console.aws.amazon.com/ec2 Instances (local page) | Page drawn into one big frame: arrows step into it level with where they start, and back out the same way | page-frame, mdn-frame-round-trip | 78e9c88 |
 | AWS access portal | awsapps.com/start accounts list (report zip + local page) | Treegrid of accounts with plain <th>/<td> cells: ArrowDown from an opened account reaches its role links (tabindex=-1) | treegrid-role-links | 63d3412 |
 | Admin dashboard | an internal results list (report zip + local page) | Rows a script makes clickable, with only the pointer cursor (no link, tabindex or role): ArrowDown from the search box steps through them, Enter opens one; a submenu shown by CSS alone still reached | script-click-rows, css-only-menu | 9787f18 |
+| Deploy form | an internal environments dashboard (report zip + local page) | Deploy button disabled for a moment: once enabled, ArrowRight from Cancel reaches it | button-enabled-later | 962a1bb |
 | Booking.com | booking.com | Destination field's label stealing the arrows; 1x1 "travelling for work" checkbox | booking-destination | 4edb195, bb6550e |
 | eBay | ebay.com/sch/i.html?_nkw=headphones | Carousel back arrow hidden at opacity 0 over the links | ebay-hidden-carousel-arrow | e16f060 |
 | Gmail | open message (report zip + local page) | Message taller than the window is one focusable list item: arrows step into it, and the message's own scroll box scrolls before ArrowDown leaves for the folders | message-in-scroll-box | the commit adding the scenario |
