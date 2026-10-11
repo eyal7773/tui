@@ -29,6 +29,7 @@ and a recheck.
 | eBay | ebay.com/sch/i.html?_nkw=headphones | Carousel back arrow hidden at opacity 0 over the links | ebay-hidden-carousel-arrow | e16f060 |
 | Gmail | open message (report zip + local page) | Message taller than the window is one focusable list item: arrows step into it, and the message's own scroll box scrolls before ArrowDown leaves for the folders | message-in-scroll-box | the commit adding the scenario |
 | GitHub | pull request diff (local page) | Review thread's buttons inside a grid cell | github-review-thread | 2f1d227 |
+| Google Calendar | event details over the week view (report zip + local page) | Icons marked aria-hidden inside the details dialog: the arrows stay on the dialog's links instead of going to the small calendar and checkboxes behind it | dialog-hidden-icons | the commit adding the scenario |
 | Google Drive | drive.google.com (report zip + local page) | Sidebar tree with one tabindex, file grid, Enter twice opens a file | drive-new-down-home, double-enter | 864664e, 3aa87f0, 3280ca5, 9a9f926 |
 | Google Sheets | a spreadsheet (report zip + local page) | Cell editor parked out of sight: once the user clicked the grid, the arrows move between cells | offscreen-cell-editor | 6a5b736 |
 | Hacker News | news.ycombinator.com | ArrowLeft from the leftmost upvote arrow climbing up | hackernews-left-edge | 83fb8f7 |

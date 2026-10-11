@@ -1,0 +1,12 @@
+# Icons marked aria-hidden inside a dialog let the arrows reach the page behind it, so a link further down the dialog was never reached (Google Calendar's event details).
+# A preview card that is all marked aria-hidden still does not hide the link under it (Wikipedia's page previews).
+pages/dialog-hidden-icons.html
+start:css=#join
+key:ArrowDown
+expect:css=#notes
+start:css=#cal-check
+key:ArrowUp
+expect:css=#notes
+start:css=#first
+key:ArrowDown
+expect:css=#under-card

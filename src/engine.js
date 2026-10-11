@@ -2898,12 +2898,17 @@ class SpatialEngine {
                     // is under it either. Wikipedia's page previews stay open
                     // over the next paragraph after focus has moved on, marked
                     // aria-hidden, and every link under them was skipped.
+                    // Only the whole card, though: an icon marked so inside a
+                    // dialog still has the dialog around it. Google Calendar's
+                    // event details hide their icons that way, and the arrows
+                    // went to the buttons behind the dialog instead of its links.
                     let isObstructingFixed = false;
                     let obstacle = topEl;
                     while (obstacle && obstacle !== document.body) {
                         const hidden = obstacle.getAttribute && obstacle.getAttribute('aria-hidden');
-                        if (hidden === '' || hidden === 'true' ||
-                            (obstacle.getAttribute && obstacle.getAttribute('role') === 'tooltip')) {
+                        if ((hidden === '' || hidden === 'true' ||
+                            (obstacle.getAttribute && obstacle.getAttribute('role') === 'tooltip')) &&
+                            !this.drawnAround(obstacle, cand)) {
                             isObstructingFixed = true;
                             break;
                         }
@@ -3093,6 +3098,30 @@ class SpatialEngine {
         if (this.candidates.some(c => this.composedContains(branch, c))) return false;
         const box = common.getBoundingClientRect();
         return x < box.left || x > box.right || y < box.top || y > box.bottom;
+    }
+
+    /**
+     * Does a box above hidden, and not holding cand, paint a background? Then
+     * hidden is a part of something drawn over cand, not the whole of it.
+     * Only a box above the outermost aria-hidden counts: one inside it is
+     * hidden too. Google's icons sit in two nested hidden boxes.
+     */
+    drawnAround(hidden, cand) {
+        let drawn = false;
+        for (let node = this.composedParent(hidden); node && node !== document.body && node !== document.documentElement &&
+            !this.composedContains(node, cand); node = this.composedParent(node)) {
+            if (node.nodeType !== 1) continue;
+            const flag = node.getAttribute('aria-hidden');
+            if (flag === '' || flag === 'true') {
+                drawn = false;
+                continue;
+            }
+            const style = window.getComputedStyle(node);
+            const alpha = style.backgroundColor.match(/rgba\([^)]*,\s*([\d.]+)\s*\)/);
+            if (style.backgroundImage !== 'none' ||
+                (style.backgroundColor !== 'transparent' && !(alpha && parseFloat(alpha[1]) === 0))) drawn = true;
+        }
+        return drawn;
     }
 
     getDistance(currentRect, targetRect, direction) {

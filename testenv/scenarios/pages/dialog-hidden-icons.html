@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dialog with hidden icons</title>
+<style>
+  body { margin: 0; font: 14px sans-serif; }
+  .side { position: absolute; left: 0; top: 0; width: 420px; }
+  .side button { position: absolute; left: 10px; width: 90px; height: 24px; }
+  #day-1 { top: 200px; }
+  #day-2 { top: 240px; }
+  .side input { position: absolute; left: 15px; top: 400px; width: 24px; height: 24px; margin: 0; }
+  .dialog { position: fixed; left: 0; top: 100px; width: 420px; height: 600px; background: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .4); }
+  .row { position: absolute; left: 0; width: 420px; height: 40px; }
+  .icon { position: absolute; left: 0; top: 0; width: 64px; height: 40px; }
+  .icon svg { display: block; margin: 10px 22px; }
+  .row a, .row span.text { position: absolute; left: 70px; top: 10px; }
+  .article { position: absolute; left: 480px; top: 460px; width: 400px; }
+  .article a { position: absolute; left: 0; }
+  .card { position: absolute; left: 470px; top: 530px; width: 320px; height: 120px; background: #fff;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, .4); }
+</style>
+</head>
+<body>
+  <!-- The page behind: a small month calendar and a calendar's checkbox. -->
+  <div class="side">
+    <button id="day-1">Day 1</button>
+    <button id="day-2">Day 2</button>
+    <input type="checkbox" id="cal-check" aria-label="Show my calendar">
+  </div>
+
+  <!-- An article with a preview card left open over its next line. The whole
+       card says it is not there, so it does not hide the link under it. -->
+  <div class="article">
+    <a id="first" href="#first" style="top: 40px">First link</a>
+    <a id="under-card" href="#under-card" style="top: 120px">Link under the card</a>
+  </div>
+  <div class="card" aria-hidden="true"><p>A preview of the first link.</p></div>
+
+  <!-- The event's details over it. Each row starts with an icon marked
+       aria-hidden, some in two hidden boxes, right over the page behind. -->
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Event details">
+    <div class="row" style="top: 20px">
+      <div class="icon" aria-hidden="true"><svg width="20" height="20"><circle cx="10" cy="10" r="8"/></svg></div>
+      <a id="join" href="#join">Join the call</a>
+    </div>
+    <div class="row" style="top: 95px">
+      <div class="icon" aria-hidden="true"><span aria-hidden="true"><svg width="20" height="20"><rect width="16" height="16"/></svg></span></div>
+      <span class="text">Phone details</span>
+    </div>
+    <div class="row" style="top: 135px">
+      <div class="icon" aria-hidden="true"><svg width="20" height="20"><rect width="16" height="16"/></svg></div>
+      <span class="text">More details</span>
+    </div>
+    <div class="row" style="top: 190px">
+      <div class="icon" aria-hidden="true"><svg width="20" height="20"><circle cx="10" cy="10" r="8"/></svg></div>
+      <a id="notes" href="#notes">Meeting notes</a>
+    </div>
+    <div class="row" style="top: 290px">
+      <div class="icon" aria-hidden="true"><svg width="20" height="20"><circle cx="10" cy="10" r="8"/></svg></div>
+      <span class="text">10 minutes before</span>
+    </div>
+  </div>
+</body>
+</html>
