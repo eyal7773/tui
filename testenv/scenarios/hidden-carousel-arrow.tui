@@ -1,0 +1,5 @@
+# A carousel's spent back arrow, hidden at opacity 0 over the first chip, made ArrowDown from the tabs pass the chip (eBay's Popular Filters).
+pages/hidden-carousel-arrow.html
+start:css=#all
+key:ArrowDown
+expect:css=#chip-1

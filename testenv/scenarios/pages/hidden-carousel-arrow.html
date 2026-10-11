@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hidden carousel arrow</title>
+<style>
+  body { margin: 0; font: 14px sans-serif; }
+  .tabs { position: absolute; left: 300px; top: 20px; }
+  .tabs a { margin-right: 20px; }
+  .side { position: absolute; left: 20px; top: 260px; width: 200px; }
+  .carousel { position: absolute; left: 300px; top: 80px; width: 600px; height: 40px; }
+  .carousel ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 10px; }
+  .carousel li a { display: inline-block; padding: 8px 14px; border: 1px solid #888; border-radius: 16px; }
+  /* The back arrow, spent at the start of the row, is hidden by opacity
+     alone and still lies over the first chip. */
+  .back { position: absolute; left: 0; top: 0; width: 60px; height: 36px; opacity: 0; }
+</style>
+</head>
+<body>
+  <div class="tabs">
+    <a href="#all" aria-current="page" id="all">All</a>
+    <a href="#auction">Auction</a>
+    <a href="#buy">Buy It Now</a>
+  </div>
+  <div class="carousel">
+    <ul>
+      <li><a href="#c1" id="chip-1">Wireless</a></li>
+      <li><a href="#c2">Over-ear</a></li>
+      <li><a href="#c3">In-ear</a></li>
+      <li><a href="#c4">Noise cancelling</a></li>
+    </ul>
+    <button class="back" aria-label="Previous" disabled>&lt;</button>
+  </div>
+  <div class="side">
+    <a href="#cat" id="side-link">Category</a>
+  </div>
+</body>
+</html>

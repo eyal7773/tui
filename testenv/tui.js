@@ -53,7 +53,10 @@
  * --ext loads another build instead of ../src, e.g. an old commit checked out
  * with `git worktree add`, to see whether a bug was already there.
  *
- * Exit code is 1 when an expect fails, so runs can be scripted.
+ * Exit code is 1 when an expect fails, so runs can be scripted. It is 3 when
+ * a live site did not serve the page the steps were written for: it did not
+ * load, or a start step's element is not on it. Sites change their pages and
+ * serve other layouts at times; that says nothing about the extension.
  */
 
 const { chromium } = require('playwright');
@@ -284,6 +287,10 @@ async function find(page, what, focus = false, frame = page.mainFrame()) {
     return frame.locator('[data-tui-harness]').first();
 }
 
+/** A live site served another page than the one the steps were written for. */
+class SiteChanged extends Error {}
+const SITE_CHANGED = 3;
+
 async function runStep(page, step, state) {
     const i = step.indexOf(':');
     const cmd = i < 0 ? step : step.slice(0, i);
@@ -292,7 +299,11 @@ async function runStep(page, step, state) {
     switch (cmd) {
         case 'start': {
             // The engine picks up focus it sees after a pointer interaction.
-            await find(page, arg, true);
+            try {
+                await find(page, arg, true);
+            } catch (e) {
+                throw state.live ? new SiteChanged(`${e.message}: the live page is not the one the steps were written for`) : e;
+            }
             await page.waitForTimeout(200);
             // A throwaway arrow would move the ring, so show it without one.
             const r = await ring(page);
@@ -460,7 +471,8 @@ async function main() {
             ...(opts.asChrome ? ['--disable-blink-features=AutomationControlled'] : [])],
     });
     const missing = archive ? await replay(ctx, archive) : [];
-    const state = { failed: 0, shots: 0, settle: 250, headed: opts.headed, ctx: ctx };
+    const state = { failed: 0, shots: 0, settle: 250, headed: opts.headed, ctx: ctx,
+        live: /^https?:/i.test(url) && !archive };
     // Routed after replay, so it is the one that answers the report's address.
     await standInServer(ctx, state);
     try {
@@ -489,7 +501,11 @@ async function main() {
         });
         page.on('pageerror', (e) => log.write(`[pageerror] ${e.message}\n`));
 
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        try {
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        } catch (e) {
+            throw state.live ? new SiteChanged(`${url} did not load: ${e.message.split('\n')[0]}`) : e;
+        }
         await page.waitForTimeout(1500);
 
         for (const step of opts.steps) await runStep(page, step, state);
@@ -507,4 +523,4 @@ async function main() {
     if (state.failed) { console.log(`\n${state.failed} expectation(s) failed`); process.exit(1); }
 }
 
-main().catch((e) => { console.error(e.message); process.exit(1); });
+main().catch((e) => { console.error(e.message); process.exit(e instanceof SiteChanged ? SITE_CHANGED : 1); });

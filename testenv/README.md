@@ -67,5 +67,11 @@ Each fixed bug can be kept as a `scenarios/*.tui` file (the target, then one
 step per line). `node suite.js` runs them all; `--ext <dir>` runs them against
 another build, such as an older commit checked out with `git worktree add`.
 
+A live site is not always the page a scenario was written for: it changes,
+or serves another layout now and then. When it did not load, or a `start`
+step's element is not on it, tui.js exits 3 and the suite shows SKIP with
+the reason, not FAIL. `node suite.js --local` runs only the scenarios on
+local pages and reports, whose result depends on the extension alone.
+
 Everything generated (unpacked reports, screenshots, profiles, the last
 console log) goes to `.work/`, which git ignores.

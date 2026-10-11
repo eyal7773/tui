@@ -26,7 +26,7 @@ and a recheck.
 | Admin dashboard | an internal results list (report zip + local page) | Rows a script makes clickable, with only the pointer cursor (no link, tabindex or role): ArrowDown from the search box steps through them, Enter opens one; a submenu shown by CSS alone still reached | script-click-rows, css-only-menu | 9787f18 |
 | Deploy form | an internal environments dashboard (report zip + local page) | Deploy button disabled for a moment: once enabled, ArrowRight from Cancel reaches it | button-enabled-later | 962a1bb |
 | Booking.com | booking.com | Destination field's label stealing the arrows; 1x1 "travelling for work" checkbox | booking-destination | 4edb195, bb6550e |
-| eBay | ebay.com/sch/i.html?_nkw=headphones | Carousel back arrow hidden at opacity 0 over the links | ebay-hidden-carousel-arrow | e16f060 |
+| eBay | ebay.com/sch/i.html?_nkw=headphones (local page) | Carousel back arrow hidden at opacity 0 over the links | hidden-carousel-arrow | e16f060 |
 | Gmail | open message (report zip + local page) | Message taller than the window is one focusable list item: arrows step into it, and the message's own scroll box scrolls before ArrowDown leaves for the folders | message-in-scroll-box | the commit adding the scenario |
 | GitHub | pull request diff (local page) | Review thread's buttons inside a grid cell | github-review-thread | 2f1d227 |
 | Google Calendar | event details over the week view (report zip + local page) | Icons marked aria-hidden inside the details dialog: the arrows stay on the dialog's links instead of going to the small calendar and checkboxes behind it | dialog-hidden-icons | 545b204 |
@@ -39,7 +39,7 @@ and a recheck.
 | Slack | app.slack.com client (saved page, local pages) | Sidebar `role="tree" tabindex="-1"`: ArrowLeft from a message to the channel beside it, up and down the channels; Enter on a row (direct message, channel, section heading, none of them a link) clicks its label | tree-container-tabindex, tree-item-link, tree-item-no-link | 0d14c28, 4ef722d, f2d9f90 |
 | Stack Overflow | stackoverflow.com/questions/11227809/... | OneTrust cookie card taking focus on load | stackoverflow-first-press | 4c32c83 |
 | The Verge | theverge.com | Stretched links in the story stream, staying in the column | verge-story-stream, stretched-link | 2b38ea2, be73518 |
-| Wikipedia | en.wikipedia.org/wiki/Albert_Einstein, .../Python_(programming_language) | Appearance radios, Main menu Enter, page preview hover card, sticky side column | wikipedia-appearance-radios, wikipedia-main-menu-enter, wikipedia-preview-down | e9314d0, edaca2a, b42c7ec, 6e7cf43, ee1c3a4 |
+| Wikipedia | en.wikipedia.org/wiki/Albert_Einstein, .../Python_(programming_language) | Appearance radios, Main menu Enter, page preview hover card, sticky side column | wikipedia-appearance-radios, wikipedia-main-menu-enter, dialog-hidden-icons (preview card, local page) | e9314d0, edaca2a, b42c7ec, 6e7cf43, ee1c3a4 |
 | ynet | ynet.co.il | Inline link wrapping a lead photo | ynet-photo-link | 53b9229 |
 | YouTube | youtube.com | Sidebar entries inside `tabindex=-1` links | youtube-sidebar | 3e98875 |
 
