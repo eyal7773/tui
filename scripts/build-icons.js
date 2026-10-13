@@ -24,11 +24,12 @@ const root = path.join(__dirname, '..');
 const MASTER = 'assets/icon.svg';
 const SMALL = 'assets/icon-16.svg';
 
-// Sizes the manifest asks for, plus the favicon the GitHub Pages site uses.
+// Sizes the manifest asks for (128px is the one the Chrome Web Store requires), plus the favicon the GitHub Pages site uses.
 // 16px comes from its own drawing; see the comment in that file for why.
 const targets = [
   { file: 'src/icons/icon16.png', size: 16, source: SMALL },
   { file: 'src/icons/icon32.png', size: 32, source: MASTER },
+  { file: 'src/icons/icon128.png', size: 128, source: MASTER },
   { file: 'src/icons/icon192.png', size: 192, source: MASTER },
   { file: 'src/icons/icon512.png', size: 512, source: MASTER },
   { file: 'docs/icon.png', size: 192, source: MASTER }

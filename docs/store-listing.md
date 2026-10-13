@@ -13,29 +13,54 @@ things you can click or type into, by where they are on screen.
 
 | Permission | Justification |
 | :--- | :--- |
-| Host access (content script on `<all_urls>`) | The arrow keys have to work on whatever page the user is on. |
+| Host access (content script on `<all_urls>`) | The arrow keys have to work on whatever page the user is on. The script only reads the layout of the page to move the ring, and sends nothing. |
 | `storage` | The user's settings (ring colour, excluded sites, motion) and local usage counts for the stats page. |
 | `activeTab` | The popup shows and changes the setting for the site in the current tab. |
 | `notifications`, `alarms` | The weekly recap notification, which the user can turn off. |
-| `pageCapture` (optional) | Requested only when the user presses a button in a bug report they started from the F10 menu, with "Attach a copy of the page" ticked. Chrome asks first, the copy is saved to their own downloads, and nothing is sent. |
+| `pageCapture` (optional) | Requested only when the user sends a bug report they started from the F10 menu with "Attach a copy of the page" ticked. Chrome asks first; the copy goes in that report and nowhere else. |
+
+## Remote code
+
+No. Every script ships in the package. (The stats page loads one stylesheet, Bootstrap's
+CSS, from `cdn.jsdelivr.net`; a stylesheet is not code.)
 
 ## Data usage
 
-Nothing is collected: no data leaves the user's computer through the extension.
+Nothing is collected while browsing. Settings and usage counts stay in
+`chrome.storage.local`; the navigation log (tui-log.js) stays in the page's memory.
 
-- Settings and usage counts stay in `chrome.storage.local`.
-- The navigation log (tui-log.js) stays in the page's memory, holds the last 20 events,
-  and records element shape only: tag, role, up to three class names, tabindex,
-  position. No text, labels, links, ids or typed keys.
-- A bug report is a zip the user saves and chooses to attach to a GitHub issue. The
-  report window shows its content under "What is sent". A copy of the page is ticked by
-  default and can be unticked; it needs the permission Chrome asks for.
+Data leaves the computer only in a bug report, and only when the user presses
+**Send report** in the window opened from F10 → Report a problem. The report is a zip
+POSTed to the report server (`server/`, at `tui-reports.taliandeyal.workers.dev`), kept
+there until the developer downloads it with `npm run pull-reports`, then deleted. It
+holds:
 
-So every "Data usage" category is left unticked, and all three certifications apply:
-no selling, no use unrelated to the single purpose, no use for credit decisions.
+- the user's description;
+- the page's full address;
+- the navigation log: the keys the extension acted on and the shape of the elements it
+  moved between (tag, role, up to three class names, tabindex, position). No text,
+  labels, links, ids or typed keys, unless admin mode is on;
+- the extension version, the browser's version string and the window size;
+- with "Attach a copy of the page" ticked (the default), an MHTML copy of the page.
+
+So tick these categories:
+
+| Category | Why |
+| :--- | :--- |
+| **Website content** | The copy of the page, which holds everything on it. |
+| **Web history** | The address of the page the report is about. |
+| **User activity** | The log of keys the extension acted on. |
+
+The rest stay unticked: no account, name or email is asked for, and nothing is read
+from forms, credentials or the user's location.
+
+All three certifications still apply: no selling or transfer, no use unrelated to the
+single purpose (a report is only used to fix the bug it describes), no use for credit
+decisions.
 
 ## Before submitting, also check
 
-- **Remote code.** None: every script ships in the package. The stats page loads only a
-  stylesheet from `cdn.jsdelivr.net`; bundling it would remove the one outside request.
 - **Ads and affiliate links.** None.
+- **Icon.** The manifest has a 128×128 icon (`src/icons/icon128.png`); the store needs it.
+- **Package.** Upload the `tui-navigator-v*.zip` from the latest GitHub release. Its
+  version is stamped from the tag, and each upload must be higher than the last.

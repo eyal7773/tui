@@ -1,7 +1,7 @@
 {
   "name": "tui-navigator",
   "version": "0.1.100",
-  "description": "Transform browsing into a Text-based User Interface navigation experience.",
+  "description": "Navigate any web page with the arrow keys: a visible ring moves between the links, buttons and fields on screen.",
   "scripts": {
     "test": "node scripts/run-tests.js",
     "build-icons": "node scripts/build-icons.js",
