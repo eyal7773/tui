@@ -3,11 +3,11 @@
   "version": "0.1.100",
   "description": "Transform browsing into a Text-based User Interface navigation experience.",
   "scripts": {
-    "sync-site-version": "node scripts/sync-site-version.js",
     "test": "node scripts/run-tests.js",
     "build-icons": "node scripts/build-icons.js",
     "pull-reports": "node scripts/pull-reports.js",
-    "sync-site-figure": "node scripts/sync-site-figure.js"
+    "sync-site-figure": "node scripts/sync-site-figure.js",
+    "build-site": "node scripts/build-site.js"
   },
   "private": true
 }

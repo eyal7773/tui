@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="{{lang}}" dir="{{dir}}">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{privacy.title}}</title>
+  <meta name="description" content="{{privacy.description}}">
+  {{head}}
+  <link rel="icon" href="{{root}}icon.png">
+  <style>
+    :root {
+      --paper: #eaece9;
+      --ink: #17181a;
+      --ink-dim: #5a635c;
+      --rule: #c9cec9;
+      --phosphor: #00893a;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    :root:lang(he) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Heebo", "Segoe UI", Arial, sans-serif;
+      --serif: "Frank Ruhl Libre", "David Libre", "Times New Roman", serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #14161a;
+        --ink: #dfe3df;
+        --ink-dim: #8b948c;
+        --rule: #333a36;
+        --phosphor: #00ff6a;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    .wrap {
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+
+    h1 {
+      font-weight: 400;
+      font-size: 2.2rem;
+      line-height: 1.15;
+      margin: 0 0 0.5rem;
+    }
+
+    h2 {
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--phosphor);
+      margin: 2.25rem 0 0.5rem;
+    }
+
+    .dim {
+      color: var(--ink-dim);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    code,
+    kbd {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>{{privacy.h1}}</h1>
+    <p class="dim">{{privacy.lede}}</p>
+
+    <h2>{{privacy.keepHeading}}</h2>
+    <ul>
+      <li>{{privacy.keepSettings}}</li>
+      <li>{{privacy.keepCounts}}</li>
+      <li>{{privacy.keepLog}}</li>
+    </ul>
+
+    <h2>{{privacy.sendHeading}}</h2>
+    <p>{{privacy.send}}</p>
+
+    <h2>{{privacy.reportsHeading}}</h2>
+    <p>{{privacy.reports1}}</p>
+    <p>{{privacy.reports2}}</p>
+    <p>{{privacy.reports3}}</p>
+
+    <h2>{{privacy.permissionsHeading}}</h2>
+    <ul>
+      <li>{{privacy.permStorage}}</li>
+      <li>{{privacy.permActiveTab}}</li>
+      <li>{{privacy.permRecap}}</li>
+      <li>{{privacy.permPageCapture}}</li>
+      <li>{{privacy.permSites}}</li>
+    </ul>
+
+    <h2>{{privacy.questionsHeading}}</h2>
+    <p>{{privacy.questions}}</p>
+
+    <footer><a href="index.html">TUI Navigator</a></footer>
+  </div>
+</body>
+
+</html>

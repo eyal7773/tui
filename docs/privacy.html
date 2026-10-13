@@ -1,11 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy — TUI Navigator</title>
   <meta name="description" content="What TUI Navigator keeps, where it keeps it, and what leaves your computer: nothing, unless you send a report yourself.">
+  <link rel="canonical" href="https://eyal7773.github.io/tui/privacy.html">
+  <link rel="alternate" hreflang="en" href="https://eyal7773.github.io/tui/privacy.html">
+  <link rel="alternate" hreflang="he" href="https://eyal7773.github.io/tui/he/privacy.html">
+  <link rel="alternate" hreflang="x-default" href="https://eyal7773.github.io/tui/privacy.html">
   <link rel="icon" href="icon.png">
   <style>
     :root {
@@ -16,6 +20,11 @@
       --phosphor: #00893a;
       --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
       --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    :root:lang(he) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Heebo", "Segoe UI", Arial, sans-serif;
+      --serif: "Frank Ruhl Libre", "David Libre", "Times New Roman", serif;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -74,6 +83,8 @@
     kbd {
       font-family: var(--mono);
       font-size: 0.85em;
+      direction: ltr;
+      unicode-bidi: isolate;
     }
 
     footer {
@@ -89,53 +100,29 @@
 <body>
   <div class="wrap">
     <h1>Privacy</h1>
-    <p class="dim">TUI Navigator sends nothing anywhere. What it keeps stays on your computer, and a bug
-      report leaves it only when you send one yourself.</p>
+    <p class="dim">TUI Navigator sends nothing anywhere. What it keeps stays on your computer, and a bug report leaves it only when you send one yourself.</p>
 
     <h2>What it keeps, on your computer</h2>
     <ul>
-      <li><strong>Your settings:</strong> ring colour and thickness, scrolling, the sites you turned
-        it off on, and whether you want the weekly recap. Kept in Chrome's extension storage.</li>
-      <li><strong>Your usage counts:</strong> how many times you pressed each key the extension acts
-        on, by day and hour, for the stats page and the weekly recap. Counts only: no addresses, no
-        page content. Kept in Chrome's extension storage.</li>
-      <li><strong>A short log of what the extension did on the page you are on:</strong> the keys it
-        acted on (arrows, <kbd>Enter</kbd>, <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>F10</kbd>,
-        <kbd>Esc</kbd>) and the elements it moved between, described by their shape: tag, role, a
-        few class names, position and size. It never holds the text on the page, labels, links, ids,
-        or anything you type. It holds the last 20 events, lives only in that page's memory, and is
-        gone when the page is reloaded or closed.</li>
+      <li><strong>Your settings:</strong> ring colour and thickness, scrolling, the sites you turned it off on, and whether you want the weekly recap. Kept in Chrome’s extension storage.</li>
+      <li><strong>Your usage counts:</strong> how many times you pressed each key the extension acts on, by day and hour, for the stats page and the weekly recap. Counts only: no addresses, no page content. Kept in Chrome’s extension storage.</li>
+      <li><strong>A short log of what the extension did on the page you are on:</strong> the keys it acted on (arrows, <kbd>Enter</kbd>, <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>F10</kbd>, <kbd>Esc</kbd>) and the elements it moved between, described by their shape: tag, role, a few class names, position and size. It never holds the text on the page, labels, links, ids, or anything you type. It holds the last 20 events, lives only in that page’s memory, and is gone when the page is reloaded or closed.</li>
     </ul>
 
     <h2>What it sends</h2>
-    <p>Nothing, unless you send a bug report (below). Besides a report, the one request it makes is
-      for a stylesheet: the stats page loads Bootstrap's CSS from <code>cdn.jsdelivr.net</code>, which,
-      like any web request, shows that server your IP address.</p>
+    <p>Nothing, unless you send a bug report (below). Besides a report, the one request it makes is for a stylesheet: the stats page loads Bootstrap’s CSS from <code>cdn.jsdelivr.net</code>, which, like any web request, shows that server your IP address.</p>
 
     <h2>Bug reports</h2>
-    <p><kbd>F10</kbd> → <em>Report a problem</em> opens a window where you write what happened. The
-      report holds your description, the page's full address (taken from the tab, and put in the
-      report's title), the log above, the extension version, your browser version and the window
-      size; <em>What is sent</em>, under the buttons, shows all of it.</p>
-    <p>Nothing is sent until you press <em>Send report</em>. Then the report goes, as one zip file,
-      to the TUI Navigator report server (run on Cloudflare, at
-      <code>tui-reports.taliandeyal.workers.dev</code>). It is kept there only until the developer
-      downloads it, and is then deleted from the server. Reports are not made public, and no
-      account, name or email address is asked for or sent. Like any web request, sending shows the
-      server your IP address; it is used only to limit how many reports one address can send a
-      minute, and is not stored with the report.</p>
-    <p><em>Attach a copy of the page</em> is ticked from the start. That copy holds everything on the
-      page, so untick it if something there is private. The first time you send with it ticked,
-      Chrome asks you for the <code>pageCapture</code> permission, and without it the report goes
-      without the copy.</p>
+    <p><kbd>F10</kbd> → <em>Report a problem</em> opens a window where you write what happened. The report holds your description, the page’s full address (taken from the tab, and put in the report’s title), the log above, the extension version, your browser version and the window size; <em>What is sent</em>, under the buttons, shows all of it.</p>
+    <p>Nothing is sent until you press <em>Send report</em>. Then the report goes, as one zip file, to the TUI Navigator report server (run on Cloudflare, at <code>tui-reports.taliandeyal.workers.dev</code>). It is kept there only until the developer downloads it, and is then deleted from the server. Reports are not made public, and no account, name or email address is asked for or sent. Like any web request, sending shows the server your IP address; it is used only to limit how many reports one address can send a minute, and is not stored with the report.</p>
+    <p><em>Attach a copy of the page</em> is ticked from the start. That copy holds everything on the page, so untick it if something there is private. The first time you send with it ticked, Chrome asks you for the <code>pageCapture</code> permission, and without it the report goes without the copy.</p>
 
     <h2>Permissions</h2>
     <ul>
       <li><code>storage</code>: your settings and usage counts.</li>
-      <li><code>activeTab</code>: the popup's settings for the site you are on.</li>
+      <li><code>activeTab</code>: the popup’s settings for the site you are on.</li>
       <li><code>notifications</code>, <code>alarms</code>: the weekly recap, which you can turn off.</li>
-      <li><code>pageCapture</code> (optional, asked for only when you include a copy of the page in a
-        report): making that copy.</li>
+      <li><code>pageCapture</code> (optional, asked for only when you include a copy of the page in a report): making that copy.</li>
       <li>Access to every site: the arrow keys have to work wherever you browse.</li>
     </ul>
 

@@ -1,17 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TUI Navigator — arrow keys, on every website</title>
-  <meta name="description"
-    content="A Chrome extension that turns search results, tables and lists into a keyboard-navigable interface, with a focus ring you can actually see.">
+  <title>TUI Navigator — less mouse, less pain</title>
+  <meta name="description" content="A Chrome extension that lets you browse any website with the arrow keys, so your hand stays on the keyboard and your wrist, forearm and shoulder get a break.">
+  <link rel="canonical" href="https://eyal7773.github.io/tui/">
+  <link rel="alternate" hreflang="en" href="https://eyal7773.github.io/tui/">
+  <link rel="alternate" hreflang="he" href="https://eyal7773.github.io/tui/he/">
+  <link rel="alternate" hreflang="x-default" href="https://eyal7773.github.io/tui/">
+  <script>
+    (function () {
+      var pages = {"he":"he/"};
+      try {
+        if (localStorage.getItem('tui-lang')) return;
+        var wanted = String((navigator.languages && navigator.languages[0]) || navigator.language || '');
+        var lang = wanted.toLowerCase().split('-')[0];
+        if (lang === 'iw') lang = 'he';
+        if (pages[lang]) location.replace(pages[lang]);
+      } catch (e) { /* storage off: stay on this page */ }
+    })();
+  </script>
   <link rel="icon" href="icon.png">
   <link rel="stylesheet" href="benefit/benefit-figure.css">
   <meta property="og:title" content="TUI Navigator">
-  <meta property="og:description" content="Arrow keys, on every website.">
+  <meta property="og:description" content="Less mouse. Less pain.">
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_US">
   <style>
     :root {
       --paper: #eaece9;
@@ -25,6 +41,13 @@
       --pulse-fade: rgba(0, 166, 63, 0);
       --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
       --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    /* Hebrew: the serif above has no Hebrew letters, and a monospace face
+       with them is rare, so the labels set in mono fall back to a sans. */
+    :root:lang(he) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Heebo", "Segoe UI", Arial, sans-serif;
+      --serif: "Frank Ruhl Libre", "David Libre", "Times New Roman", serif;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -57,6 +80,10 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    :lang(he) body {
+      font-size: 18px;
+    }
+
     .wrap {
       max-width: 54rem;
       margin: 0 auto;
@@ -68,7 +95,7 @@
     .bar {
       display: flex;
       flex-wrap: wrap;
-      align-items: baseline;
+      align-items: center;
       gap: 0.5rem 1rem;
       padding: 1rem 0;
       border-bottom: 1px solid var(--rule);
@@ -96,18 +123,63 @@
       border-bottom-color: var(--rule);
     }
 
-    .version {
+    .langs {
+      display: flex;
+      gap: 0.6rem;
+    }
+
+    .langs [aria-current] {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    /* ---- the button to the store ---- */
+
+    .get {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      text-decoration: none;
+      color: var(--paper);
+      background: var(--ink);
+      padding: 0.75rem 1.3rem;
+      border: 1px solid var(--ink);
+    }
+
+    a.get:hover {
+      background: transparent;
+      color: var(--ink);
+    }
+
+    /* Not in the store yet: the same shape, plainly not a link. */
+    .get.soon {
       color: var(--ink-dim);
+      background: transparent;
+      border: 1px dashed var(--rule);
+    }
+
+    .bar .get {
+      font-size: 0.75rem;
+      padding: 0.35rem 0.75rem;
+    }
+
+    .bar a.get {
+      color: var(--paper);
+      border-bottom: 1px solid var(--ink);
+    }
+
+    .bar a.get:hover {
+      color: var(--ink);
     }
 
     /* ---- hero ---- */
 
     .hero {
-      padding: 4.5rem 0 3rem;
+      padding: 4.5rem 0 1rem;
     }
 
     h1 {
-      font-size: clamp(2.1rem, 6vw, 3.4rem);
+      font-size: clamp(2.3rem, 7vw, 3.8rem);
       line-height: 1.08;
       font-weight: 400;
       letter-spacing: -0.02em;
@@ -115,17 +187,58 @@
       max-width: 16ch;
     }
 
+    :lang(he) h1 {
+      letter-spacing: 0;
+      font-weight: 500;
+    }
+
     .lede {
-      margin: 0;
-      max-width: 58ch;
+      margin: 0 0 2rem;
+      max-width: 52ch;
       color: var(--ink-dim);
-      font-size: 1.05rem;
+      font-size: 1.15rem;
+    }
+
+    /* ---- the story ---- */
+
+    .story {
+      margin: 0;
+      max-width: 44rem;
+    }
+
+    .story blockquote {
+      margin: 0;
+      padding-inline-start: 1.25rem;
+      border-inline-start: 3px solid var(--phosphor);
+    }
+
+    .story blockquote p {
+      margin: 0 0 1rem;
+      font-size: 1.2rem;
+    }
+
+    .story figcaption {
+      margin-top: 0.25rem;
+      padding-inline-start: 1.25rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--ink-dim);
+    }
+
+    .story figcaption strong {
+      color: var(--ink);
+    }
+
+    .story .note {
+      display: block;
+      margin-top: 0.35rem;
+      font-size: 0.75rem;
     }
 
     /* ---- the demo ---- */
 
     .demo {
-      margin: 2.75rem 0 0;
+      margin: 0;
       background: var(--panel);
       border: 1px solid var(--rule);
       padding: 0.5rem;
@@ -149,7 +262,7 @@
     .row {
       display: block;
       width: 100%;
-      text-align: left;
+      text-align: start;
       padding: 0.7rem 0.75rem;
       font-family: var(--mono);
       font-size: 0.85rem;
@@ -273,37 +386,6 @@
       color: var(--ink-dim);
     }
 
-    /* ---- install ---- */
-
-    ol.steps {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      counter-reset: step;
-      max-width: 62ch;
-    }
-
-    ol.steps li {
-      counter-increment: step;
-      position: relative;
-      padding: 0 0 1.1rem 2.4rem;
-    }
-
-    ol.steps li::before {
-      content: counter(step);
-      position: absolute;
-      left: 0;
-      top: 0.15rem;
-      font-family: var(--mono);
-      font-size: 0.75rem;
-      color: var(--ink-dim);
-      border: 1px solid var(--rule);
-      width: 1.5rem;
-      height: 1.5rem;
-      display: grid;
-      place-items: center;
-    }
-
     code {
       font-family: var(--mono);
       font-size: 0.85em;
@@ -311,29 +393,6 @@
       border: 1px solid var(--rule);
       padding: 0.05em 0.35em;
       word-break: break-word;
-    }
-
-    .get {
-      display: inline-block;
-      margin-top: 0.5rem;
-      font-family: var(--mono);
-      font-size: 0.85rem;
-      text-decoration: none;
-      color: var(--paper);
-      background: var(--ink);
-      padding: 0.7rem 1.2rem;
-      border: 1px solid var(--ink);
-    }
-
-    .get:hover {
-      background: transparent;
-      color: var(--ink);
-    }
-
-    .alt {
-      font-size: 0.95rem;
-      color: var(--ink-dim);
-      margin-top: 1.5rem;
     }
 
     /* ---- keys ---- */
@@ -350,7 +409,8 @@
     dl.keys dt {
       font-family: var(--mono);
       font-size: 0.8rem;
-      padding: 0.5rem 1.5rem 0.5rem 0;
+      padding-block: 0.5rem;
+      padding-inline-end: 1.5rem;
       border-bottom: 1px solid var(--rule);
     }
 
@@ -361,6 +421,7 @@
       border-bottom: 1px solid var(--rule);
     }
 
+    /* Keys are physical: an arrow points where it moves in either language. */
     kbd {
       font-family: var(--mono);
       font-size: 0.75rem;
@@ -370,6 +431,20 @@
       display: inline-block;
       min-width: 1.6rem;
       text-align: center;
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+
+    /* ---- the closing call ---- */
+
+    .closing {
+      padding-top: 4rem;
+      text-align: center;
+    }
+
+    .closing p {
+      margin: 0 auto 1.25rem;
+      font-size: 1.25rem;
     }
 
     /* ---- footer ---- */
@@ -411,8 +486,25 @@
         font-size: 16px;
       }
 
+      :lang(he) body {
+        font-size: 17px;
+      }
+
+      .wrap {
+        padding: 0 1rem;
+      }
+
       .hero {
-        padding: 3rem 0 2rem;
+        padding: 2.5rem 0 0.5rem;
+      }
+
+      .story blockquote,
+      .story figcaption {
+        padding-inline-start: 1rem;
+      }
+
+      .story blockquote p {
+        font-size: 1.1rem;
       }
 
       dl.keys {
@@ -436,18 +528,39 @@
 
     <header class="bar">
       <span class="name">tui navigator</span>
-      <span class="version">v<span data-version>0.1.100</span></span>
       <span class="spacer"></span>
-      <a href="https://github.com/eyal7773/tui">source</a>
-      <a href="https://github.com/eyal7773/tui/releases">releases</a>
+      <nav class="langs" aria-label="Language"><a href="./" hreflang="en" lang="en" data-lang="en" aria-current="page">English</a><a href="he/" hreflang="he" lang="he" data-lang="he">עברית</a></nav>
+      <span class="get soon">Coming soon</span>
     </header>
 
     <div class="hero">
-      <h1>Arrow keys, on every website.</h1>
-      <p class="lede">TUI Navigator is a Chrome extension that turns search results, tables and
-        lists into something you can move through from the keyboard — with a focus ring that is
-        hard to lose track of.</p>
+      <h1>Less mouse.<br>Less pain.</h1>
+      <p class="lede">TUI Navigator lets you browse any website with the arrow keys, so your hand stays on the keyboard and your wrist, forearm and shoulder get a break.</p>
+      <span class="get soon">Coming soon to the Chrome Web Store</span>
+    </div>
 
+    <section id="story">
+      <h2>why I built it</h2>
+      <figure class="story">
+        <blockquote>
+          <p>I work at a computer all day, and at some point I started getting strong pain in the fingers of my right hand, my mouse hand. I saw a physiotherapist and did the exercises, and they helped a little. But it felt like treating the symptom rather than the cause, and I worried the pain would keep coming back.</p>
+          <p>I looked for a way to fix it at the root, and a simple thought came up: if I clicked less, it might help a lot. Most of my day is spent in Chrome, so I wrote an extension for it that lets me browse with the arrow keys.</p>
+          <p>Since then there has been a significant improvement. I use the arrows most of the time and the mouse only now and then, and the pain is gone.</p>
+        </blockquote>
+        <figcaption><strong>Eyal Bardugo</strong>, who built TUI Navigator
+          <span class="note">My own experience, not medical advice.</span></figcaption>
+      </figure>
+    </section>
+
+    <section id="spared">
+      <h2>what it spares you</h2>
+      <p>A mouse keeps the hand gripping, the wrist bent and the arm reaching out to the side. With the arrow keys the hands stay where they type. Here is roughly what an ordinary week of browsing with the extension spares your body.</p>
+      <div id="week-figure"></div>
+      <p class="week-note">The week is an example, not anyone’s data: five working days, opening about 80 links and pressing about 400 arrows a day. The extension’s stats page shows the same figure for your own browsing, counted on your computer and never sent anywhere.</p>
+    </section>
+
+    <section id="try">
+      <h2>try it</h2>
       <div class="demo">
         <div class="demo-chrome">results for &ldquo;keyboard navigation&rdquo;</div>
         <ul class="rows">
@@ -462,39 +575,11 @@
           <button class="chip" type="button">Next page</button>
           <button class="chip" type="button">Filter</button>
         </div>
-        <p class="demo-hint" id="hint">A mock-up, not the extension — but the ring is the real
-          one. Click a row, then press <b>&darr; &uarr; &larr; &rarr;</b>.</p>
+        <p class="demo-hint" id="hint">A mock-up, not the extension — but the ring is the real one. Click a row, then press <b>&darr; &uarr; &larr; &rarr;</b>.</p>
       </div>
-    </div>
-
-    <section id="spared">
-      <h2>what it spares you</h2>
-      <p>A mouse keeps the hand gripping, the wrist bent and the arm reaching out to the side.
-        With the arrow keys the hands stay where they type. Here is roughly what an ordinary
-        week of browsing with the extension spares your body.</p>
-      <div id="week-figure"></div>
-      <p class="week-note">The week is an example, not anyone's data: five working days, opening
-        about 80 links and pressing about 400 arrows a day. The extension's stats page shows the
-        same figure for your own browsing, counted on your computer and never sent anywhere.</p>
     </section>
 
-    <section id="install">
-      <h2>install</h2>
-      <ol class="steps">
-        <li>Download <code>tui-navigator.zip</code> from the releases page and unzip it
-          anywhere.</li>
-        <li>Open <code>chrome://extensions/</code> and turn on <strong>Developer mode</strong>
-          (top right).</li>
-        <li>Click <strong>Load unpacked</strong> and pick the unzipped folder — the one containing
-          <code>manifest.json</code>.</li>
-      </ol>
-      <a class="get" href="https://github.com/eyal7773/tui/releases/latest/download/tui-navigator.zip">Download
-        the latest release</a>
-      <p class="alt">Working from a clone instead? Load unpacked and point Chrome at the
-        <code>src</code> folder, which is where <code>manifest.json</code> lives.</p>
-    </section>
-
-    <section>
+    <section id="keys">
       <h2>keys</h2>
       <dl class="keys">
         <dt><kbd>&darr;</kbd> <kbd>&uarr;</kbd></dt>
@@ -504,103 +589,52 @@
         <dd>Move across the row you are on.</dd>
 
         <dt><kbd>Home</kbd> <kbd>End</kbd></dt>
-        <dd>Jump to either end of the line you are on. The last arrow you pressed
-          decides what a line means: after moving sideways it is the row, after moving
-          up or down it is the column.</dd>
+        <dd>Jump to either end of the line you are on. The last arrow you pressed decides what a line means: after moving sideways it is the row, after moving up or down it is the column.</dd>
 
         <dt><kbd>Enter</kbd></dt>
-        <dd>Activate the focused element. On a text box or dropdown, it hands focus over so you
-          can type or pick. On a list row it activates the link inside the row, since that is
-          where the row keeps its href.</dd>
+        <dd>Activate the focused element. On a text box or dropdown, it hands focus over so you can type or pick. On a list row it activates the link inside the row, since that is where the row keeps its href.</dd>
 
         <dt><kbd>Esc</kbd></dt>
         <dd>Leave a text box and go back to navigating the page.</dd>
 
         <dt><kbd>Esc</kbd> again</dt>
-        <dd>Hand the keyboard back to the site, so its own shortcuts work — space to
-          play a video, or anything else it binds. Press it once more to carry on
-          navigating.</dd>
+        <dd>Hand the keyboard back to the site, so its own shortcuts work — space to play a video, or anything else it binds. Press it once more to carry on navigating.</dd>
 
         <dt><kbd>F10</kbd></dt>
-        <dd>Open the menu — duplicate the page, go back, select text, or report a problem.
-          <kbd>Esc</kbd> closes it.</dd>
+        <dd>Open the menu — duplicate the page, go back, select text, or report a problem. <kbd>Esc</kbd> closes it.</dd>
       </dl>
     </section>
 
-    <section>
+    <section id="how">
       <h2>how it works</h2>
-      <p>The extension reads the page, works out which elements are worth stopping on, and treats
-        them as a grid. Arrow keys move between them by position rather than by DOM order, so
-        moving right goes to the thing on the right, not to whatever happens to come next in the
-        markup.</p>
-      <p>Keystrokes are intercepted before the page sees them, so sites with their own arrow-key
-        handlers do not fight you for control. Text boxes, dropdowns and anything else that needs
-        arrow keys of its own are left alone until you hand focus over with <kbd>Enter</kbd>.</p>
-      <p>The toolbar popup keeps a running count of the actions you have taken and links to a
-        stats page. When something goes wrong, <kbd>F10</kbd> → <em>Report a problem</em> shows you
-        a short log of what the extension did on the page, and sends it with your description to
-        the developer. Nothing is sent until you press <em>Send report</em>; see
-        <a href="privacy.html">privacy</a>.</p>
+      <p>The extension reads the page, works out which elements are worth stopping on, and treats them as a grid. Arrow keys move between them by position rather than by DOM order, so moving right goes to the thing on the right, not to whatever happens to come next in the markup.</p>
+      <p>Keystrokes are intercepted before the page sees them, so sites with their own arrow-key handlers do not fight you for control. Text boxes, dropdowns and anything else that needs arrow keys of its own are left alone until you hand focus over with <kbd>Enter</kbd>.</p>
+      <p>The toolbar popup keeps a running count of the actions you have taken and links to a stats page. When something goes wrong, <kbd>F10</kbd> → <em>Report a problem</em> shows you a short log of what the extension did on the page, and sends it with your description to the developer. Nothing is sent until you press <em>Send report</em>; see <a href="privacy.html">privacy</a>.</p>
+    </section>
+
+    <section class="closing">
+      <p>Ready to give your hand a rest?</p>
+      <span class="get soon">Coming soon to the Chrome Web Store</span>
     </section>
 
     <footer>
-      <span>v<span data-version>0.1.100</span></span>
-      <a href="https://github.com/eyal7773/tui">github.com/eyal7773/tui</a>
-      <a href="https://github.com/eyal7773/tui/issues">report a problem</a>
       <a href="privacy.html">privacy</a>
+      <a href="https://github.com/eyal7773/tui">source code</a>
+      <a href="https://github.com/eyal7773/tui/issues">report a problem</a>
     </footer>
 
   </div>
 
   <script>
-    // The version shown on this page.
-    //
-    // This file is served straight out of the repo, and releases no longer write
-    // anything back to it — the git tag is what names a release. So the number
-    // sitting in the markup is only a starting point, and the live one is asked
-    // for here and filled in.
-    //
-    // Every step is allowed to fail quietly: a blocked request, a rate limit
-    // (the API allows 60 an hour per address without a token) or storage turned
-    // off all leave the committed number on the page, which is stale but never
-    // wrong-looking.
+    // Remembers the language the reader picked, so the English page stops
+    // sending a Hebrew browser to /he/ once they chose English themselves.
     (function () {
-      var spans = document.querySelectorAll('[data-version]');
-      if (!spans.length) return;
-
-      var LATEST = 'https://api.github.com/repos/eyal7773/tui/releases/latest';
-      var CACHE = 'tui-latest-version';
-
-      function show(version) {
-        if (!/^\d+\.\d+\.\d+$/.test(version || '')) return;
-        Array.prototype.forEach.call(spans, function (span) {
-          span.textContent = version;
+      var links = document.querySelectorAll('[data-lang]');
+      Array.prototype.forEach.call(links, function (a) {
+        a.addEventListener('click', function () {
+          try { localStorage.setItem('tui-lang', a.getAttribute('data-lang')); } catch (e) { /* fine */ }
         });
-      }
-
-      // A version already seen this session, so moving around the site does not
-      // spend another request.
-      try {
-        var cached = sessionStorage.getItem(CACHE);
-        if (cached) {
-          show(cached);
-          return;
-        }
-      } catch (e) { /* storage unavailable; ask for it instead */ }
-
-      fetch(LATEST, { headers: { Accept: 'application/vnd.github+json' } })
-        .then(function (response) {
-          if (!response.ok) throw new Error(response.status);
-          return response.json();
-        })
-        .then(function (release) {
-          var version = String(release.tag_name || '').replace(/^v/, '');
-          if (!/^\d+\.\d+\.\d+$/.test(version)) return;
-
-          show(version);
-          try { sessionStorage.setItem(CACHE, version); } catch (e) { /* fine */ }
-        })
-        .catch(function () { /* leave the committed number in place */ });
+      });
     })();
 
     (function () {
@@ -621,9 +655,12 @@
       // extension applies to a real page. Distance along the direction comes
       // from the centres; drift across it comes from the leading edges, so a
       // narrow button under a full-width row still lines up with its start.
+      // Directions are physical, so a right-to-left page works the same.
       function next(from, dir) {
         var box = from.getBoundingClientRect();
         var vertical = (dir === 'ArrowUp' || dir === 'ArrowDown');
+        var rtl = getComputedStyle(demo).direction === 'rtl';
+        var edge = function (r) { return rtl ? r.right : r.left; };
         var best = null;
         var bestScore = Infinity;
 
@@ -636,7 +673,7 @@
           if (vertical) {
             along = (r.top + r.height / 2) - (box.top + box.height / 2);
             if (dir === 'ArrowUp') along = -along;
-            across = Math.abs(r.left - box.left);
+            across = Math.abs(edge(r) - edge(box));
           } else {
             // Sideways moves stay on the band they started on, so they never
             // hop between rows.
@@ -698,13 +735,13 @@
       var box = document.getElementById('week-figure');
       if (!box || !window.TuiBenefitFigure) return;
       var week = TuiBenefitRules.typicalWeek();
-      var images = 'benefit/body/';
-      TuiBenefitFigure.render(box, week, { animate: true, countUp: false, images: images });
+      var options = { animate: true, images: 'benefit/body/', strings: null };
+      TuiBenefitFigure.render(box, week, Object.assign({}, options, { countUp: false }));
       if (!('IntersectionObserver' in window)) return;
       var seen = new IntersectionObserver(function (entries) {
         if (!entries[0].isIntersecting) return;
         seen.disconnect();
-        TuiBenefitFigure.render(box, week, { animate: true, images: images });
+        TuiBenefitFigure.render(box, week, options);
       }, { threshold: 0.4 });
       seen.observe(box);
     })();

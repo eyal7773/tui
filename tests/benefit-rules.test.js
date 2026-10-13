@@ -85,6 +85,10 @@ test('formatMinutes and formatDistance read naturally at every size', () => {
   assert.equal(rules.formatDistance(187.4), '187 m');
   assert.equal(rules.formatDistance(1234), '1.2 km');
   assert.equal(rules.formatDistance(14200), '14 km');
+  // Another language's units, in the same places.
+  const he = { s: 'שנ׳', min: 'דק׳', h: 'שע׳', m: 'מ׳', km: 'ק״מ' };
+  assert.equal(rules.formatMinutes(185, he), '3 שע׳ 5 דק׳');
+  assert.equal(rules.formatDistance(1234, he), '1.2 ק״מ');
 });
 
 test('the website carries the same copies of the shared files', () => {

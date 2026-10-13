@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>פרטיות — TUI Navigator</title>
+  <meta name="description" content="מה TUI Navigator שומר, איפה הוא שומר את זה, ומה יוצא מהמחשב שלכם: כלום, אלא אם אתם שולחים דיווח בעצמכם.">
+  <link rel="canonical" href="https://eyal7773.github.io/tui/he/privacy.html">
+  <link rel="alternate" hreflang="en" href="https://eyal7773.github.io/tui/privacy.html">
+  <link rel="alternate" hreflang="he" href="https://eyal7773.github.io/tui/he/privacy.html">
+  <link rel="alternate" hreflang="x-default" href="https://eyal7773.github.io/tui/privacy.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=Heebo:wght@400;600&display=swap">
+  <link rel="icon" href="../icon.png">
+  <style>
+    :root {
+      --paper: #eaece9;
+      --ink: #17181a;
+      --ink-dim: #5a635c;
+      --rule: #c9cec9;
+      --phosphor: #00893a;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    :root:lang(he) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Heebo", "Segoe UI", Arial, sans-serif;
+      --serif: "Frank Ruhl Libre", "David Libre", "Times New Roman", serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #14161a;
+        --ink: #dfe3df;
+        --ink-dim: #8b948c;
+        --rule: #333a36;
+        --phosphor: #00ff6a;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    .wrap {
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+
+    h1 {
+      font-weight: 400;
+      font-size: 2.2rem;
+      line-height: 1.15;
+      margin: 0 0 0.5rem;
+    }
+
+    h2 {
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--phosphor);
+      margin: 2.25rem 0 0.5rem;
+    }
+
+    .dim {
+      color: var(--ink-dim);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    code,
+    kbd {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>פרטיות</h1>
+    <p class="dim">TUI Navigator לא שולח שום דבר לשום מקום. מה שהוא שומר נשאר במחשב שלכם, ודיווח על באג יוצא ממנו רק כשאתם שולחים אותו בעצמכם.</p>
+
+    <h2>מה הוא שומר, במחשב שלכם</h2>
+    <ul>
+      <li><strong>ההגדרות שלכם:</strong> הצבע והעובי של הטבעת, הגלילה, האתרים שבהם כיביתם אותו, והאם אתם רוצים את הסיכום השבועי. נשמרות באחסון התוספים של כרום.</li>
+      <li><strong>ספירת השימוש:</strong> כמה פעמים לחצתם על כל מקש שהתוסף מגיב אליו, לפי יום ושעה, בשביל דף הסטטיסטיקה והסיכום השבועי. רק מספרים: בלי כתובות ובלי תוכן מהדפים. נשמרת באחסון התוספים של כרום.</li>
+      <li><strong>יומן קצר של מה שהתוסף עשה בדף שבו אתם נמצאים:</strong> המקשים שהוא הגיב אליהם (חיצים, <kbd>Enter</kbd>, <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>F10</kbd>, <kbd>Esc</kbd>) והאלמנטים שהוא עבר ביניהם, לפי הצורה שלהם בלבד: סוג התגית, התפקיד, כמה שמות class, מיקום וגודל. הוא אף פעם לא שומר את הטקסט שבדף, תוויות, קישורים, מזהים או משהו שהקלדתם. הוא מחזיק את 20 האירועים האחרונים, קיים רק בזיכרון של אותו דף, ונעלם כשהדף נטען מחדש או נסגר.</li>
+    </ul>
+
+    <h2>מה הוא שולח</h2>
+    <p>כלום, אלא אם אתם שולחים דיווח על באג (בהמשך). מלבד דיווח, הבקשה היחידה שהוא מבצע היא לקובץ עיצוב: דף הסטטיסטיקה טוען את ה-CSS של Bootstrap מ-<code>cdn.jsdelivr.net</code>, וכמו כל בקשה ברשת, השרת הזה רואה את כתובת ה-IP שלכם.</p>
+
+    <h2>דיווחים על באגים</h2>
+    <p><kbd>F10</kbd> ← <em>Report a problem</em> פותח חלון שבו כותבים מה קרה. הדיווח כולל את התיאור שלכם, את הכתובת המלאה של הדף (מהלשונית, והיא מופיעה בכותרת הדיווח), את היומן שתואר למעלה, את גרסת התוסף, את גרסת הדפדפן ואת גודל החלון. <em>What is sent</em>, מתחת לכפתורים, מציג את כל זה.</p>
+    <p>שום דבר לא נשלח עד שלוחצים על <em>Send report</em>. אז הדיווח נשלח, כקובץ zip אחד, לשרת הדיווחים של TUI Navigator (שרץ על Cloudflare, בכתובת <code>tui-reports.taliandeyal.workers.dev</code>). הוא נשמר שם רק עד שהמפתח מוריד אותו, ואז נמחק מהשרת. הדיווחים לא מתפרסמים, ולא מתבקשים ולא נשלחים חשבון, שם או כתובת מייל. כמו כל בקשה ברשת, השליחה חושפת לשרת את כתובת ה-IP שלכם; היא משמשת רק כדי להגביל כמה דיווחים כתובת אחת יכולה לשלוח בדקה, ולא נשמרת עם הדיווח.</p>
+    <p><em>Attach a copy of the page</em> מסומן מההתחלה. העותק הזה מכיל את כל מה שיש בדף, אז בטלו את הסימון אם יש שם משהו פרטי. בפעם הראשונה ששולחים כשהוא מסומן, כרום מבקש מכם את ההרשאה <code>pageCapture</code>, ובלעדיה הדיווח נשלח בלי העותק.</p>
+
+    <h2>הרשאות</h2>
+    <ul>
+      <li><code>storage</code>: ההגדרות שלכם וספירת השימוש.</li>
+      <li><code>activeTab</code>: ההגדרות שבחלון הקופץ עבור האתר שבו אתם נמצאים.</li>
+      <li><code>notifications</code>, <code>alarms</code>: הסיכום השבועי, שאפשר לכבות.</li>
+      <li><code>pageCapture</code> (לא חובה, מתבקשת רק כשמצרפים עותק של הדף לדיווח): יצירת העותק הזה.</li>
+      <li>גישה לכל האתרים: מקשי החיצים צריכים לעבוד בכל מקום שבו אתם גולשים.</li>
+    </ul>
+
+    <h2>שאלות</h2>
+    <p>פתחו issue ב-<a href="https://github.com/eyal7773/tui/issues">GitHub</a>.</p>
+
+    <footer><a href="index.html">TUI Navigator</a></footer>
+  </div>
+</body>
+
+</html>

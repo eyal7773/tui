@@ -1,0 +1,98 @@
+{
+  "lang": "en",
+  "dir": "ltr",
+  "name": "English",
+  "meta": {
+    "title": "TUI Navigator — less mouse, less pain",
+    "description": "A Chrome extension that lets you browse any website with the arrow keys, so your hand stays on the keyboard and your wrist, forearm and shoulder get a break.",
+    "ogDescription": "Less mouse. Less pain.",
+    "ogLocale": "en_US"
+  },
+  "bar": {
+    "languages": "Language"
+  },
+  "store": {
+    "add": "Add to Chrome — it’s free",
+    "addShort": "Add to Chrome",
+    "soon": "Coming soon to the Chrome Web Store",
+    "soonShort": "Coming soon"
+  },
+  "hero": {
+    "title": "Less mouse.<br>Less pain.",
+    "lede": "TUI Navigator lets you browse any website with the arrow keys, so your hand stays on the keyboard and your wrist, forearm and shoulder get a break."
+  },
+  "story": {
+    "heading": "why I built it",
+    "p1": "I work at a computer all day, and at some point I started getting strong pain in the fingers of my right hand, my mouse hand. I saw a physiotherapist and did the exercises, and they helped a little. But it felt like treating the symptom rather than the cause, and I worried the pain would keep coming back.",
+    "p2": "I looked for a way to fix it at the root, and a simple thought came up: if I clicked less, it might help a lot. Most of my day is spent in Chrome, so I wrote an extension for it that lets me browse with the arrow keys.",
+    "p3": "Since then there has been a significant improvement. I use the arrows most of the time and the mouse only now and then, and the pain is gone.",
+    "name": "Eyal Bardugo",
+    "role": "who built TUI Navigator",
+    "note": "My own experience, not medical advice."
+  },
+  "figure": {
+    "heading": "what it spares you",
+    "intro": "A mouse keeps the hand gripping, the wrist bent and the arm reaching out to the side. With the arrow keys the hands stay where they type. Here is roughly what an ordinary week of browsing with the extension spares your body.",
+    "note": "The week is an example, not anyone’s data: five working days, opening about 80 links and pressing about 400 arrows a day. The extension’s stats page shows the same figure for your own browsing, counted on your computer and never sent anywhere."
+  },
+  "demo": {
+    "heading": "try it",
+    "chrome": "results for &ldquo;keyboard navigation&rdquo;",
+    "row1": "Keyboard-only browsing is faster than you think",
+    "meta1": "example.com — 4 min read",
+    "row2": "Why focus indicators matter",
+    "meta2": "example.org — 7 min read",
+    "row3": "A short history of text-based interfaces",
+    "meta3": "example.net — 12 min read",
+    "next": "Next page",
+    "filter": "Filter",
+    "hint": "A mock-up, not the extension — but the ring is the real one. Click a row, then press <b>&darr; &uarr; &larr; &rarr;</b>."
+  },
+  "keys": {
+    "heading": "keys",
+    "upDown": "Move to the element above or below.",
+    "leftRight": "Move across the row you are on.",
+    "homeEnd": "Jump to either end of the line you are on. The last arrow you pressed decides what a line means: after moving sideways it is the row, after moving up or down it is the column.",
+    "enter": "Activate the focused element. On a text box or dropdown, it hands focus over so you can type or pick. On a list row it activates the link inside the row, since that is where the row keeps its href.",
+    "esc": "Leave a text box and go back to navigating the page.",
+    "again": "again",
+    "escAgain": "Hand the keyboard back to the site, so its own shortcuts work — space to play a video, or anything else it binds. Press it once more to carry on navigating.",
+    "f10": "Open the menu — duplicate the page, go back, select text, or report a problem. <kbd>Esc</kbd> closes it."
+  },
+  "how": {
+    "heading": "how it works",
+    "p1": "The extension reads the page, works out which elements are worth stopping on, and treats them as a grid. Arrow keys move between them by position rather than by DOM order, so moving right goes to the thing on the right, not to whatever happens to come next in the markup.",
+    "p2": "Keystrokes are intercepted before the page sees them, so sites with their own arrow-key handlers do not fight you for control. Text boxes, dropdowns and anything else that needs arrow keys of its own are left alone until you hand focus over with <kbd>Enter</kbd>.",
+    "p3": "The toolbar popup keeps a running count of the actions you have taken and links to a stats page. When something goes wrong, <kbd>F10</kbd> → <em>Report a problem</em> shows you a short log of what the extension did on the page, and sends it with your description to the developer. Nothing is sent until you press <em>Send report</em>; see <a href=\"privacy.html\">privacy</a>."
+  },
+  "closing": "Ready to give your hand a rest?",
+  "footer": {
+    "privacy": "privacy",
+    "source": "source code",
+    "report": "report a problem"
+  },
+  "privacy": {
+    "title": "Privacy — TUI Navigator",
+    "description": "What TUI Navigator keeps, where it keeps it, and what leaves your computer: nothing, unless you send a report yourself.",
+    "h1": "Privacy",
+    "lede": "TUI Navigator sends nothing anywhere. What it keeps stays on your computer, and a bug report leaves it only when you send one yourself.",
+    "keepHeading": "What it keeps, on your computer",
+    "keepSettings": "<strong>Your settings:</strong> ring colour and thickness, scrolling, the sites you turned it off on, and whether you want the weekly recap. Kept in Chrome’s extension storage.",
+    "keepCounts": "<strong>Your usage counts:</strong> how many times you pressed each key the extension acts on, by day and hour, for the stats page and the weekly recap. Counts only: no addresses, no page content. Kept in Chrome’s extension storage.",
+    "keepLog": "<strong>A short log of what the extension did on the page you are on:</strong> the keys it acted on (arrows, <kbd>Enter</kbd>, <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>F10</kbd>, <kbd>Esc</kbd>) and the elements it moved between, described by their shape: tag, role, a few class names, position and size. It never holds the text on the page, labels, links, ids, or anything you type. It holds the last 20 events, lives only in that page’s memory, and is gone when the page is reloaded or closed.",
+    "sendHeading": "What it sends",
+    "send": "Nothing, unless you send a bug report (below). Besides a report, the one request it makes is for a stylesheet: the stats page loads Bootstrap’s CSS from <code>cdn.jsdelivr.net</code>, which, like any web request, shows that server your IP address.",
+    "reportsHeading": "Bug reports",
+    "reports1": "<kbd>F10</kbd> → <em>Report a problem</em> opens a window where you write what happened. The report holds your description, the page’s full address (taken from the tab, and put in the report’s title), the log above, the extension version, your browser version and the window size; <em>What is sent</em>, under the buttons, shows all of it.",
+    "reports2": "Nothing is sent until you press <em>Send report</em>. Then the report goes, as one zip file, to the TUI Navigator report server (run on Cloudflare, at <code>tui-reports.taliandeyal.workers.dev</code>). It is kept there only until the developer downloads it, and is then deleted from the server. Reports are not made public, and no account, name or email address is asked for or sent. Like any web request, sending shows the server your IP address; it is used only to limit how many reports one address can send a minute, and is not stored with the report.",
+    "reports3": "<em>Attach a copy of the page</em> is ticked from the start. That copy holds everything on the page, so untick it if something there is private. The first time you send with it ticked, Chrome asks you for the <code>pageCapture</code> permission, and without it the report goes without the copy.",
+    "permissionsHeading": "Permissions",
+    "permStorage": "<code>storage</code>: your settings and usage counts.",
+    "permActiveTab": "<code>activeTab</code>: the popup’s settings for the site you are on.",
+    "permRecap": "<code>notifications</code>, <code>alarms</code>: the weekly recap, which you can turn off.",
+    "permPageCapture": "<code>pageCapture</code> (optional, asked for only when you include a copy of the page in a report): making that copy.",
+    "permSites": "Access to every site: the arrow keys have to work wherever you browse.",
+    "questionsHeading": "Questions",
+    "questions": "Open an issue on <a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a>."
+  }
+}

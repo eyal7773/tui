@@ -354,26 +354,26 @@ for the very first release, when there is no tag yet.
 Nothing is committed back to `main`, so your local clone is never left behind after a
 release and pushes are never rejected as non-fast-forward.
 
-### How the site keeps up
+### The website
 
-`docs/index.html` is served straight out of the repo by GitHub Pages, and releases no
-longer write anything back, so the number in the markup would freeze. The page therefore
-asks for the live one on load: it reads `tag_name` from
+The site in `docs/` is served by GitHub Pages, in English at the root and in Hebrew
+under `docs/he/`. Its pages are built, so edit the sources in `site/`, not `docs/`:
 
-```
-https://api.github.com/repos/eyal7773/tui/releases/latest
-```
+- `site/index.html`, `site/privacy.html` — the templates. `{{hero.title}}` is filled
+  from the language's strings file, as HTML.
+- `site/i18n/<lang>.json` — every text, one file per language. The Hebrew one also
+  carries the body figure's words (`figure.strings`); the English ones live in
+  `src/stats/benefit-figure.js`.
+- `site/site.json` — the languages, the site's address, and `storeUrl`: the Chrome Web
+  Store link. While it is empty the buttons say "coming soon".
 
-and fills every `<span data-version>`, caching the answer in `sessionStorage` so moving
-around the site costs one request rather than several. The API allows 60 an hour per
-address without a token.
+Then run `npm run build-site` (and `npm run sync-site-figure` after changing the
+figure). `npm test` fails while `docs/` is stale, while a language is missing a text
+the English has, or while a translation drops a `{placeholder}` or a tag.
 
-Every step is allowed to fail quietly — a blocked request, a rate limit or storage turned
-off leaves the committed number on the page. That number is the fallback, so it is worth
-keeping roughly current: `npm run sync-site-version` rewrites it from `src/manifest.json`.
-
-The download button does not depend on any of this. It points at
-`releases/latest/download/tui-navigator.zip`, which GitHub resolves on its own.
+To add a language, add `site/i18n/<lang>.json` and its code to `languages` in
+`site/site.json`. A browser set to that language is sent to its page on the first
+visit; the language switch remembers the reader's own choice.
 
 ## Usage Guide
 

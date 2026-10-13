@@ -111,28 +111,34 @@
     });
   }
 
+  /** The unit names the formatters write; a page in another language passes its own. */
+  const UNITS = { s: 's', min: 'min', h: 'h', m: 'm', km: 'km' };
+
   /** "45 s", "47 min", "3 h 5 min". */
-  function formatMinutes(minutes) {
+  function formatMinutes(minutes, units) {
+    const u = units || UNITS;
     const m = count(minutes);
-    if (m < 1) return `${Math.round(m * 60)} s`;
-    if (m < 60) return `${Math.round(m)} min`;
+    if (m < 1) return `${Math.round(m * 60)} ${u.s}`;
+    if (m < 60) return `${Math.round(m)} ${u.min}`;
     const h = Math.floor(m / 60);
     const rest = Math.round(m - h * 60);
-    return rest ? `${h} h ${rest} min` : `${h} h`;
+    return rest ? `${h} ${u.h} ${rest} ${u.min}` : `${h} ${u.h}`;
   }
 
   /** "18 m", "1.2 km", "14 km". */
-  function formatDistance(metres) {
+  function formatDistance(metres, units) {
+    const u = units || UNITS;
     const m = count(metres);
-    if (m < 1000) return `${Math.round(m)} m`;
+    if (m < 1000) return `${Math.round(m)} ${u.m}`;
     const km = m / 1000;
-    return `${km < 10 ? km.toFixed(1) : Math.round(km)} km`;
+    return `${km < 10 ? km.toFixed(1) : Math.round(km)} ${u.km}`;
   }
 
   root.TuiBenefitRules = {
     ASSUMPTIONS,
     KEEP_DAYS,
     TYPICAL_WEEK,
+    UNITS,
     computeBenefits,
     fromStats,
     startsNewBurst,
