@@ -273,3 +273,28 @@ test('what a click brings up when it opens something counts as an overlay', () =
   // Being selected is not a sign that a click did what it was for.
   assert.equal(EFFECT_ATTRIBUTES.includes('aria-selected'), false);
 });
+
+test('a frame around a picture is clicked on the picture, where a mouse lands', () => {
+  const photo = el('img');
+  const frame = el('div', { class: 'media-frame', tabindex: '-1' }, [photo]);
+  const boxes = new Map([[frame, { width: 360, height: 200 }], [photo, { width: 360, height: 200 }]]);
+  assert.equal(resolveClickTarget(frame, null, (n) => boxes.get(n) || null), photo);
+
+  // Without boxes (or a picture the mouse cannot hit) the frame stays the target.
+  assert.equal(resolveClickTarget(frame), frame);
+  assert.equal(resolveClickTarget(frame, null, (n) => (n === photo ? null : boxes.get(n))), frame);
+});
+
+test('a small picture in a frame is not taken for the frame', () => {
+  const avatar = el('img');
+  const message = el('div', { class: 'text-message', tabindex: '-1' }, [avatar, el('span', { text: 'See you at nine' })]);
+  const boxes = new Map([[message, { width: 380, height: 24 }], [avatar, { width: 24, height: 24 }]]);
+  assert.equal(resolveClickTarget(message, null, (n) => boxes.get(n) || null), message);
+});
+
+test('a link or button holding a picture is still clicked itself', () => {
+  const picture = el('img');
+  const link = el('a', { href: '/photo/1' }, [picture]);
+  const box = () => ({ width: 100, height: 100 });
+  assert.equal(resolveClickTarget(link, null, box), link);
+});

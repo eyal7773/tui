@@ -242,13 +242,39 @@
     return label === el ? null : label;
   }
 
+  // What a picture is drawn with.
+  const PICTURE_TAGS = new Set(['IMG', 'VIDEO', 'CANVAS']);
+
+  /**
+   * The picture a frame holds, when the picture is most of the frame: where a
+   * mouse lands. A chat's photo message is a focusable div around an <img>,
+   * and the page opens the photo only when the click lands on the picture
+   * itself; on the div it does nothing. The click still bubbles up through
+   * the frame, so a handler on the frame keeps working.
+   *
+   * `boxOf` gives an element's box ({ width, height }), or null for one a
+   * mouse cannot hit (hidden, or pointer-events: none).
+   */
+  function pictureInside(el, boxOf) {
+    if (typeof boxOf !== 'function') return null;
+    const frame = boxOf(el);
+    if (!frame || frame.width <= 0 || frame.height <= 0) return null;
+    const area = frame.width * frame.height;
+    return findDescendant(el, (node) => {
+      if (!PICTURE_TAGS.has(tagOf(node)) || isOut(node)) return false;
+      const box = boxOf(node);
+      return !!box && box.width * box.height * 2 >= area;
+    }, MAX_NODES);
+  }
+
   /**
    * @param {Element} el       the focused element, which is what a click would hit
    * @param {Element} [intended] the element navigation aimed at, when focus was
    *                             bounced to a container instead
+   * @param {Function} [boxOf] an element's box, for finding the picture a frame holds
    * @returns {Element} the element to click
    */
-  function resolveClickTarget(el, intended) {
+  function resolveClickTarget(el, intended, boxOf) {
     if (!el) return el;
 
     // 1. Navigation already knows which link the user was standing on; the
@@ -275,7 +301,8 @@
       if (wrapper) return wrapper;
     }
 
-    return el;
+    // 6. A frame around a picture: on the picture.
+    return pictureInside(el, boxOf) || el;
   }
 
   /**

@@ -1052,7 +1052,11 @@ class SpatialEngine {
             ? el._tui_activate : null;
 
         if (window.TuiClickRules) {
-            target = window.TuiClickRules.resolveClickTarget(el, intended) || el;
+            target = window.TuiClickRules.resolveClickTarget(el, intended, (node) => {
+                const style = getComputedStyle(node);
+                if (style.pointerEvents === 'none' || style.visibility === 'hidden') return null;
+                return node.getBoundingClientRect();
+            }) || el;
         }
 
         const options = {
@@ -1086,7 +1090,9 @@ class SpatialEngine {
         LOG.event('click', {
             on: LOG.describe(target),
             from: target !== el ? LOG.describe(el) : undefined,
-            why: target === el ? undefined : (intended === target ? 'aimed-at' : 'container-action'),
+            why: target === el ? undefined
+                : intended === target ? 'aimed-at'
+                    : /^(IMG|VIDEO|CANVAS)$/.test(target.tagName) ? 'picture' : 'container-action',
             count: clickCount,
             dblclick: !!pair,
             via: native ? 'click()' : 'dispatchEvent'

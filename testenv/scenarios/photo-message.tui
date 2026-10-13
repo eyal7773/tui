@@ -1,0 +1,11 @@
+# A chat's photo message is a focusable frame around the picture, and the app opens its viewer only for a click on the picture itself, so Enter on the frame did nothing. Enter clicks the picture, as a mouse would; a small avatar in a text message is not taken for the message.
+pages/photo-message.html
+start:css=#photo
+key:Enter
+wait:200
+eval:(() => { const t = document.getElementById('view').textContent; if (t !== 'Viewer: photo') throw new Error(t); return t; })()
+key:ArrowDown
+expect:css=#note
+key:Enter
+wait:200
+eval:(() => { const t = document.getElementById('view').textContent; if (t !== 'Opened: message') throw new Error(t); return t; })()
