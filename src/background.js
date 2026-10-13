@@ -190,13 +190,19 @@ let lastTwoKeys = [];
 // Initialize cache on service worker load
 chrome.storage.local.get(null, fillCache);
 
+// ON: the arrows work here. OFF, in grey: the extension is on the page but
+// switched off on purpose (the global switch, an excluded site, or Escape
+// handed the keyboard to the page), so it is plain that nothing is broken.
+// No badge: the extension is not on the page at all (chrome:// pages, the
+// Web Store, a tab opened before an install or an update).
 function updateBadge(tabId, state) {
-  if (state.supported && state.enabled) {
-    chrome.action.setBadgeText({ text: 'ON', tabId: tabId }).catch(() => {});
-    chrome.action.setBadgeBackgroundColor({ color: '#4caf50', tabId: tabId }).catch(() => {});
-  } else {
+  if (!state.supported) {
     chrome.action.setBadgeText({ text: '', tabId: tabId }).catch(() => {});
+    return;
   }
+  chrome.action.setBadgeText({ text: state.enabled ? 'ON' : 'OFF', tabId: tabId }).catch(() => {});
+  chrome.action.setBadgeBackgroundColor({ color: state.enabled ? '#4caf50' : '#8a8f98', tabId: tabId }).catch(() => {});
+  chrome.action.setBadgeTextColor({ color: '#ffffff', tabId: tabId }).catch(() => {});
 }
 
 const KEY_CODE_MAP = {
