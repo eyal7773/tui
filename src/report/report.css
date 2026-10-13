@@ -55,6 +55,42 @@ textarea {
   color: var(--text-dim);
 }
 
+/* Under the box for the copy of the page, while it is ticked: that copy can
+   hold anything the user had on screen. */
+.privacy-warning {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 8px;
+  padding: 10px 12px;
+  color: var(--error);
+  background: #fdeeee;
+  border: 1px solid #f2c4c4;
+  border-left: 4px solid var(--error);
+  border-radius: 6px;
+}
+
+.privacy-warning[hidden] {
+  display: none;
+}
+
+.privacy-icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+}
+
+.privacy-warning strong {
+  display: block;
+  font-size: 15px;
+}
+
+.privacy-warning p {
+  margin: 2px 0 0;
+  color: #8a2424;
+}
+
 .warning-inline {
   color: #6b4a00;
 }

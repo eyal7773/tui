@@ -32,7 +32,17 @@
       <input type="checkbox" id="include-page" checked aria-describedby="page-help">
       <span>Attach a copy of the page</span>
     </label>
-    <p class="note" id="page-help">It holds everything on the page. Untick it if something there is private.</p>
+    <div class="privacy-warning" id="page-help">
+      <svg class="privacy-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2.5 1.5 21h21L12 2.5z" fill="currentColor"/>
+        <path d="M12 9v5.5M12 17.2v.3" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <strong>This may send personal information!</strong>
+        <p>The copy holds everything on the page: names, email addresses, messages, account details,
+          whatever is on screen. Untick the box if anything there is private.</p>
+      </div>
+    </div>
 
     <div class="actions">
       <button id="send" type="button">Send report</button>

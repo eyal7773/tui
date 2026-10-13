@@ -162,6 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const allowAgain = () => { $('send').disabled = false; };
   $('description').addEventListener('input', allowAgain);
   $('include-page').addEventListener('change', allowAgain);
+  // The warning about personal information is only true while the box is ticked.
+  $('include-page').addEventListener('change', () => { $('page-help').hidden = !$('include-page').checked; });
   $('send').addEventListener('click', send);
 
   // Escape closes, except while a description is being written: there it
