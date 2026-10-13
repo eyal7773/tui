@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Keyboard shortcuts window over a page</title>
+<style>
+  body { font: 15px sans-serif; margin: 0; padding: 24px; }
+  nav a { margin-right: 16px; }
+  /* A page whose own rules for the tags the window is made of would
+     wreck it if they reached in. */
+  section { display: grid; background: #f00; padding: 40px; border: 4px solid #000; }
+  h3 { font-size: 40px; text-transform: lowercase; }
+  dl { margin: 60px; }
+  kbd { font-size: 30px; background: #000; color: #ff0; }
+</style></head>
+<body>
+  <!-- The page listens for keys itself, and counts every one it is given:
+       while the window is open none should reach it. -->
+  <nav><a href="#a" id="first">Home</a><a href="#b">Recipes</a><a href="#c">Contact</a></nav>
+  <p id="count">0</p>
+  <script>
+    let count = 0;
+    document.addEventListener('keydown', () => {
+      count += 1;
+      document.getElementById('count').textContent = String(count);
+    });
+  </script>
+</body></html>

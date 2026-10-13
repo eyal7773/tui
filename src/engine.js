@@ -872,6 +872,13 @@ class SpatialEngine {
             return;
         }
 
+        // The help window takes every key until it closes, Escape among them:
+        // there it closes the window rather than handing the keyboard over.
+        if (this.isHelpOpen) {
+            this.handleHelpKey(e);
+            return;
+        }
+
         // Escape hands the keyboard back to the page, and takes it again. Read
         // before the enabled check, because once the keyboard is handed over the
         // engine is disabled and would otherwise have no way to hear the key that
@@ -1125,7 +1132,7 @@ class SpatialEngine {
 
         const href = location.href;
         const ours = (node) => node === this.spotlight || node === this.hint ||
-            node.id === 'tui-menu-container';
+            node.id === 'tui-menu-container' || node.id === 'tui-help';
         const overlayInside = (node) => rules.isOverlay(node) || (!!node.querySelector && !!node.querySelector(
             'dialog, [popover], [aria-modal="true"], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]'));
         const observer = new MutationObserver((records) => {
@@ -2176,7 +2183,7 @@ class SpatialEngine {
             '[role="treeitem"], [role="checkbox"], [role="radio"], [role="switch"], ' +
             '[contenteditable]:not([contenteditable="false"])';
         // The extension's own menu has pointer rows too.
-        const ours = '#tui-menu-container, #tui-hint, #tui-text-badge';
+        const ours = '#tui-menu-container, #tui-hint, #tui-text-badge, #tui-help';
         const found = [];
         const cursorOf = new Map();
         const cursor = (el) => {
@@ -3775,7 +3782,10 @@ class SpatialEngine {
             ['duplicate', 'Duplicate page'],
             ['back', 'Go to previous page'],
             ['select-text', 'Select text'],
-            ['report', 'Report a problem']
+            ['report', 'Report a problem'],
+            // Last, so the items above keep their places: F10, three times
+            // down and Enter is still Report a problem.
+            ['help', 'Keyboard shortcuts']
         ]) {
             const item = document.createElement('li');
             item.className = 'tui-menu-item';
@@ -3879,6 +3889,160 @@ class SpatialEngine {
             window.history.back();
         } else if (action === 'select-text') {
             this.enterTextMode(null);
+        } else if (action === 'help') {
+            this.openHelp();
+        }
+    }
+
+    /*
+     * HELP: every key, in a window over the page, from F10 > Keyboard shortcuts.
+     */
+    buildHelp() {
+        const box = document.createElement('div');
+        box.id = 'tui-help';
+        box.setAttribute('role', 'dialog');
+        box.setAttribute('aria-modal', 'true');
+        box.setAttribute('aria-labelledby', 'tui-help-title');
+
+        const card = document.createElement('div');
+        card.className = 'tui-help-card';
+        box.appendChild(card);
+
+        const header = document.createElement('div');
+        header.className = 'tui-help-header';
+        const title = document.createElement('h2');
+        title.id = 'tui-help-title';
+        title.textContent = 'Keyboard shortcuts';
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'tui-help-close';
+        close.setAttribute('aria-label', 'Close');
+        close.textContent = '×';
+        close.addEventListener('click', () => this.closeHelp());
+        header.append(title, close);
+        card.appendChild(header);
+
+        const body = document.createElement('div');
+        body.className = 'tui-help-body';
+        card.appendChild(body);
+        this.helpBody = body;
+
+        // [keys, what they do]. A key list is chords joined by "or"; a
+        // chord is keys pressed together (joined by +) or one after the
+        // other (joined by a space).
+        const sections = [
+            ['Moving', [
+                [['↑', '↓'], 'The item above or below'],
+                [['←', '→'], 'Along the row you are on'],
+                [['Home', 'End'], 'Either end of the line. The last arrow decides: after a sideways step the row, after up or down the column']
+            ]],
+            ['Acting', [
+                [['Enter'], 'Click the item in the ring'],
+                [['Enter Enter'], 'Twice, quickly: a double-click'],
+                [['Enter'], 'On a text box or a list: go in, to type or pick'],
+                [['Esc'], 'Leave a text box']
+            ]],
+            ['The page’s own keys', [
+                [['Esc'], 'Hand the keyboard to the site, so its shortcuts work (space to play a video)'],
+                [['Esc'], 'Again: take it back and carry on']
+            ]],
+            ['Selecting text', [
+                [['Shift+←→↑↓'], 'Start, from the text in the ring'],
+                [['←→↑↓'], 'By character or line'],
+                [['Ctrl+←→↑↓'], 'By word or paragraph'],
+                [['Enter'], 'Copy what is selected. With nothing selected: drop an anchor, so the arrows select'],
+                [['Esc'], 'Leave text mode']
+            ]],
+            ['Menu', [
+                [['F10'], 'Open the menu: duplicate the page, go back, select text, report a problem, these keys'],
+                [['Esc'], 'Close it']
+            ]]
+        ];
+
+        for (const [name, rows] of sections) {
+            const section = document.createElement('section');
+            const heading = document.createElement('h3');
+            heading.textContent = name;
+            section.appendChild(heading);
+            const list = document.createElement('dl');
+            for (const [keys, text] of rows) {
+                const dt = document.createElement('dt');
+                keys.forEach((chord, i) => {
+                    if (i) dt.appendChild(document.createTextNode(' '));
+                    chord.split(' ').forEach((step, j) => {
+                        if (j) dt.appendChild(document.createTextNode(' '));
+                        step.split('+').forEach((key, k) => {
+                            if (k) dt.appendChild(document.createTextNode('+'));
+                            const kbd = document.createElement('kbd');
+                            kbd.textContent = key;
+                            dt.appendChild(kbd);
+                        });
+                    });
+                });
+                const dd = document.createElement('dd');
+                dd.textContent = text;
+                list.append(dt, dd);
+            }
+            section.appendChild(list);
+            body.appendChild(section);
+        }
+
+        const footer = document.createElement('div');
+        footer.className = 'tui-help-footer';
+        footer.textContent = 'Esc to close  ·  ↑ ↓ to scroll';
+        card.appendChild(footer);
+
+        // A click on the dimmed page around the card closes it.
+        box.addEventListener('click', (e) => {
+            if (e.target === box) this.closeHelp();
+        });
+        return box;
+    }
+
+    openHelp() {
+        if (!document.body) return;
+        if (!this.helpBox || !this.helpBox.isConnected) {
+            this.helpBox = this.buildHelp();
+            document.body.appendChild(this.helpBox);
+        }
+        this.helpBody.scrollTop = 0;
+        this.isHelpOpen = true;
+        this.isActiveMode = false;
+        if (this.spotlight) this.spotlight.style.display = 'none';
+        // Drawn hidden first, so the fade has somewhere to start from.
+        requestAnimationFrame(() => {
+            if (this.isHelpOpen && this.helpBox) this.helpBox.classList.add('tui-help-visible');
+        });
+    }
+
+    closeHelp() {
+        this.isHelpOpen = false;
+        if (this.helpBox) this.helpBox.classList.remove('tui-help-visible');
+    }
+
+    /**
+     * While the help is open every key is its: Esc, F10 or Enter close it,
+     * the arrows and page keys scroll it, and nothing reaches the page.
+     * Ctrl and Cmd shortcuts still do, so the user can copy from it.
+     */
+    handleHelpKey(e) {
+        if (e.ctrlKey || e.metaKey) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const body = this.helpBody;
+        const page = body ? body.clientHeight * 0.9 : 0;
+        switch (e.key) {
+            case 'Escape':
+            case 'F10':
+            case 'Enter':
+                this.closeHelp();
+                break;
+            case 'ArrowDown': if (body) body.scrollTop += 60; break;
+            case 'ArrowUp': if (body) body.scrollTop -= 60; break;
+            case 'PageDown': case ' ': if (body) body.scrollTop += page; break;
+            case 'PageUp': if (body) body.scrollTop -= page; break;
+            case 'Home': if (body) body.scrollTop = 0; break;
+            case 'End': if (body) body.scrollTop = body.scrollHeight; break;
         }
     }
 }

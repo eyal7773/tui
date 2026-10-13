@@ -85,7 +85,7 @@
     "esc": "Sair de uma caixa de texto e voltar a navegar pela página.",
     "again": "de novo",
     "escAgain": "Devolver o teclado ao site, para que os atalhos dele funcionem: a barra de espaço para tocar um vídeo ou qualquer outra tecla que ele use. Pressione mais uma vez para continuar navegando.",
-    "f10": "Abrir o menu: duplicar a página, voltar, selecionar texto ou relatar um problema. <kbd>Esc</kbd> fecha o menu."
+    "f10": "Abrir o menu: duplicar a página, voltar, selecionar texto, relatar um problema ou ver todas as teclas. <kbd>Esc</kbd> fecha o menu."
   },
   "how": {
     "heading": "como funciona",

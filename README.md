@@ -395,7 +395,7 @@ not have it can be excluded (see Excluded sites).
 | **Enter** | Activate the focused item (see below); twice for a double-click |
 | **Shift + Arrows** | Select text (see below) |
 | **Esc** | Leave a text box, or hand the keyboard back to the page |
-| **F10** | The menu: duplicate the page, go back, select text, report a problem |
+| **F10** | The menu: duplicate the page, go back, select text, report a problem, keyboard shortcuts |
 
 ### The popup
 Click the extension icon for:

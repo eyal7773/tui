@@ -57,7 +57,7 @@
     "esc": "Leave a text box and go back to navigating the page.",
     "again": "again",
     "escAgain": "Hand the keyboard back to the site, so its own shortcuts work — space to play a video, or anything else it binds. Press it once more to carry on navigating.",
-    "f10": "Open the menu — duplicate the page, go back, select text, or report a problem. <kbd>Esc</kbd> closes it."
+    "f10": "Open the menu — duplicate the page, go back, select text, report a problem, or see every key. <kbd>Esc</kbd> closes it."
   },
   "how": {
     "heading": "how it works",

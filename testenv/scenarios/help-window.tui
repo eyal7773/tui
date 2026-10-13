@@ -1,0 +1,17 @@
+# F10 > Keyboard shortcuts opens a window with every key over the page. While it is open no key reaches the page and the page's own CSS does not reach in; Esc closes it without handing the keyboard to the site, and the arrows go on as before.
+pages/help-window.html
+start:css=#first
+key:F10
+key:ArrowDown*4
+key:Enter
+wait:300
+eval:(() => { const h = document.getElementById('tui-help'); if (!h || getComputedStyle(h).visibility !== 'visible') throw new Error('help not shown'); const k = h.querySelector('kbd'); if (getComputedStyle(k).fontSize !== '12px') throw new Error('page CSS reached the keycaps: ' + getComputedStyle(k).fontSize); return h.querySelectorAll('section').length + ' sections'; })()
+eval:document.getElementById('count').textContent = '0'
+key:ArrowDown*3
+key:ArrowLeft
+eval:(() => { const n = document.getElementById('count').textContent; if (n !== '0') throw new Error(n + ' keys reached the page'); return n; })()
+key:Escape
+wait:300
+eval:(() => { const v = getComputedStyle(document.getElementById('tui-help')).visibility; if (v !== 'hidden') throw new Error(v); return v; })()
+key:ArrowRight
+expect:Recipes

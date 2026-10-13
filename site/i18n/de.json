@@ -85,7 +85,7 @@
     "esc": "Ein Textfeld verlassen und wieder auf der Seite navigieren.",
     "again": "erneut",
     "escAgain": "Die Tastatur an die Website zurückgeben, damit deren eigene Tastenkürzel funktionieren: die Leertaste zum Abspielen eines Videos oder jede andere Taste, die sie belegt. Noch einmal drücken, um weiter zu navigieren.",
-    "f10": "Das Menü öffnen: Seite duplizieren, zurück, Text auswählen oder ein Problem melden. <kbd>Esc</kbd> schließt es."
+    "f10": "Das Menü öffnen: Seite duplizieren, zurück, Text auswählen, ein Problem melden oder alle Tasten anzeigen. <kbd>Esc</kbd> schließt es."
   },
   "how": {
     "heading": "so funktioniert es",

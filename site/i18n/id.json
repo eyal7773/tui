@@ -85,7 +85,7 @@
     "esc": "Keluar dari kotak teks dan kembali menavigasi halaman.",
     "again": "lagi",
     "escAgain": "Mengembalikan keyboard ke situs agar pintasannya sendiri berfungsi: spasi untuk memutar video, atau tombol lain yang dipakai situs. Tekan sekali lagi untuk lanjut bernavigasi.",
-    "f10": "Membuka menu: menggandakan halaman, kembali, memilih teks, atau melaporkan masalah. <kbd>Esc</kbd> menutupnya."
+    "f10": "Membuka menu: menggandakan halaman, kembali, memilih teks, melaporkan masalah, atau melihat semua tombol. <kbd>Esc</kbd> menutupnya."
   },
   "how": {
     "heading": "cara kerjanya",

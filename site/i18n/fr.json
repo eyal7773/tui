@@ -85,7 +85,7 @@
     "esc": "Quitter une zone de texte et revenir à la navigation dans la page.",
     "again": "à nouveau",
     "escAgain": "Rendre le clavier au site pour que ses propres raccourcis fonctionnent : la barre d’espace pour lire une vidéo, ou toute autre touche qu’il utilise. Appuyez encore une fois pour reprendre la navigation.",
-    "f10": "Ouvrir le menu : dupliquer la page, revenir en arrière, sélectionner du texte ou signaler un problème. <kbd>Esc</kbd> le ferme."
+    "f10": "Ouvrir le menu : dupliquer la page, revenir en arrière, sélectionner du texte, signaler un problème ou voir toutes les touches. <kbd>Esc</kbd> le ferme."
   },
   "how": {
     "heading": "comment ça marche",

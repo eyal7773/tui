@@ -85,7 +85,7 @@
     "esc": "Salir de un cuadro de texto y volver a navegar por la página.",
     "again": "otra vez",
     "escAgain": "Devolver el teclado al sitio para que funcionen sus propios atajos: la barra espaciadora para reproducir un vídeo o cualquier otra tecla que use. Púlsala una vez más para seguir navegando.",
-    "f10": "Abrir el menú: duplicar la página, volver atrás, seleccionar texto o informar de un problema. <kbd>Esc</kbd> lo cierra."
+    "f10": "Abrir el menú: duplicar la página, volver atrás, seleccionar texto, informar de un problema o ver todas las teclas. <kbd>Esc</kbd> lo cierra."
   },
   "how": {
     "heading": "cómo funciona",
