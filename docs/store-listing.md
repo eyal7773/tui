@@ -21,8 +21,8 @@ things you can click or type into, by where they are on screen.
 
 ## Remote code
 
-No. Every script ships in the package. (The stats page loads one stylesheet, Bootstrap's
-CSS, from `cdn.jsdelivr.net`; a stylesheet is not code.)
+No. Every script and stylesheet ships in the package; nothing is loaded from another
+server.
 
 ## Data usage
 
