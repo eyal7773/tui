@@ -24,7 +24,7 @@ and a recheck.
 | AWS console | us-east-1.console.aws.amazon.com/ec2 Instances (local page) | Page drawn into one big frame: arrows step into it level with where they start, and back out the same way | page-frame, mdn-frame-round-trip | 78e9c88 |
 | AWS access portal | awsapps.com/start accounts list (report zip + local page) | Treegrid of accounts with plain <th>/<td> cells: ArrowDown from an opened account reaches its role links (tabindex=-1) | treegrid-role-links | 63d3412 |
 | Admin dashboard | an internal results list (report zip + local page) | Rows a script makes clickable, with only the pointer cursor (no link, tabindex or role): ArrowDown from the search box steps through them, Enter opens one; a submenu shown by CSS alone still reached | script-click-rows, css-only-menu | 9787f18 |
-| Deploy form | an internal environments dashboard (report zip + local page) | Deploy button disabled for a moment: once enabled, ArrowRight from Cancel reaches it | button-enabled-later | 962a1bb |
+| Deploy form | an internal environments dashboard (report zip + local page) | Deploy button disabled for a moment: once enabled, ArrowRight from Cancel reaches it; a confirm box grouped with its label and a Copy button: ArrowDown from Copy rings the box, not the group, and ArrowUp returns to Copy | button-enabled-later, confirm-phrase-group | 962a1bb, 049ff25 |
 | Booking.com | booking.com | Destination field's label stealing the arrows; 1x1 "travelling for work" checkbox | booking-destination | 4edb195, bb6550e |
 | eBay | ebay.com/sch/i.html?_nkw=headphones (local page) | Carousel back arrow hidden at opacity 0 over the links | hidden-carousel-arrow | e16f060 |
 | Gmail | open message (report zip + local page) | Message taller than the window is one focusable list item: arrows step into it, and the message's own scroll box scrolls before ArrowDown leaves for the folders | message-in-scroll-box | the commit adding the scenario |
@@ -42,7 +42,7 @@ and a recheck.
 | The Verge | theverge.com | Stretched links in the story stream, staying in the column | verge-story-stream, stretched-link | 2b38ea2, be73518 |
 | Wikipedia | en.wikipedia.org/wiki/Albert_Einstein, .../Python_(programming_language) | Appearance radios, Main menu Enter, page preview hover card, sticky side column | wikipedia-appearance-radios, wikipedia-main-menu-enter, dialog-hidden-icons (preview card, local page) | e9314d0, edaca2a, b42c7ec, 6e7cf43, ee1c3a4 |
 | ynet | ynet.co.il | Inline link wrapping a lead photo | ynet-photo-link | 53b9229 |
-| YouTube | youtube.com | Sidebar entries inside `tabindex=-1` links | youtube-sidebar | 3e98875 |
+| YouTube | youtube.com | Sidebar entries inside `tabindex=-1` links; "Continue watching?" dialog with one button, focused by the page: the arrows enter it (report zip + local page) | youtube-sidebar, dialog-one-button | 3e98875, 6f1381f |
 
 ## Surveyed
 
