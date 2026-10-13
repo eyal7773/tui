@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>A dialog with one button that focuses itself</title>
+<style>
+  body { font: 15px sans-serif; margin: 0; padding: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 200px); gap: 16px; }
+  .grid a { display: block; height: 120px; background: #ddd; }
+  #backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); }
+  #dialog { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 260px;
+            padding: 16px; background: #fff; border-radius: 12px; }
+  #dialog .text { margin-bottom: 16px; }
+  #dialog .actions { display: flex; justify-content: flex-end; }
+</style></head>
+<body>
+  <!-- A video page that paused itself: a dialog with a question and a
+       single "Yes" button opens over a backdrop and focuses its own box.
+       Everything in the dialog lies inside that box, so no arrow found a
+       way out of it, and with only one control inside, the box was taken
+       for a wrapper around it rather than a place to enter. -->
+  <div class="grid">
+    <a href="#one">Up next: river walk</a>
+    <a href="#two">Up next: bread at home</a>
+    <a href="#three">Up next: night trains</a>
+  </div>
+  <div id="backdrop"></div>
+  <div role="dialog">
+    <div id="dialog" tabindex="-1">
+      <div class="text">Video paused. Continue watching?</div>
+      <div class="actions"><button type="button" id="yes">Yes</button></div>
+    </div>
+  </div>
+  <script>
+    document.getElementById('dialog').focus();
+    document.getElementById('yes').addEventListener('click', () => {
+      document.getElementById('dialog').parentElement.remove();
+      document.getElementById('backdrop').remove();
+    });
+  </script>
+</body></html>

@@ -3453,8 +3453,15 @@ class SpatialEngine {
         // A box around one control is a wrapper that took focus for it,
         // not a place to enter. Booking re-renders its destination field, so
         // the wrapper's input is not the one stepped to, and the ring went
-        // back into the field on every press.
-        if (inside.length < 2) return null;
+        // back into the field on every press. A dialog around one button is
+        // still entered: that button is the way out of it. YouTube's "Video
+        // paused. Continue watching?" holds only "Yes", the dialog focused
+        // itself, and no arrow ever reached the button.
+        if (inside.length === 1) {
+            const only = inside[0];
+            if (this.shouldTrapArrows(only) || !this.composedClosest(box, '[role="dialog"], [role="alertdialog"], dialog, [aria-modal="true"]')) return null;
+        }
+        if (!inside.length) return null;
         const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
         return inside[window.TuiViewRules.firstInReadingOrder(inside.map(c => this.rectOf(c)), rtl)];
     }

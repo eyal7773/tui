@@ -1,0 +1,9 @@
+# A dialog with a single button focuses its own box over a covered page ("Continue watching?"): with one control inside, the box was taken for a wrapper around it, and no arrow ever reached the button. The ring enters the dialog, and Enter answers it.
+pages/dialog-one-button.html
+key:ArrowDown
+expect:css=#yes
+key:ArrowUp
+expect:css=#yes
+key:Enter
+wait:200
+eval:(() => { if (document.getElementById('yes')) throw new Error('dialog still open'); return 'closed'; })()
