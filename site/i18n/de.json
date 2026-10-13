@@ -1,0 +1,126 @@
+{
+  "lang": "de",
+  "dir": "ltr",
+  "name": "Deutsch",
+  "meta": {
+    "title": "TUI Navigator — weniger Maus, weniger Schmerz",
+    "description": "Eine Chrome-Erweiterung, mit der Sie jede Website mit den Pfeiltasten bedienen: Die Hand bleibt auf der Tastatur, Handgelenk, Unterarm und Schulter werden entlastet.",
+    "ogDescription": "Weniger Maus. Weniger Schmerz.",
+    "ogLocale": "de_DE"
+  },
+  "bar": {
+    "languages": "Sprache"
+  },
+  "store": {
+    "add": "Zu Chrome hinzufügen — kostenlos",
+    "addShort": "Zu Chrome hinzufügen",
+    "soon": "Bald im Chrome Web Store",
+    "soonShort": "Bald verfügbar"
+  },
+  "hero": {
+    "title": "Weniger Maus.<br>Weniger Schmerz.",
+    "lede": "Mit TUI Navigator bedienen Sie jede Website mit den Pfeiltasten. Die Hand bleibt auf der Tastatur, und Handgelenk, Unterarm und Schulter werden entlastet."
+  },
+  "story": {
+    "heading": "warum ich das gebaut habe",
+    "p1": "Ich arbeite den ganzen Tag am Computer, und irgendwann bekam ich starke Schmerzen in den Fingern der rechten Hand, meiner Maushand. Ich ging zum Physiotherapeuten und machte die Übungen, und sie halfen ein wenig. Aber es fühlte sich an, als würde ich das Symptom behandeln und nicht die Ursache, und ich hatte Sorge, dass der Schmerz immer wieder zurückkommt.",
+    "p2": "Ich suchte nach einer Lösung an der Wurzel, und mir kam ein einfacher Gedanke: Wenn ich weniger klicke, könnte das viel helfen. Den größten Teil des Tages verbringe ich in Chrome, also habe ich dafür eine Erweiterung geschrieben, mit der ich mit den Pfeiltasten surfen kann.",
+    "p3": "Seitdem hat sich viel gebessert. Ich nutze meistens die Pfeiltasten und die Maus nur ab und zu, und die Schmerzen sind weg.",
+    "name": "Eyal Bardugo",
+    "role": "Entwickler von TUI Navigator",
+    "note": "Das ist meine persönliche Erfahrung, kein medizinischer Rat."
+  },
+  "figure": {
+    "heading": "was es Ihrem Körper erspart",
+    "intro": "Die Maus hält die Hand im Griff, das Handgelenk abgeknickt und den Arm zur Seite gestreckt. Mit den Pfeiltasten bleiben die Hände dort, wo sie tippen. So viel erspart eine ganz normale Woche Surfen mit der Erweiterung Ihrem Körper ungefähr.",
+    "note": "Die Woche ist ein Beispiel, keine echten Daten: fünf Arbeitstage mit etwa 80 geöffneten Links und etwa 400 Pfeiltasten-Drücken pro Tag. Die Statistikseite der Erweiterung zeigt dieselbe Grafik für Ihr eigenes Surfen, gezählt auf Ihrem Computer und nirgendwohin gesendet.",
+    "strings": {
+      "play": "Abspielen",
+      "stop": "Anhalten",
+      "playLabel": "Animation abspielen",
+      "stopLabel": "Animation anhalten",
+      "today": "+{n} heute",
+      "howSummary": "Schätzungen, keine Messungen: So wird gezählt",
+      "howClicks": "Jedes Enter, das die Erweiterung sendet, ist ein Klick, den Ihre Hand nicht machen musste.",
+      "howGrip": "Greifzeit: {click} s pro Klick, {arrow} s pro Pfeiltaste (eine kurze Zeigerbewegung oder ein Dreh am Mausrad).",
+      "howReach": "Eine Folge von Tasten nach einer Pause von mehr als {gap} s zählt als ein Griff zur Maus, etwa {cm} cm in jede Richtung.",
+      "units": { "s": "s", "min": "Min.", "h": "Std.", "m": "m", "km": "km" },
+      "wrist": {
+        "title": "Handgelenk & Finger",
+        "unit": "Klicks, die Ihre Hand nicht machen musste",
+        "why": "Klicken und Ziehen mit der Maus erhöht den Druck im Karpaltunnel."
+      },
+      "forearm": {
+        "title": "Unterarm",
+        "unit": "ohne die Maus zu umgreifen",
+        "why": "Eine Maus zu halten, hält die Unterarmmuskeln angespannt; zwischen Tastendrücken liegen kurze Pausen."
+      },
+      "shoulder": {
+        "title": "Schulter & Nacken",
+        "unit": "Griffe zur Maus erspart",
+        "extra": "≈ {distance}, die Ihr Arm nicht zurücklegen musste",
+        "why": "Eine Maus neben der Tastatur zieht die Schulter nach außen; mit den Tasten bleiben die Hände nah beieinander."
+      }
+    }
+  },
+  "demo": {
+    "heading": "ausprobieren",
+    "chrome": "Ergebnisse für &bdquo;Tastaturnavigation&ldquo;",
+    "row1": "Surfen nur mit der Tastatur ist schneller, als Sie denken",
+    "meta1": "example.com — 4 Min. Lesezeit",
+    "row2": "Warum Fokusanzeigen wichtig sind",
+    "meta2": "example.org — 7 Min. Lesezeit",
+    "row3": "Eine kurze Geschichte textbasierter Oberflächen",
+    "meta3": "example.net — 12 Min. Lesezeit",
+    "next": "Nächste Seite",
+    "filter": "Filtern",
+    "hint": "Eine Attrappe, nicht die Erweiterung, aber der Ring ist der echte. Klicken Sie auf eine Zeile und drücken Sie dann <b>&darr; &uarr; &larr; &rarr;</b>."
+  },
+  "keys": {
+    "heading": "Tasten",
+    "upDown": "Zum Element darüber oder darunter.",
+    "leftRight": "Entlang der Reihe, in der Sie sind.",
+    "homeEnd": "Zu einem der beiden Enden der Linie springen, auf der Sie sind. Der zuletzt gedrückte Pfeil entscheidet, was eine Linie ist: nach einer Bewegung zur Seite die Reihe, nach einer Bewegung nach oben oder unten die Spalte.",
+    "enter": "Das ausgewählte Element auslösen. Bei einem Textfeld oder einer Auswahlliste geht der Fokus an das Feld, damit Sie tippen oder wählen können. Bei einer Listenzeile wird der Link darin ausgelöst, denn dort speichert die Zeile ihre Adresse.",
+    "esc": "Ein Textfeld verlassen und wieder auf der Seite navigieren.",
+    "again": "erneut",
+    "escAgain": "Die Tastatur an die Website zurückgeben, damit deren eigene Tastenkürzel funktionieren: die Leertaste zum Abspielen eines Videos oder jede andere Taste, die sie belegt. Noch einmal drücken, um weiter zu navigieren.",
+    "f10": "Das Menü öffnen: Seite duplizieren, zurück, Text auswählen oder ein Problem melden. <kbd>Esc</kbd> schließt es."
+  },
+  "how": {
+    "heading": "so funktioniert es",
+    "p1": "Die Erweiterung liest die Seite, ermittelt, an welchen Elementen sich ein Halt lohnt, und behandelt sie wie ein Raster. Die Pfeiltasten springen zwischen ihnen nach ihrer Position auf dem Bildschirm, nicht nach der Reihenfolge im Code: Der Pfeil nach rechts führt zu dem, was rechts liegt, nicht zu dem, was zufällig als Nächstes im HTML steht.",
+    "p2": "Tastendrücke werden abgefangen, bevor die Seite sie sieht, sodass Websites mit eigenen Pfeiltasten-Kürzeln Ihnen nicht die Steuerung streitig machen. Textfelder, Auswahllisten und alles, was die Pfeiltasten selbst braucht, bleiben unberührt, bis Sie ihnen mit <kbd>Enter</kbd> den Fokus übergeben.",
+    "p3": "Das kleine Fenster des Symbols in der Symbolleiste zählt Ihre Aktionen und verlinkt auf eine Statistikseite. Wenn etwas schiefgeht, zeigt <kbd>F10</kbd> → <em>Report a problem</em> ein kurzes Protokoll dessen, was die Erweiterung auf der Seite getan hat, und sendet es zusammen mit Ihrer Beschreibung an den Entwickler. Nichts wird gesendet, bevor Sie <em>Send report</em> drücken; siehe <a href=\"privacy.html\">Datenschutz</a>."
+  },
+  "closing": "Bereit, Ihrer Hand eine Pause zu gönnen?",
+  "footer": {
+    "privacy": "Datenschutz",
+    "source": "Quellcode",
+    "report": "Problem melden"
+  },
+  "privacy": {
+    "title": "Datenschutz — TUI Navigator",
+    "description": "Was TUI Navigator speichert, wo es gespeichert wird und was Ihren Computer verlässt: nichts, es sei denn, Sie senden selbst einen Bericht.",
+    "h1": "Datenschutz",
+    "lede": "TUI Navigator sendet nichts irgendwohin. Was es speichert, bleibt auf Ihrem Computer, und ein Fehlerbericht verlässt ihn nur, wenn Sie ihn selbst senden.",
+    "keepHeading": "Was auf Ihrem Computer gespeichert wird",
+    "keepSettings": "<strong>Ihre Einstellungen:</strong> Farbe und Stärke des Rings, Scrollverhalten, die Websites, auf denen Sie es ausgeschaltet haben, und ob Sie den Wochenrückblick möchten. Gespeichert im Erweiterungsspeicher von Chrome.",
+    "keepCounts": "<strong>Ihre Nutzungszahlen:</strong> wie oft Sie jede Taste gedrückt haben, auf die die Erweiterung reagiert, nach Tag und Stunde, für die Statistikseite und den Wochenrückblick. Nur Zahlen: keine Adressen, keine Seiteninhalte. Gespeichert im Erweiterungsspeicher von Chrome.",
+    "keepLog": "<strong>Ein kurzes Protokoll dessen, was die Erweiterung auf der aktuellen Seite getan hat:</strong> die Tasten, auf die sie reagiert hat (Pfeile, <kbd>Enter</kbd>, <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>F10</kbd>, <kbd>Esc</kbd>), und die Elemente, zwischen denen sie gewechselt ist, beschrieben nur nach ihrer Form: Tag, Rolle, einige Klassennamen, Position und Größe. Es enthält nie den Text der Seite, Beschriftungen, Links, IDs oder etwas, das Sie eingeben. Es hält die letzten 20 Ereignisse, existiert nur im Speicher dieser Seite und verschwindet, wenn die Seite neu geladen oder geschlossen wird.",
+    "sendHeading": "Was gesendet wird",
+    "send": "Nichts, es sei denn, Sie senden einen Fehlerbericht (siehe unten). Abgesehen von einem Bericht stellt die Erweiterung nur eine Anfrage, nach einem Stylesheet: Die Statistikseite lädt das CSS von Bootstrap von <code>cdn.jsdelivr.net</code>, wodurch dieser Server, wie bei jeder Webanfrage, Ihre IP-Adresse sieht.",
+    "reportsHeading": "Fehlerberichte",
+    "reports1": "<kbd>F10</kbd> → <em>Report a problem</em> öffnet ein Fenster, in dem Sie beschreiben, was passiert ist. Der Bericht enthält Ihre Beschreibung, die vollständige Adresse der Seite (aus dem Tab übernommen und in den Titel des Berichts gesetzt), das oben beschriebene Protokoll, die Version der Erweiterung, die Browserversion und die Fenstergröße; <em>What is sent</em> unter den Schaltflächen zeigt all das an.",
+    "reports2": "Nichts wird gesendet, bevor Sie <em>Send report</em> drücken. Dann geht der Bericht als eine einzige ZIP-Datei an den Berichtsserver von TUI Navigator (betrieben auf Cloudflare unter <code>tui-reports.taliandeyal.workers.dev</code>). Er wird dort nur so lange aufbewahrt, bis der Entwickler ihn herunterlädt, und dann vom Server gelöscht. Berichte werden nicht veröffentlicht, und es wird weder ein Konto noch ein Name noch eine E-Mail-Adresse abgefragt oder gesendet. Wie bei jeder Webanfrage sieht der Server beim Senden Ihre IP-Adresse; sie dient nur dazu, zu begrenzen, wie viele Berichte eine Adresse pro Minute senden kann, und wird nicht mit dem Bericht gespeichert.",
+    "reports3": "<em>Attach a copy of the page</em> ist von Anfang an angehakt. Diese Kopie enthält alles, was auf der Seite steht; entfernen Sie den Haken, wenn dort etwas Privates ist. Wenn Sie zum ersten Mal mit gesetztem Haken senden, fragt Chrome nach der Berechtigung <code>pageCapture</code>; ohne sie geht der Bericht ohne die Kopie.",
+    "permissionsHeading": "Berechtigungen",
+    "permStorage": "<code>storage</code>: Ihre Einstellungen und Nutzungszahlen.",
+    "permActiveTab": "<code>activeTab</code>: die Einstellungen im kleinen Fenster für die Website, auf der Sie sind.",
+    "permRecap": "<code>notifications</code>, <code>alarms</code>: der Wochenrückblick, den Sie ausschalten können.",
+    "permPageCapture": "<code>pageCapture</code> (optional, nur angefragt, wenn Sie einem Bericht eine Kopie der Seite beilegen): diese Kopie erstellen.",
+    "permSites": "Zugriff auf alle Websites: Die Pfeiltasten müssen überall funktionieren, wo Sie surfen.",
+    "questionsHeading": "Fragen",
+    "questions": "Eröffnen Sie ein Issue auf <a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a>."
+  }
+}

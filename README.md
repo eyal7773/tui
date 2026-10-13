@@ -356,15 +356,17 @@ release and pushes are never rejected as non-fast-forward.
 
 ### The website
 
-The site in `docs/` is served by GitHub Pages, in English at the root and in Hebrew
-under `docs/he/`. Its pages are built, so edit the sources in `site/`, not `docs/`:
+The site in `docs/` is served by GitHub Pages, in English at the root and in eleven
+more languages each under a folder of its own (`docs/he/`, `docs/es/`, `docs/zh/`, ...). Its pages are built, so edit the sources in `site/`, not `docs/`:
 
 - `site/index.html`, `site/privacy.html` — the templates. `{{hero.title}}` is filled
   from the language's strings file, as HTML.
-- `site/i18n/<lang>.json` — every text, one file per language. The Hebrew one also
-  carries the body figure's words (`figure.strings`); the English ones live in
-  `src/stats/benefit-figure.js`.
-- `site/site.json` — the languages, the site's address, and `storeUrl`: the Chrome Web
+- `site/i18n/<lang>.json` — every text, one file per language. Every language but
+  English also carries the body figure's words (`figure.strings`); the English ones
+  live in `src/stats/benefit-figure.js`. `lang` is the page's language tag
+  (`zh-Hans`, `pt-BR`), `dir` is `rtl` for Hebrew and Arabic.
+- `site/site.json` — the languages (the first is the root page), `fonts` from Google
+  Fonts for scripts the default faces draw badly, the site's address, and `storeUrl`: the Chrome Web
   Store link. While it is empty the buttons say "coming soon".
 
 Then run `npm run build-site` (and `npm run sync-site-figure` after changing the
@@ -372,7 +374,9 @@ figure). `npm test` fails while `docs/` is stale, while a language is missing a 
 the English has, or while a translation drops a `{placeholder}` or a tag.
 
 To add a language, add `site/i18n/<lang>.json` and its code to `languages` in
-`site/site.json`. A browser set to that language is sent to its page on the first
+`site/site.json`; a script the template's fonts do not cover also needs a `:lang()`
+rule in both templates. The translations were written without a native speaker's
+review. A browser set to that language is sent to its page on the first
 visit; the language switch remembers the reader's own choice.
 
 ## Usage Guide

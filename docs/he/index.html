@@ -9,6 +9,16 @@
   <link rel="canonical" href="https://eyal7773.github.io/tui/he/">
   <link rel="alternate" hreflang="en" href="https://eyal7773.github.io/tui/">
   <link rel="alternate" hreflang="he" href="https://eyal7773.github.io/tui/he/">
+  <link rel="alternate" hreflang="es" href="https://eyal7773.github.io/tui/es/">
+  <link rel="alternate" hreflang="zh-Hans" href="https://eyal7773.github.io/tui/zh/">
+  <link rel="alternate" hreflang="ar" href="https://eyal7773.github.io/tui/ar/">
+  <link rel="alternate" hreflang="pt-BR" href="https://eyal7773.github.io/tui/pt/">
+  <link rel="alternate" hreflang="id" href="https://eyal7773.github.io/tui/id/">
+  <link rel="alternate" hreflang="fr" href="https://eyal7773.github.io/tui/fr/">
+  <link rel="alternate" hreflang="ja" href="https://eyal7773.github.io/tui/ja/">
+  <link rel="alternate" hreflang="ru" href="https://eyal7773.github.io/tui/ru/">
+  <link rel="alternate" hreflang="de" href="https://eyal7773.github.io/tui/de/">
+  <link rel="alternate" hreflang="hi" href="https://eyal7773.github.io/tui/hi/">
   <link rel="alternate" hreflang="x-default" href="https://eyal7773.github.io/tui/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,11 +44,39 @@
       --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
     }
 
-    /* Hebrew: the serif above has no Hebrew letters, and a monospace face
-       with them is rare, so the labels set in mono fall back to a sans. */
+    /* Scripts the faces above do not cover. The labels set in mono fall
+       back to a sans, since a monospace face with these letters is rare. */
     :root:lang(he) {
       --mono: ui-monospace, "Cascadia Mono", Consolas, "Heebo", "Segoe UI", Arial, sans-serif;
       --serif: "Frank Ruhl Libre", "David Libre", "Times New Roman", serif;
+    }
+
+    :root:lang(ar) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+      --serif: "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif;
+    }
+
+    :root:lang(hi) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Devanagari", "Nirmala UI", sans-serif;
+      --serif: "Noto Serif Devanagari", "Nirmala UI", "Mangal", serif;
+    }
+
+    /* Chinese and Japanese read better in the system's own sans than in a
+       serif fetched for the occasion, which would be several megabytes. */
+    :root:lang(zh) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      --serif: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans GB", sans-serif;
+    }
+
+    :root:lang(ja) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Hiragino Sans", "Yu Gothic UI", "Meiryo", "Noto Sans JP", sans-serif;
+      --serif: "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
+    }
+
+    /* Spacing letters apart breaks Arabic's joined letters, and does nothing
+       for the other scripts here but crowd them. */
+    :lang(ar) *, :lang(he) *, :lang(hi) *, :lang(zh) *, :lang(ja) * {
+      letter-spacing: 0 !important;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -71,7 +109,9 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    :lang(he) body {
+    :lang(he) body,
+    :lang(ar) body,
+    :lang(hi) body {
       font-size: 18px;
     }
 
@@ -114,9 +154,55 @@
       border-bottom-color: var(--rule);
     }
 
+    /* The language menu: a <details>, so it opens without a script. */
     .langs {
-      display: flex;
-      gap: 0.6rem;
+      position: relative;
+    }
+
+    .langs summary {
+      cursor: pointer;
+      list-style: none;
+      color: var(--ink-dim);
+      padding: 0.35rem 0.6rem;
+      border: 1px solid var(--rule);
+    }
+
+    .langs summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .langs summary::after {
+      content: " \25BE";
+    }
+
+    .langs summary:hover,
+    .langs[open] summary {
+      color: var(--ink);
+    }
+
+    .langs ul {
+      position: absolute;
+      inset-inline-end: 0;
+      top: calc(100% + 4px);
+      z-index: 10;
+      margin: 0;
+      padding: 0.35rem 0;
+      list-style: none;
+      min-width: 10rem;
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .langs li a {
+      display: block;
+      padding: 0.35rem 0.9rem;
+      border: none;
+      text-align: start;
+    }
+
+    .langs li a:hover {
+      background: var(--ring-wash);
     }
 
     .langs [aria-current] {
@@ -178,8 +264,8 @@
       max-width: 16ch;
     }
 
-    :lang(he) h1 {
-      letter-spacing: 0;
+    :lang(he) h1,
+    :lang(ar) h1 {
       font-weight: 500;
     }
 
@@ -477,7 +563,9 @@
         font-size: 16px;
       }
 
-      :lang(he) body {
+      :lang(he) body,
+      :lang(ar) body,
+      :lang(hi) body {
         font-size: 17px;
       }
 
@@ -520,7 +608,7 @@
     <header class="bar">
       <span class="name">tui navigator</span>
       <span class="spacer"></span>
-      <nav class="langs" aria-label="שפה"><a href="../" hreflang="en" lang="en" data-lang="en">English</a><a href="../he/" hreflang="he" lang="he" data-lang="he" aria-current="page">עברית</a></nav>
+      <details class="langs"><summary aria-label="שפה">עברית</summary><ul><li><a href="../" hreflang="en" lang="en" data-lang="en">English</a></li><li><a href="../he/" hreflang="he" lang="he" dir="rtl" data-lang="he" aria-current="page">עברית</a></li><li><a href="../es/" hreflang="es" lang="es" data-lang="es">Español</a></li><li><a href="../zh/" hreflang="zh-Hans" lang="zh-Hans" data-lang="zh">简体中文</a></li><li><a href="../ar/" hreflang="ar" lang="ar" dir="rtl" data-lang="ar">العربية</a></li><li><a href="../pt/" hreflang="pt-BR" lang="pt-BR" data-lang="pt">Português</a></li><li><a href="../id/" hreflang="id" lang="id" data-lang="id">Bahasa Indonesia</a></li><li><a href="../fr/" hreflang="fr" lang="fr" data-lang="fr">Français</a></li><li><a href="../ja/" hreflang="ja" lang="ja" data-lang="ja">日本語</a></li><li><a href="../ru/" hreflang="ru" lang="ru" data-lang="ru">Русский</a></li><li><a href="../de/" hreflang="de" lang="de" data-lang="de">Deutsch</a></li><li><a href="../hi/" hreflang="hi" lang="hi" data-lang="hi">हिन्दी</a></li></ul></details>
       <span class="get soon">בקרוב</span>
     </header>
 
@@ -617,6 +705,15 @@
   </div>
 
   <script>
+    // The language menu closes on a click outside it, as a menu does.
+    (function () {
+      var menu = document.querySelector('.langs');
+      if (!menu) return;
+      document.addEventListener('click', function (e) {
+        if (menu.open && !menu.contains(e.target)) menu.open = false;
+      });
+    })();
+
     // Remembers the language the reader picked, so the English page stops
     // sending a Hebrew browser to /he/ once they chose English themselves.
     (function () {

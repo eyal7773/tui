@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TUI Navigator — فأرة أقل، ألم أقل</title>
+  <meta name="description" content="إضافة لمتصفح Chrome تتيح لك تصفح أي موقع بمفاتيح الأسهم، فتبقى يدك على لوحة المفاتيح ويرتاح معصمك وساعدك وكتفك.">
+  <link rel="canonical" href="https://eyal7773.github.io/tui/ar/">
+  <link rel="alternate" hreflang="en" href="https://eyal7773.github.io/tui/">
+  <link rel="alternate" hreflang="he" href="https://eyal7773.github.io/tui/he/">
+  <link rel="alternate" hreflang="es" href="https://eyal7773.github.io/tui/es/">
+  <link rel="alternate" hreflang="zh-Hans" href="https://eyal7773.github.io/tui/zh/">
+  <link rel="alternate" hreflang="ar" href="https://eyal7773.github.io/tui/ar/">
+  <link rel="alternate" hreflang="pt-BR" href="https://eyal7773.github.io/tui/pt/">
+  <link rel="alternate" hreflang="id" href="https://eyal7773.github.io/tui/id/">
+  <link rel="alternate" hreflang="fr" href="https://eyal7773.github.io/tui/fr/">
+  <link rel="alternate" hreflang="ja" href="https://eyal7773.github.io/tui/ja/">
+  <link rel="alternate" hreflang="ru" href="https://eyal7773.github.io/tui/ru/">
+  <link rel="alternate" hreflang="de" href="https://eyal7773.github.io/tui/de/">
+  <link rel="alternate" hreflang="hi" href="https://eyal7773.github.io/tui/hi/">
+  <link rel="alternate" hreflang="x-default" href="https://eyal7773.github.io/tui/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;700&family=Noto+Sans+Arabic:wght@400;600&display=swap">
+  <link rel="icon" href="../icon.png">
+  <link rel="stylesheet" href="../benefit/benefit-figure.css">
+  <meta property="og:title" content="TUI Navigator">
+  <meta property="og:description" content="فأرة أقل. ألم أقل.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ar_AR">
+  <style>
+    :root {
+      --paper: #eaece9;
+      --panel: #f6f7f5;
+      --ink: #17181a;
+      --ink-dim: #5a635c;
+      --rule: #c9cec9;
+      --phosphor: #00893a;
+      --ring: #00a63f;
+      --ring-wash: rgba(0, 166, 63, 0.10);
+      --pulse-fade: rgba(0, 166, 63, 0);
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    /* Scripts the faces above do not cover. The labels set in mono fall
+       back to a sans, since a monospace face with these letters is rare. */
+    :root:lang(he) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Heebo", "Segoe UI", Arial, sans-serif;
+      --serif: "Frank Ruhl Libre", "David Libre", "Times New Roman", serif;
+    }
+
+    :root:lang(ar) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+      --serif: "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif;
+    }
+
+    :root:lang(hi) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Devanagari", "Nirmala UI", sans-serif;
+      --serif: "Noto Serif Devanagari", "Nirmala UI", "Mangal", serif;
+    }
+
+    /* Chinese and Japanese read better in the system's own sans than in a
+       serif fetched for the occasion, which would be several megabytes. */
+    :root:lang(zh) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      --serif: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans GB", sans-serif;
+    }
+
+    :root:lang(ja) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Hiragino Sans", "Yu Gothic UI", "Meiryo", "Noto Sans JP", sans-serif;
+      --serif: "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
+    }
+
+    /* Spacing letters apart breaks Arabic's joined letters, and does nothing
+       for the other scripts here but crowd them. */
+    :lang(ar) *, :lang(he) *, :lang(hi) *, :lang(zh) *, :lang(ja) * {
+      letter-spacing: 0 !important;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #14161a;
+        --panel: #1c1f24;
+        --ink: #dfe3df;
+        --ink-dim: #8b948c;
+        --rule: #333a36;
+        --phosphor: #00ff6a;
+        --ring: #00ff00;
+        --ring-wash: rgba(0, 255, 0, 0.12);
+        --pulse-fade: rgba(0, 255, 0, 0);
+      }
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    :lang(he) body,
+    :lang(ar) body,
+    :lang(hi) body {
+      font-size: 18px;
+    }
+
+    .wrap {
+      max-width: 54rem;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ---- top bar ---- */
+
+    .bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+
+    .bar .name {
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .bar .spacer {
+      flex: 1;
+    }
+
+    .bar a {
+      color: var(--ink-dim);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+
+    .bar a:hover {
+      color: var(--ink);
+      border-bottom-color: var(--rule);
+    }
+
+    /* The language menu: a <details>, so it opens without a script. */
+    .langs {
+      position: relative;
+    }
+
+    .langs summary {
+      cursor: pointer;
+      list-style: none;
+      color: var(--ink-dim);
+      padding: 0.35rem 0.6rem;
+      border: 1px solid var(--rule);
+    }
+
+    .langs summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .langs summary::after {
+      content: " \25BE";
+    }
+
+    .langs summary:hover,
+    .langs[open] summary {
+      color: var(--ink);
+    }
+
+    .langs ul {
+      position: absolute;
+      inset-inline-end: 0;
+      top: calc(100% + 4px);
+      z-index: 10;
+      margin: 0;
+      padding: 0.35rem 0;
+      list-style: none;
+      min-width: 10rem;
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .langs li a {
+      display: block;
+      padding: 0.35rem 0.9rem;
+      border: none;
+      text-align: start;
+    }
+
+    .langs li a:hover {
+      background: var(--ring-wash);
+    }
+
+    .langs [aria-current] {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    /* ---- the button to the store ---- */
+
+    .get {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      text-decoration: none;
+      color: var(--paper);
+      background: var(--ink);
+      padding: 0.75rem 1.3rem;
+      border: 1px solid var(--ink);
+    }
+
+    a.get:hover {
+      background: transparent;
+      color: var(--ink);
+    }
+
+    /* Not in the store yet: the same shape, plainly not a link. */
+    .get.soon {
+      color: var(--ink-dim);
+      background: transparent;
+      border: 1px dashed var(--rule);
+    }
+
+    .bar .get {
+      font-size: 0.75rem;
+      padding: 0.35rem 0.75rem;
+    }
+
+    .bar a.get {
+      color: var(--paper);
+      border-bottom: 1px solid var(--ink);
+    }
+
+    .bar a.get:hover {
+      color: var(--ink);
+    }
+
+    /* ---- hero ---- */
+
+    .hero {
+      padding: 4.5rem 0 1rem;
+    }
+
+    h1 {
+      font-size: clamp(2.3rem, 7vw, 3.8rem);
+      line-height: 1.08;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      margin: 0 0 1.25rem;
+      max-width: 16ch;
+    }
+
+    :lang(he) h1,
+    :lang(ar) h1 {
+      font-weight: 500;
+    }
+
+    .lede {
+      margin: 0 0 2rem;
+      max-width: 52ch;
+      color: var(--ink-dim);
+      font-size: 1.15rem;
+    }
+
+    /* ---- the story ---- */
+
+    .story {
+      margin: 0;
+      max-width: 44rem;
+    }
+
+    .story blockquote {
+      margin: 0;
+      padding-inline-start: 1.25rem;
+      border-inline-start: 3px solid var(--phosphor);
+    }
+
+    .story blockquote p {
+      margin: 0 0 1rem;
+      font-size: 1.2rem;
+    }
+
+    .story figcaption {
+      margin-top: 0.25rem;
+      padding-inline-start: 1.25rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--ink-dim);
+    }
+
+    .story figcaption strong {
+      color: var(--ink);
+    }
+
+    .story .note {
+      display: block;
+      margin-top: 0.35rem;
+      font-size: 0.75rem;
+    }
+
+    /* ---- the demo ---- */
+
+    .demo {
+      margin: 0;
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      padding: 0.5rem;
+    }
+
+    .demo-chrome {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--ink-dim);
+      padding: 0.35rem 0.6rem 0.6rem;
+      border-bottom: 1px dashed var(--rule);
+      margin-bottom: 0.5rem;
+    }
+
+    .rows {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .row {
+      display: block;
+      width: 100%;
+      text-align: start;
+      padding: 0.7rem 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: var(--ink);
+      background: none;
+      border: none;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .row .meta {
+      display: block;
+      color: var(--ink-dim);
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem 0.25rem;
+    }
+
+    .chip {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      padding: 0.3rem 0.7rem;
+      border: 1px solid var(--rule);
+      background: transparent;
+      color: var(--ink-dim);
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* The one bold moment: the ring, ported from the extension's styles.css.
+       The extension paints its own indicator rather than leaning on native
+       focus, so the demo carries the state in a class the same way. */
+    .tui-on {
+      outline: 3px solid var(--ring);
+      outline-offset: 2px;
+      background-color: var(--ring-wash);
+      animation: tui-pulse 1.4s ease-out infinite;
+    }
+
+    @keyframes tui-pulse {
+      0% {
+        box-shadow: 0 0 0 0 var(--ring-wash);
+      }
+
+      70% {
+        box-shadow: 0 0 0 6px var(--pulse-fade);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 var(--pulse-fade);
+      }
+    }
+
+    .demo-hint {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-dim);
+      margin: 0.75rem 0 0;
+      padding: 0 0.75rem 0.4rem;
+      max-width: none;
+    }
+
+    .demo-hint b {
+      color: var(--phosphor);
+      font-weight: 600;
+    }
+
+    /* ---- sections ---- */
+
+    section {
+      padding: 3.5rem 0 0;
+    }
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--ink-dim);
+      margin: 0 0 1.5rem;
+    }
+
+    h2::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--rule);
+    }
+
+    p {
+      max-width: 64ch;
+    }
+
+    /* ---- body figure (benefit/benefit-figure.css) ---- */
+
+    #week-figure {
+      --bf-accent: var(--phosphor);
+      --bf-ink: var(--ink);
+      --bf-dim: var(--ink-dim);
+      --bf-rule: var(--rule);
+      --bf-bg: var(--panel);
+      margin: 1.5rem 0 0;
+    }
+
+    #week-figure .bf-num {
+      font-family: var(--mono);
+    }
+
+    .week-note {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: var(--ink-dim);
+    }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      padding: 0.05em 0.35em;
+      word-break: break-word;
+    }
+
+    /* ---- keys ---- */
+
+    dl.keys {
+      display: grid;
+      grid-template-columns: 9rem 1fr;
+      gap: 0;
+      margin: 0;
+      max-width: 46rem;
+      align-items: baseline;
+    }
+
+    dl.keys dt {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      padding-block: 0.5rem;
+      padding-inline-end: 1.5rem;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    dl.keys dd {
+      margin: 0;
+      padding: 0.5rem 0;
+      font-size: 0.95rem;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    /* Keys are physical: an arrow points where it moves in either language. */
+    kbd {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      border: 1px solid var(--rule);
+      background: var(--panel);
+      padding: 0.1rem 0.4rem;
+      display: inline-block;
+      min-width: 1.6rem;
+      text-align: center;
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+
+    /* ---- the closing call ---- */
+
+    .closing {
+      padding-top: 4rem;
+      text-align: center;
+    }
+
+    .closing p {
+      margin: 0 auto 1.25rem;
+      font-size: 1.25rem;
+    }
+
+    /* ---- footer ---- */
+
+    footer {
+      margin-top: 4.5rem;
+      padding: 1.25rem 0 3rem;
+      border-top: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-dim);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+    }
+
+    footer a {
+      color: var(--ink-dim);
+    }
+
+    footer a:hover {
+      color: var(--ink);
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid var(--ring);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .tui-on {
+        animation: none;
+      }
+    }
+
+    @media (max-width: 34rem) {
+      body {
+        font-size: 16px;
+      }
+
+      :lang(he) body,
+      :lang(ar) body,
+      :lang(hi) body {
+        font-size: 17px;
+      }
+
+      .wrap {
+        padding: 0 1rem;
+      }
+
+      .hero {
+        padding: 2.5rem 0 0.5rem;
+      }
+
+      .story blockquote,
+      .story figcaption {
+        padding-inline-start: 1rem;
+      }
+
+      .story blockquote p {
+        font-size: 1.1rem;
+      }
+
+      dl.keys {
+        grid-template-columns: 1fr;
+      }
+
+      dl.keys dt {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      dl.keys dd {
+        padding-top: 0.15rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="bar">
+      <span class="name">tui navigator</span>
+      <span class="spacer"></span>
+      <details class="langs"><summary aria-label="اللغة">العربية</summary><ul><li><a href="../" hreflang="en" lang="en" data-lang="en">English</a></li><li><a href="../he/" hreflang="he" lang="he" dir="rtl" data-lang="he">עברית</a></li><li><a href="../es/" hreflang="es" lang="es" data-lang="es">Español</a></li><li><a href="../zh/" hreflang="zh-Hans" lang="zh-Hans" data-lang="zh">简体中文</a></li><li><a href="../ar/" hreflang="ar" lang="ar" dir="rtl" data-lang="ar" aria-current="page">العربية</a></li><li><a href="../pt/" hreflang="pt-BR" lang="pt-BR" data-lang="pt">Português</a></li><li><a href="../id/" hreflang="id" lang="id" data-lang="id">Bahasa Indonesia</a></li><li><a href="../fr/" hreflang="fr" lang="fr" data-lang="fr">Français</a></li><li><a href="../ja/" hreflang="ja" lang="ja" data-lang="ja">日本語</a></li><li><a href="../ru/" hreflang="ru" lang="ru" data-lang="ru">Русский</a></li><li><a href="../de/" hreflang="de" lang="de" data-lang="de">Deutsch</a></li><li><a href="../hi/" hreflang="hi" lang="hi" data-lang="hi">हिन्दी</a></li></ul></details>
+      <span class="get soon">قريبًا</span>
+    </header>
+
+    <div class="hero">
+      <h1>فأرة أقل.<br>ألم أقل.</h1>
+      <p class="lede">تتيح لك TUI Navigator تصفح أي موقع بمفاتيح الأسهم. تبقى يدك على لوحة المفاتيح، ويرتاح معصمك وساعدك وكتفك.</p>
+      <span class="get soon">قريبًا في سوق Chrome الإلكتروني</span>
+    </div>
+
+    <section id="story">
+      <h2>لماذا صنعتها</h2>
+      <figure class="story">
+        <blockquote>
+          <p>أعمل أمام الحاسوب طوال اليوم، وفي مرحلة ما بدأت أشعر بألم شديد في أصابع يدي اليمنى، اليد التي تمسك الفأرة. ذهبت إلى أخصائي علاج طبيعي وأدّيت التمارين، فساعدت قليلًا. لكنني شعرت أنني أعالج العَرَض لا السبب، وكنت أخشى أن يعود الألم مرة بعد مرة.</p>
+          <p>بحثت عن حل من الجذور، فخطرت لي فكرة بسيطة: إذا قلّلت النقرات، فقد يساعد ذلك كثيرًا. أقضي معظم يومي في Chrome، فكتبت له إضافة تتيح لي التصفح بمفاتيح الأسهم.</p>
+          <p>ومنذ ذلك الحين لاحظت تحسنًا كبيرًا. أستخدم الأسهم معظم الوقت والفأرة من حين لآخر فقط، وقد اختفى الألم.</p>
+        </blockquote>
+        <figcaption><strong>Eyal Bardugo</strong>, مطوّر TUI Navigator
+          <span class="note">هذه تجربتي الشخصية، وليست نصيحة طبية.</span></figcaption>
+      </figure>
+    </section>
+
+    <section id="spared">
+      <h2>ما توفّره على جسمك</h2>
+      <p>الفأرة تُبقي اليد قابضة، والمعصم منثنيًا، والذراع ممدودة إلى الجانب. مع الأسهم تبقى اليدان في مكان الكتابة. هذا تقريبًا ما يوفّره أسبوع عادي من التصفح بالإضافة على جسمك.</p>
+      <div id="week-figure"></div>
+      <p class="week-note">هذا الأسبوع مثال وليس بيانات أحد: خمسة أيام عمل، يُفتح فيها نحو 80 رابطًا ويُضغط على الأسهم نحو 400 مرة يوميًا. تعرض صفحة الإحصاءات في الإضافة الشكل نفسه وفق تصفحك أنت، ويُحسب على حاسوبك ولا يُرسل إلى أي مكان.</p>
+    </section>
+
+    <section id="try">
+      <h2>جرّبها</h2>
+      <div class="demo">
+        <div class="demo-chrome">نتائج البحث عن «التنقل بلوحة المفاتيح»</div>
+        <ul class="rows">
+          <li><button class="row" type="button">التصفح بلوحة المفاتيح وحدها أسرع مما تظن
+              <span class="meta">example.com — قراءة في 4 دقائق</span></button></li>
+          <li><button class="row" type="button">لماذا تهم مؤشرات التركيز
+              <span class="meta">example.org — قراءة في 7 دقائق</span></button></li>
+          <li><button class="row" type="button">تاريخ موجز للواجهات النصية
+              <span class="meta">example.net — قراءة في 12 دقيقة</span></button></li>
+        </ul>
+        <div class="row-actions">
+          <button class="chip" type="button">الصفحة التالية</button>
+          <button class="chip" type="button">تصفية</button>
+        </div>
+        <p class="demo-hint" id="hint">هذا نموذج وليس الإضافة نفسها، لكن الحلقة هي الحلقة الحقيقية. انقر على سطر ثم اضغط <b>&darr; &uarr; &larr; &rarr;</b>.</p>
+      </div>
+    </section>
+
+    <section id="keys">
+      <h2>المفاتيح</h2>
+      <dl class="keys">
+        <dt><kbd>&darr;</kbd> <kbd>&uarr;</kbd></dt>
+        <dd>الانتقال إلى العنصر الذي فوقك أو تحتك.</dd>
+
+        <dt><kbd>&larr;</kbd> <kbd>&rarr;</kbd></dt>
+        <dd>التحرك على امتداد الصف الذي أنت فيه.</dd>
+
+        <dt><kbd>Home</kbd> <kbd>End</kbd></dt>
+        <dd>القفز إلى أحد طرفي الخط الذي أنت فيه. آخر سهم ضغطته يحدد معنى الخط: بعد التحرك أفقيًا هو الصف، وبعد التحرك عموديًا هو العمود.</dd>
+
+        <dt><kbd>Enter</kbd></dt>
+        <dd>تفعيل العنصر المحدد. في مربع نص أو قائمة منسدلة، يُسلَّم إليه التركيز لتكتب أو تختار. في سطر من قائمة، يُفعَّل الرابط الذي بداخله، لأن السطر يحفظ عنوانه هناك.</dd>
+
+        <dt><kbd>Esc</kbd></dt>
+        <dd>الخروج من مربع النص والعودة إلى التنقل في الصفحة.</dd>
+
+        <dt><kbd>Esc</kbd> مرة أخرى</dt>
+        <dd>إعادة لوحة المفاتيح إلى الموقع لتعمل اختصاراته الخاصة: المسافة لتشغيل فيديو، أو أي مفتاح آخر يستخدمه. اضغطه مرة أخرى لمتابعة التنقل.</dd>
+
+        <dt><kbd>F10</kbd></dt>
+        <dd>فتح القائمة: تكرار الصفحة، الرجوع، تحديد النص، أو الإبلاغ عن مشكلة. يغلقها <kbd>Esc</kbd>.</dd>
+      </dl>
+    </section>
+
+    <section id="how">
+      <h2>كيف تعمل</h2>
+      <p>تقرأ الإضافة الصفحة، وتحدد العناصر التي تستحق التوقف عندها، وتعاملها كشبكة. تتنقل الأسهم بينها بحسب موقعها على الشاشة لا بحسب ترتيبها في الشيفرة، فيذهب السهم الأيمن إلى ما هو على اليمين، لا إلى ما يأتي بعده صدفةً في HTML.</p>
+      <p>تُلتقط ضغطات المفاتيح قبل أن تراها الصفحة، فلا تنازعك المواقع التي لها اختصارات أسهم خاصة على التحكم. أما مربعات النص والقوائم المنسدلة وكل ما يحتاج إلى الأسهم لنفسه، فتُترك وشأنها حتى تسلّمها التركيز بـ <kbd>Enter</kbd>.</p>
+      <p>تعرض النافذة التي تُفتح من شريط الأدوات عدد الإجراءات التي قمت بها وتربط بصفحة إحصاءات. عندما يحدث خلل، يعرض <kbd>F10</kbd> ← <em>Report a problem</em> سجلًا قصيرًا لما فعلته الإضافة في الصفحة، ويرسله إلى المطوّر مع وصفك. لا يُرسل شيء قبل أن تضغط <em>Send report</em>؛ راجع صفحة <a href="privacy.html">الخصوصية</a>.</p>
+    </section>
+
+    <section class="closing">
+      <p>هل أنت مستعد لإراحة يدك؟</p>
+      <span class="get soon">قريبًا في سوق Chrome الإلكتروني</span>
+    </section>
+
+    <footer>
+      <a href="privacy.html">الخصوصية</a>
+      <a href="https://github.com/eyal7773/tui">الشيفرة المصدرية</a>
+      <a href="https://github.com/eyal7773/tui/issues">الإبلاغ عن مشكلة</a>
+    </footer>
+
+  </div>
+
+  <script>
+    // The language menu closes on a click outside it, as a menu does.
+    (function () {
+      var menu = document.querySelector('.langs');
+      if (!menu) return;
+      document.addEventListener('click', function (e) {
+        if (menu.open && !menu.contains(e.target)) menu.open = false;
+      });
+    })();
+
+    // Remembers the language the reader picked, so the English page stops
+    // sending a Hebrew browser to /he/ once they chose English themselves.
+    (function () {
+      var links = document.querySelectorAll('[data-lang]');
+      Array.prototype.forEach.call(links, function (a) {
+        a.addEventListener('click', function () {
+          try { localStorage.setItem('tui-lang', a.getAttribute('data-lang')); } catch (e) { /* fine */ }
+        });
+      });
+    })();
+
+    (function () {
+      var demo = document.querySelector('.demo');
+      if (!demo) return;
+
+      // Only the elements inside the demo take part. `current` is the one place
+      // the ring's position is stored; paint() is the only thing that writes it.
+      var items = Array.prototype.slice.call(demo.querySelectorAll('.row, .chip'));
+      var current = null;
+
+      function paint(el) {
+        items.forEach(function (i) { i.classList.toggle('tui-on', i === el); });
+        current = el;
+      }
+
+      // Nearest item in the direction travelled, which is the idea the
+      // extension applies to a real page. Distance along the direction comes
+      // from the centres; drift across it comes from the leading edges, so a
+      // narrow button under a full-width row still lines up with its start.
+      // Directions are physical, so a right-to-left page works the same.
+      function next(from, dir) {
+        var box = from.getBoundingClientRect();
+        var vertical = (dir === 'ArrowUp' || dir === 'ArrowDown');
+        var rtl = getComputedStyle(demo).direction === 'rtl';
+        var edge = function (r) { return rtl ? r.right : r.left; };
+        var best = null;
+        var bestScore = Infinity;
+
+        items.forEach(function (el) {
+          if (el === from) return;
+
+          var r = el.getBoundingClientRect();
+          var along, across;
+
+          if (vertical) {
+            along = (r.top + r.height / 2) - (box.top + box.height / 2);
+            if (dir === 'ArrowUp') along = -along;
+            across = Math.abs(edge(r) - edge(box));
+          } else {
+            // Sideways moves stay on the band they started on, so they never
+            // hop between rows.
+            if (r.bottom <= box.top || r.top >= box.bottom) return;
+            along = (r.left + r.width / 2) - (box.left + box.width / 2);
+            if (dir === 'ArrowLeft') along = -along;
+            across = Math.abs(r.top - box.top);
+          }
+
+          if (along < 6) return;               // behind us, or level with us
+          var score = along + across * 2;      // prefer straight ahead
+          if (score < bestScore) { bestScore = score; best = el; }
+        });
+
+        return best;
+      }
+
+      // Starting the demo takes a deliberate click or tab into it.
+      items.forEach(function (el) {
+        el.addEventListener('click', function () { paint(el); });
+        el.addEventListener('focus', function () {
+          if (current !== el) paint(el);       // guard against a paint/focus loop
+        });
+      });
+
+      // Clicking anywhere else hands the arrow keys back to the page.
+      document.addEventListener('click', function (e) {
+        if (!demo.contains(e.target)) paint(null);
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (!current) return;                  // demo has not been started
+        if (e.key.indexOf('Arrow') !== 0) return;
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+        // Focus moved on to a real element elsewhere: stop intercepting.
+        var active = document.activeElement;
+        if (active && active !== document.body && !demo.contains(active)) {
+          paint(null);
+          return;
+        }
+
+        var target = next(current, e.key);
+        if (!target) return;
+
+        e.preventDefault();                    // do not scroll the page
+        paint(target);
+        target.focus({ preventScroll: true });
+      });
+    })();
+  </script>
+  <script src="../benefit/benefit-rules.js"></script>
+  <script src="../benefit/benefit-figure.js"></script>
+  <script>
+    // The typical week, drawn at once (Stop button and all) so the page does
+    // not jump, and started over, numbers counting up, the first time it
+    // scrolls into view.
+    (function () {
+      var box = document.getElementById('week-figure');
+      if (!box || !window.TuiBenefitFigure) return;
+      var week = TuiBenefitRules.typicalWeek();
+      var options = { animate: true, images: '../benefit/body/', strings: {"play":"تشغيل","stop":"إيقاف","playLabel":"تشغيل الرسوم المتحركة","stopLabel":"إيقاف الرسوم المتحركة","today":"+{n} اليوم","howSummary":"تقديرات وليست قياسات: كيف تُحسب","howClicks":"كل ضغطة Enter ترسلها الإضافة هي نقرة لم تقم بها يدك.","howGrip":"وقت القبض: {click} ث لكل نقرة، و{arrow} ث لكل سهم (حركة قصيرة للمؤشر أو دورة للعجلة).","howReach":"سلسلة مفاتيح بعد توقف يزيد على {gap} ث تُحسب مدًّا واحدًا لليد نحو الفأرة، نحو {cm} سم في كل اتجاه.","units":{"s":"ث","min":"د","h":"س","m":"م","km":"كم"},"wrist":{"title":"المعصم والأصابع","unit":"نقرة لم تقم بها يدك","why":"النقر والسحب بالفأرة يرفعان الضغط داخل النفق الرسغي."},"forearm":{"title":"الساعد","unit":"دون القبض على الفأرة","why":"الإمساك بالفأرة يُبقي عضلات الساعد مشدودة؛ أما ضغطات المفاتيح فبينها استراحات قصيرة."},"shoulder":{"title":"الكتف والرقبة","unit":"مرة لم تمدّ فيها يدك إلى الفأرة","extra":"≈ {distance} لم تقطعها ذراعك","why":"الفأرة بجانب لوحة المفاتيح تشدّ الكتف إلى الخارج؛ أما مع المفاتيح فتبقى اليدان متقاربتين."}} };
+      TuiBenefitFigure.render(box, week, Object.assign({}, options, { countUp: false }));
+      if (!('IntersectionObserver' in window)) return;
+      var seen = new IntersectionObserver(function (entries) {
+        if (!entries[0].isIntersecting) return;
+        seen.disconnect();
+        TuiBenefitFigure.render(box, week, options);
+      }, { threshold: 0.4 });
+      seen.observe(box);
+    })();
+  </script>
+</body>
+
+</html>

@@ -9,6 +9,16 @@
   <link rel="canonical" href="https://eyal7773.github.io/tui/privacy.html">
   <link rel="alternate" hreflang="en" href="https://eyal7773.github.io/tui/privacy.html">
   <link rel="alternate" hreflang="he" href="https://eyal7773.github.io/tui/he/privacy.html">
+  <link rel="alternate" hreflang="es" href="https://eyal7773.github.io/tui/es/privacy.html">
+  <link rel="alternate" hreflang="zh-Hans" href="https://eyal7773.github.io/tui/zh/privacy.html">
+  <link rel="alternate" hreflang="ar" href="https://eyal7773.github.io/tui/ar/privacy.html">
+  <link rel="alternate" hreflang="pt-BR" href="https://eyal7773.github.io/tui/pt/privacy.html">
+  <link rel="alternate" hreflang="id" href="https://eyal7773.github.io/tui/id/privacy.html">
+  <link rel="alternate" hreflang="fr" href="https://eyal7773.github.io/tui/fr/privacy.html">
+  <link rel="alternate" hreflang="ja" href="https://eyal7773.github.io/tui/ja/privacy.html">
+  <link rel="alternate" hreflang="ru" href="https://eyal7773.github.io/tui/ru/privacy.html">
+  <link rel="alternate" hreflang="de" href="https://eyal7773.github.io/tui/de/privacy.html">
+  <link rel="alternate" hreflang="hi" href="https://eyal7773.github.io/tui/hi/privacy.html">
   <link rel="alternate" hreflang="x-default" href="https://eyal7773.github.io/tui/privacy.html">
   <link rel="icon" href="icon.png">
   <style>
@@ -22,9 +32,39 @@
       --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
     }
 
+    /* Scripts the faces above do not cover. The labels set in mono fall
+       back to a sans, since a monospace face with these letters is rare. */
     :root:lang(he) {
       --mono: ui-monospace, "Cascadia Mono", Consolas, "Heebo", "Segoe UI", Arial, sans-serif;
       --serif: "Frank Ruhl Libre", "David Libre", "Times New Roman", serif;
+    }
+
+    :root:lang(ar) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+      --serif: "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif;
+    }
+
+    :root:lang(hi) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Devanagari", "Nirmala UI", sans-serif;
+      --serif: "Noto Serif Devanagari", "Nirmala UI", "Mangal", serif;
+    }
+
+    /* Chinese and Japanese read better in the system's own sans than in a
+       serif fetched for the occasion, which would be several megabytes. */
+    :root:lang(zh) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      --serif: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans GB", sans-serif;
+    }
+
+    :root:lang(ja) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Hiragino Sans", "Yu Gothic UI", "Meiryo", "Noto Sans JP", sans-serif;
+      --serif: "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
+    }
+
+    /* Spacing letters apart breaks Arabic's joined letters, and does nothing
+       for the other scripts here but crowd them. */
+    :lang(ar) *, :lang(he) *, :lang(hi) *, :lang(zh) *, :lang(ja) * {
+      letter-spacing: 0 !important;
     }
 
     @media (prefers-color-scheme: dark) {

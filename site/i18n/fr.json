@@ -1,0 +1,126 @@
+{
+  "lang": "fr",
+  "dir": "ltr",
+  "name": "Français",
+  "meta": {
+    "title": "TUI Navigator — moins de souris, moins de douleur",
+    "description": "Une extension Chrome pour naviguer sur n’importe quel site avec les flèches du clavier : la main reste sur le clavier, et le poignet, l’avant-bras et l’épaule se reposent.",
+    "ogDescription": "Moins de souris. Moins de douleur.",
+    "ogLocale": "fr_FR"
+  },
+  "bar": {
+    "languages": "Langue"
+  },
+  "store": {
+    "add": "Ajouter à Chrome — c’est gratuit",
+    "addShort": "Ajouter à Chrome",
+    "soon": "Bientôt sur le Chrome Web Store",
+    "soonShort": "Bientôt"
+  },
+  "hero": {
+    "title": "Moins de souris.<br>Moins de douleur.",
+    "lede": "TUI Navigator vous permet de naviguer sur n’importe quel site avec les flèches du clavier. La main reste sur le clavier, et le poignet, l’avant-bras et l’épaule se reposent."
+  },
+  "story": {
+    "heading": "pourquoi je l’ai créée",
+    "p1": "Je travaille devant un ordinateur toute la journée, et à un moment j’ai commencé à avoir de fortes douleurs dans les doigts de la main droite, celle de la souris. Je suis allé voir un kinésithérapeute et j’ai fait les exercices, qui m’ont un peu aidé. Mais j’avais l’impression de traiter le symptôme et non la cause, et je craignais que la douleur revienne encore et encore.",
+    "p2": "J’ai cherché à régler le problème à la racine, et une idée simple m’est venue : si je cliquais moins, cela pourrait beaucoup aider. Je passe la plus grande partie de ma journée dans Chrome, alors j’ai écrit une extension qui me permet de naviguer avec les flèches.",
+    "p3": "Depuis, j’ai constaté une nette amélioration. J’utilise les flèches la plupart du temps et la souris seulement de temps en temps, et la douleur a disparu.",
+    "name": "Eyal Bardugo",
+    "role": "créateur de TUI Navigator",
+    "note": "C’est mon expérience personnelle, pas un avis médical."
+  },
+  "figure": {
+    "heading": "ce qu’elle épargne à votre corps",
+    "intro": "La souris garde la main crispée, le poignet plié et le bras tendu sur le côté. Avec les flèches, les mains restent là où elles tapent. Voici à peu près ce qu’une semaine normale de navigation avec l’extension épargne à votre corps.",
+    "note": "Cette semaine est un exemple, pas les données de quelqu’un : cinq jours de travail, avec environ 80 liens ouverts et 400 appuis sur les flèches par jour. La page de statistiques de l’extension affiche la même figure pour votre propre navigation, calculée sur votre ordinateur et jamais envoyée nulle part.",
+    "strings": {
+      "play": "Lecture",
+      "stop": "Arrêter",
+      "playLabel": "Lancer l’animation",
+      "stopLabel": "Arrêter l’animation",
+      "today": "+{n} aujourd’hui",
+      "howSummary": "Des estimations, pas des mesures : comment elles sont calculées",
+      "howClicks": "Chaque Entrée envoyée par l’extension est un clic que votre main n’a pas fait.",
+      "howGrip": "Temps de préhension : {click} s par clic, {arrow} s par flèche (un petit déplacement du pointeur ou un cran de molette).",
+      "howReach": "Une série de touches après une pause de plus de {gap} s compte comme un geste vers la souris, d’environ {cm} cm dans chaque sens.",
+      "units": { "s": "s", "min": "min", "h": "h", "m": "m", "km": "km" },
+      "wrist": {
+        "title": "Poignet et doigts",
+        "unit": "clics que votre main n’a pas faits",
+        "why": "Cliquer et faire glisser avec une souris augmente la pression dans le canal carpien."
+      },
+      "forearm": {
+        "title": "Avant-bras",
+        "unit": "sans tenir la souris",
+        "why": "Tenir une souris garde les muscles de l’avant-bras contractés ; entre deux appuis sur les touches, il y a de courtes pauses."
+      },
+      "shoulder": {
+        "title": "Épaule et nuque",
+        "unit": "gestes vers la souris évités",
+        "extra": "≈ {distance} que votre bras n’a pas parcourus",
+        "why": "Une souris à côté du clavier tire l’épaule vers l’extérieur ; avec les touches, les mains restent proches."
+      }
+    }
+  },
+  "demo": {
+    "heading": "essayez",
+    "chrome": "résultats pour &laquo;&nbsp;navigation au clavier&nbsp;&raquo;",
+    "row1": "Naviguer uniquement au clavier est plus rapide qu’on ne le croit",
+    "meta1": "example.com — 4 min de lecture",
+    "row2": "Pourquoi les indicateurs de focus comptent",
+    "meta2": "example.org — 7 min de lecture",
+    "row3": "Une brève histoire des interfaces texte",
+    "meta3": "example.net — 12 min de lecture",
+    "next": "Page suivante",
+    "filter": "Filtrer",
+    "hint": "C’est une maquette, pas l’extension, mais l’anneau est le vrai. Cliquez sur une ligne, puis appuyez sur <b>&darr; &uarr; &larr; &rarr;</b>."
+  },
+  "keys": {
+    "heading": "touches",
+    "upDown": "Aller à l’élément au-dessus ou en dessous.",
+    "leftRight": "Se déplacer le long de la rangée où vous êtes.",
+    "homeEnd": "Sauter à l’une des extrémités de la ligne où vous êtes. La dernière flèche utilisée décide de ce qu’est une ligne : après un déplacement latéral, c’est la rangée ; après un déplacement vertical, c’est la colonne.",
+    "enter": "Activer l’élément sélectionné. Sur une zone de texte ou une liste déroulante, le focus lui est confié pour que vous puissiez taper ou choisir. Sur une ligne de liste, c’est le lien qu’elle contient qui est activé, car c’est là que la ligne garde son adresse.",
+    "esc": "Quitter une zone de texte et revenir à la navigation dans la page.",
+    "again": "à nouveau",
+    "escAgain": "Rendre le clavier au site pour que ses propres raccourcis fonctionnent : la barre d’espace pour lire une vidéo, ou toute autre touche qu’il utilise. Appuyez encore une fois pour reprendre la navigation.",
+    "f10": "Ouvrir le menu : dupliquer la page, revenir en arrière, sélectionner du texte ou signaler un problème. <kbd>Esc</kbd> le ferme."
+  },
+  "how": {
+    "heading": "comment ça marche",
+    "p1": "L’extension lit la page, repère les éléments où il vaut la peine de s’arrêter et les traite comme une grille. Les flèches passent de l’un à l’autre selon leur position à l’écran et non selon l’ordre du code : la flèche droite va à ce qui se trouve à droite, pas à ce qui vient ensuite dans le HTML.",
+    "p2": "Les touches sont interceptées avant que la page ne les voie, si bien que les sites qui ont leurs propres raccourcis fléchés ne vous disputent pas le contrôle. Les zones de texte, les listes déroulantes et tout ce qui a besoin des flèches pour lui-même sont laissés tranquilles jusqu’à ce que vous leur donniez le focus avec <kbd>Enter</kbd>.",
+    "p3": "La petite fenêtre de l’icône dans la barre d’outils compte vos actions et renvoie à une page de statistiques. Quand quelque chose ne va pas, <kbd>F10</kbd> → <em>Report a problem</em> affiche un court journal de ce que l’extension a fait sur la page et l’envoie au développeur avec votre description. Rien n’est envoyé avant que vous appuyiez sur <em>Send report</em> ; voir la page <a href=\"privacy.html\">confidentialité</a>."
+  },
+  "closing": "Prêt à offrir une pause à votre main ?",
+  "footer": {
+    "privacy": "confidentialité",
+    "source": "code source",
+    "report": "signaler un problème"
+  },
+  "privacy": {
+    "title": "Confidentialité — TUI Navigator",
+    "description": "Ce que TUI Navigator conserve, où il le conserve et ce qui quitte votre ordinateur : rien, sauf si vous envoyez vous-même un rapport.",
+    "h1": "Confidentialité",
+    "lede": "TUI Navigator n’envoie rien nulle part. Ce qu’il conserve reste sur votre ordinateur, et un rapport de bug n’en sort que lorsque vous l’envoyez vous-même.",
+    "keepHeading": "Ce qu’il conserve, sur votre ordinateur",
+    "keepSettings": "<strong>Vos réglages :</strong> la couleur et l’épaisseur de l’anneau, le défilement, les sites où vous l’avez désactivé et si vous voulez le récapitulatif hebdomadaire. Conservés dans le stockage des extensions de Chrome.",
+    "keepCounts": "<strong>Vos compteurs d’utilisation :</strong> combien de fois vous avez appuyé sur chaque touche à laquelle l’extension réagit, par jour et par heure, pour la page de statistiques et le récapitulatif hebdomadaire. Des nombres seulement : ni adresses, ni contenu des pages. Conservés dans le stockage des extensions de Chrome.",
+    "keepLog": "<strong>Un court journal de ce que l’extension a fait sur la page où vous êtes :</strong> les touches auxquelles elle a réagi (flèches, <kbd>Enter</kbd>, <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>F10</kbd>, <kbd>Esc</kbd>) et les éléments entre lesquels elle s’est déplacée, décrits seulement par leur forme : balise, rôle, quelques noms de classe, position et taille. Il ne conserve jamais le texte de la page, les libellés, les liens, les identifiants ni rien de ce que vous tapez. Il garde les 20 derniers événements, n’existe que dans la mémoire de cette page et disparaît quand elle est rechargée ou fermée.",
+    "sendHeading": "Ce qu’il envoie",
+    "send": "Rien, sauf si vous envoyez un rapport de bug (voir plus bas). En dehors d’un rapport, la seule requête qu’il fait concerne une feuille de style : la page de statistiques charge le CSS de Bootstrap depuis <code>cdn.jsdelivr.net</code>, ce qui, comme toute requête web, montre votre adresse IP à ce serveur.",
+    "reportsHeading": "Rapports de bug",
+    "reports1": "<kbd>F10</kbd> → <em>Report a problem</em> ouvre une fenêtre où vous décrivez ce qui s’est passé. Le rapport contient votre description, l’adresse complète de la page (prise dans l’onglet et reprise dans le titre du rapport), le journal ci-dessus, la version de l’extension, celle du navigateur et la taille de la fenêtre ; <em>What is sent</em>, sous les boutons, montre tout cela.",
+    "reports2": "Rien n’est envoyé avant que vous appuyiez sur <em>Send report</em>. Le rapport part alors, sous forme d’un seul fichier zip, vers le serveur de rapports de TUI Navigator (hébergé sur Cloudflare, à l’adresse <code>tui-reports.taliandeyal.workers.dev</code>). Il n’y est conservé que jusqu’à ce que le développeur le télécharge, puis il est supprimé du serveur. Les rapports ne sont pas rendus publics, et aucun compte, nom ni adresse e-mail n’est demandé ou envoyé. Comme toute requête web, l’envoi montre votre adresse IP au serveur ; elle sert seulement à limiter le nombre de rapports qu’une adresse peut envoyer par minute et n’est pas conservée avec le rapport.",
+    "reports3": "<em>Attach a copy of the page</em> est coché d’emblée. Cette copie contient tout ce qui se trouve sur la page : décochez-la s’il y a quelque chose de privé. La première fois que vous envoyez avec cette option cochée, Chrome vous demande l’autorisation <code>pageCapture</code> ; sans elle, le rapport part sans la copie.",
+    "permissionsHeading": "Autorisations",
+    "permStorage": "<code>storage</code> : vos réglages et compteurs d’utilisation.",
+    "permActiveTab": "<code>activeTab</code> : les réglages de la petite fenêtre pour le site où vous êtes.",
+    "permRecap": "<code>notifications</code>, <code>alarms</code> : le récapitulatif hebdomadaire, que vous pouvez désactiver.",
+    "permPageCapture": "<code>pageCapture</code> (facultative, demandée seulement quand vous joignez une copie de la page à un rapport) : faire cette copie.",
+    "permSites": "Accès à tous les sites : les flèches doivent fonctionner partout où vous naviguez.",
+    "questionsHeading": "Questions",
+    "questions": "Ouvrez une issue sur <a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a>."
+  }
+}

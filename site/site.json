@@ -1,5 +1,10 @@
 {
   "base": "https://eyal7773.github.io/tui/",
   "storeUrl": "",
-  "languages": ["en", "he"]
+  "languages": ["en", "he", "es", "zh", "ar", "pt", "id", "fr", "ja", "ru", "de", "hi"],
+  "fonts": {
+    "he": "family=Frank+Ruhl+Libre:wght@400;500;700&family=Heebo:wght@400;600",
+    "ar": "family=Noto+Naskh+Arabic:wght@400;500;700&family=Noto+Sans+Arabic:wght@400;600",
+    "hi": "family=Noto+Serif+Devanagari:wght@400;500;700&family=Noto+Sans+Devanagari:wght@400;600"
+  }
 }

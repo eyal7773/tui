@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id" dir="ltr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privasi — TUI Navigator</title>
+  <meta name="description" content="Apa yang disimpan TUI Navigator, di mana disimpan, dan apa yang keluar dari komputer Anda: tidak ada, kecuali Anda sendiri mengirim laporan.">
+  <link rel="canonical" href="https://eyal7773.github.io/tui/id/privacy.html">
+  <link rel="alternate" hreflang="en" href="https://eyal7773.github.io/tui/privacy.html">
+  <link rel="alternate" hreflang="he" href="https://eyal7773.github.io/tui/he/privacy.html">
+  <link rel="alternate" hreflang="es" href="https://eyal7773.github.io/tui/es/privacy.html">
+  <link rel="alternate" hreflang="zh-Hans" href="https://eyal7773.github.io/tui/zh/privacy.html">
+  <link rel="alternate" hreflang="ar" href="https://eyal7773.github.io/tui/ar/privacy.html">
+  <link rel="alternate" hreflang="pt-BR" href="https://eyal7773.github.io/tui/pt/privacy.html">
+  <link rel="alternate" hreflang="id" href="https://eyal7773.github.io/tui/id/privacy.html">
+  <link rel="alternate" hreflang="fr" href="https://eyal7773.github.io/tui/fr/privacy.html">
+  <link rel="alternate" hreflang="ja" href="https://eyal7773.github.io/tui/ja/privacy.html">
+  <link rel="alternate" hreflang="ru" href="https://eyal7773.github.io/tui/ru/privacy.html">
+  <link rel="alternate" hreflang="de" href="https://eyal7773.github.io/tui/de/privacy.html">
+  <link rel="alternate" hreflang="hi" href="https://eyal7773.github.io/tui/hi/privacy.html">
+  <link rel="alternate" hreflang="x-default" href="https://eyal7773.github.io/tui/privacy.html">
+  <link rel="icon" href="../icon.png">
+  <style>
+    :root {
+      --paper: #eaece9;
+      --ink: #17181a;
+      --ink-dim: #5a635c;
+      --rule: #c9cec9;
+      --phosphor: #00893a;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    /* Scripts the faces above do not cover. The labels set in mono fall
+       back to a sans, since a monospace face with these letters is rare. */
+    :root:lang(he) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Heebo", "Segoe UI", Arial, sans-serif;
+      --serif: "Frank Ruhl Libre", "David Libre", "Times New Roman", serif;
+    }
+
+    :root:lang(ar) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+      --serif: "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif;
+    }
+
+    :root:lang(hi) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Devanagari", "Nirmala UI", sans-serif;
+      --serif: "Noto Serif Devanagari", "Nirmala UI", "Mangal", serif;
+    }
+
+    /* Chinese and Japanese read better in the system's own sans than in a
+       serif fetched for the occasion, which would be several megabytes. */
+    :root:lang(zh) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      --serif: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans GB", sans-serif;
+    }
+
+    :root:lang(ja) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Hiragino Sans", "Yu Gothic UI", "Meiryo", "Noto Sans JP", sans-serif;
+      --serif: "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
+    }
+
+    /* Spacing letters apart breaks Arabic's joined letters, and does nothing
+       for the other scripts here but crowd them. */
+    :lang(ar) *, :lang(he) *, :lang(hi) *, :lang(zh) *, :lang(ja) * {
+      letter-spacing: 0 !important;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #14161a;
+        --ink: #dfe3df;
+        --ink-dim: #8b948c;
+        --rule: #333a36;
+        --phosphor: #00ff6a;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    .wrap {
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+
+    h1 {
+      font-weight: 400;
+      font-size: 2.2rem;
+      line-height: 1.15;
+      margin: 0 0 0.5rem;
+    }
+
+    h2 {
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--phosphor);
+      margin: 2.25rem 0 0.5rem;
+    }
+
+    .dim {
+      color: var(--ink-dim);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    code,
+    kbd {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Privasi</h1>
+    <p class="dim">TUI Navigator tidak mengirim apa pun ke mana pun. Apa yang disimpannya tetap di komputer Anda, dan laporan bug hanya keluar dari sana saat Anda sendiri mengirimnya.</p>
+
+    <h2>Apa yang disimpan, di komputer Anda</h2>
+    <ul>
+      <li><strong>Pengaturan Anda:</strong> warna dan ketebalan cincin, pengguliran, situs tempat Anda menonaktifkannya, dan apakah Anda ingin ringkasan mingguan. Disimpan di penyimpanan ekstensi Chrome.</li>
+      <li><strong>Hitungan penggunaan Anda:</strong> berapa kali Anda menekan setiap tombol yang ditanggapi ekstensi, per hari dan jam, untuk halaman statistik dan ringkasan mingguan. Hanya angka: tanpa alamat dan tanpa isi halaman. Disimpan di penyimpanan ekstensi Chrome.</li>
+      <li><strong>Log singkat tentang apa yang dilakukan ekstensi di halaman tempat Anda berada:</strong> tombol yang ditanggapinya (panah, <kbd>Enter</kbd>, <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>F10</kbd>, <kbd>Esc</kbd>) dan elemen yang dilaluinya, dijelaskan hanya dari bentuknya: tag, peran, beberapa nama kelas, posisi, dan ukuran. Log ini tidak pernah menyimpan teks halaman, label, tautan, id, atau apa pun yang Anda ketik. Isinya 20 peristiwa terakhir, hanya ada di memori halaman itu, dan hilang saat halaman dimuat ulang atau ditutup.</li>
+    </ul>
+
+    <h2>Apa yang dikirim</h2>
+    <p>Tidak ada, kecuali Anda mengirim laporan bug (di bawah). Selain laporan, satu-satunya permintaan yang dibuatnya adalah untuk lembar gaya: halaman statistik memuat CSS Bootstrap dari <code>cdn.jsdelivr.net</code>, yang, seperti permintaan web mana pun, memperlihatkan alamat IP Anda kepada server itu.</p>
+
+    <h2>Laporan bug</h2>
+    <p><kbd>F10</kbd> → <em>Report a problem</em> membuka jendela tempat Anda menulis apa yang terjadi. Laporan berisi deskripsi Anda, alamat lengkap halaman (diambil dari tab dan dicantumkan di judul laporan), log di atas, versi ekstensi, versi browser, dan ukuran jendela; <em>What is sent</em>, di bawah tombol, menampilkan semuanya.</p>
+    <p>Tidak ada yang dikirim sampai Anda menekan <em>Send report</em>. Setelah itu laporan dikirim, sebagai satu file zip, ke server laporan TUI Navigator (berjalan di Cloudflare, di <code>tui-reports.taliandeyal.workers.dev</code>). Laporan disimpan di sana hanya sampai pengembang mengunduhnya, lalu dihapus dari server. Laporan tidak dipublikasikan, dan tidak ada akun, nama, atau alamat email yang diminta atau dikirim. Seperti permintaan web mana pun, pengiriman memperlihatkan alamat IP Anda kepada server; alamat itu hanya dipakai untuk membatasi berapa banyak laporan yang bisa dikirim satu alamat per menit, dan tidak disimpan bersama laporan.</p>
+    <p><em>Attach a copy of the page</em> sudah dicentang sejak awal. Salinan itu berisi semua yang ada di halaman, jadi hapus centangnya jika ada sesuatu yang pribadi. Pertama kali Anda mengirim dengan opsi ini dicentang, Chrome meminta izin <code>pageCapture</code>; tanpa izin itu, laporan dikirim tanpa salinan.</p>
+
+    <h2>Izin</h2>
+    <ul>
+      <li><code>storage</code>: pengaturan dan hitungan penggunaan Anda.</li>
+      <li><code>activeTab</code>: pengaturan di jendela kecil untuk situs tempat Anda berada.</li>
+      <li><code>notifications</code>, <code>alarms</code>: ringkasan mingguan, yang bisa Anda matikan.</li>
+      <li><code>pageCapture</code> (opsional, hanya diminta saat Anda menyertakan salinan halaman dalam laporan): membuat salinan itu.</li>
+      <li>Akses ke semua situs: tombol panah harus berfungsi di mana pun Anda menjelajah.</li>
+    </ul>
+
+    <h2>Pertanyaan</h2>
+    <p>Buka issue di <a href="https://github.com/eyal7773/tui/issues">GitHub</a>.</p>
+
+    <footer><a href="index.html">TUI Navigator</a></footer>
+  </div>
+</body>
+
+</html>

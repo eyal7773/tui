@@ -1,0 +1,126 @@
+{
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "name": "Português",
+  "meta": {
+    "title": "TUI Navigator — menos mouse, menos dor",
+    "description": "Uma extensão para Chrome que permite navegar em qualquer site com as setas do teclado: a mão fica no teclado, e o punho, o antebraço e o ombro descansam.",
+    "ogDescription": "Menos mouse. Menos dor.",
+    "ogLocale": "pt_BR"
+  },
+  "bar": {
+    "languages": "Idioma"
+  },
+  "store": {
+    "add": "Usar no Chrome — é grátis",
+    "addShort": "Usar no Chrome",
+    "soon": "Em breve na Chrome Web Store",
+    "soonShort": "Em breve"
+  },
+  "hero": {
+    "title": "Menos mouse.<br>Menos dor.",
+    "lede": "O TUI Navigator permite navegar em qualquer site com as setas do teclado. A mão fica no teclado, e o punho, o antebraço e o ombro descansam."
+  },
+  "story": {
+    "heading": "por que eu criei",
+    "p1": "Trabalho no computador o dia todo e, em algum momento, comecei a sentir uma dor forte nos dedos da mão direita, a mão do mouse. Fui a um fisioterapeuta e fiz os exercícios, e eles ajudaram um pouco. Mas eu sentia que estava tratando o sintoma, não a causa, e tinha medo de que a dor voltasse de novo e de novo.",
+    "p2": "Procurei uma forma de resolver isso pela raiz e me veio uma ideia simples: se eu clicasse menos, isso poderia ajudar muito. Passo a maior parte do dia no Chrome, então escrevi uma extensão que me deixa navegar com as setas.",
+    "p3": "Desde então, tive uma melhora significativa. Uso as setas na maior parte do tempo e o mouse só de vez em quando, e a dor sumiu.",
+    "name": "Eyal Bardugo",
+    "role": "criador do TUI Navigator",
+    "note": "É a minha experiência pessoal, não um conselho médico."
+  },
+  "figure": {
+    "heading": "o que ela poupa ao seu corpo",
+    "intro": "O mouse mantém a mão segurando, o punho dobrado e o braço esticado para o lado. Com as setas, as mãos ficam onde digitam. Isto é, mais ou menos, o que uma semana normal de navegação com a extensão poupa ao seu corpo.",
+    "note": "A semana é um exemplo, não dados de ninguém: cinco dias de trabalho, com cerca de 80 links abertos e 400 toques nas setas por dia. A página de estatísticas da extensão mostra a mesma figura com a sua própria navegação, contada no seu computador e nunca enviada a lugar nenhum.",
+    "strings": {
+      "play": "Reproduzir",
+      "stop": "Parar",
+      "playLabel": "Reproduzir a animação",
+      "stopLabel": "Parar a animação",
+      "today": "+{n} hoje",
+      "howSummary": "Estimativas, não medições: como são calculadas",
+      "howClicks": "Cada Enter que a extensão envia é um clique que a sua mão não fez.",
+      "howGrip": "Tempo segurando: {click} s por clique, {arrow} s por seta (um pequeno movimento do ponteiro ou um giro da roda).",
+      "howReach": "Uma sequência de teclas depois de uma pausa de mais de {gap} s conta como uma esticada até o mouse, de cerca de {cm} cm em cada sentido.",
+      "units": { "s": "s", "min": "min", "h": "h", "m": "m", "km": "km" },
+      "wrist": {
+        "title": "Punho e dedos",
+        "unit": "cliques que a sua mão não fez",
+        "why": "Clicar e arrastar com o mouse aumenta a pressão dentro do túnel do carpo."
+      },
+      "forearm": {
+        "title": "Antebraço",
+        "unit": "sem segurar o mouse",
+        "why": "Segurar o mouse mantém os músculos do antebraço tensos; entre um toque e outro nas teclas há pequenas pausas."
+      },
+      "shoulder": {
+        "title": "Ombro e pescoço",
+        "unit": "esticadas até o mouse evitadas",
+        "extra": "≈ {distance} que o seu braço não percorreu",
+        "why": "Um mouse ao lado do teclado puxa o ombro para fora; com as teclas, as mãos ficam próximas."
+      }
+    }
+  },
+  "demo": {
+    "heading": "experimente",
+    "chrome": "resultados para &ldquo;navegação pelo teclado&rdquo;",
+    "row1": "Navegar só com o teclado é mais rápido do que você imagina",
+    "meta1": "example.com — 4 min de leitura",
+    "row2": "Por que os indicadores de foco importam",
+    "meta2": "example.org — 7 min de leitura",
+    "row3": "Uma breve história das interfaces de texto",
+    "meta3": "example.net — 12 min de leitura",
+    "next": "Próxima página",
+    "filter": "Filtrar",
+    "hint": "É uma simulação, não a extensão, mas o anel é o de verdade. Clique em uma linha e pressione <b>&darr; &uarr; &larr; &rarr;</b>."
+  },
+  "keys": {
+    "heading": "teclas",
+    "upDown": "Ir para o elemento de cima ou de baixo.",
+    "leftRight": "Andar pela linha em que você está.",
+    "homeEnd": "Pular para uma das pontas da linha em que você está. A última seta que você pressionou decide o que é uma linha: depois de andar para os lados, é a linha; depois de andar para cima ou para baixo, é a coluna.",
+    "enter": "Ativar o elemento selecionado. Em uma caixa de texto ou lista suspensa, passa o foco para ela, para você digitar ou escolher. Em uma linha de uma lista, ativa o link dentro dela, porque é ali que a linha guarda o seu endereço.",
+    "esc": "Sair de uma caixa de texto e voltar a navegar pela página.",
+    "again": "de novo",
+    "escAgain": "Devolver o teclado ao site, para que os atalhos dele funcionem: a barra de espaço para tocar um vídeo ou qualquer outra tecla que ele use. Pressione mais uma vez para continuar navegando.",
+    "f10": "Abrir o menu: duplicar a página, voltar, selecionar texto ou relatar um problema. <kbd>Esc</kbd> fecha o menu."
+  },
+  "how": {
+    "heading": "como funciona",
+    "p1": "A extensão lê a página, descobre em quais elementos vale a pena parar e os trata como uma grade. As setas se movem entre eles pela posição na tela, não pela ordem no código, então a seta para a direita vai para o que está à direita, e não para o que vem depois no HTML.",
+    "p2": "As teclas são capturadas antes que a página as veja, então sites com atalhos de setas próprios não disputam o controle com você. Caixas de texto, listas suspensas e tudo o que precisa das setas para si ficam em paz até você passar o foco para eles com <kbd>Enter</kbd>.",
+    "p3": "A janelinha do ícone na barra de ferramentas conta as ações que você fez e leva a uma página de estatísticas. Quando algo dá errado, <kbd>F10</kbd> → <em>Report a problem</em> mostra um registro curto do que a extensão fez na página e o envia ao desenvolvedor junto com a sua descrição. Nada é enviado até você pressionar <em>Send report</em>; veja a página de <a href=\"privacy.html\">privacidade</a>."
+  },
+  "closing": "Pronto para dar um descanso à sua mão?",
+  "footer": {
+    "privacy": "privacidade",
+    "source": "código-fonte",
+    "report": "relatar um problema"
+  },
+  "privacy": {
+    "title": "Privacidade — TUI Navigator",
+    "description": "O que o TUI Navigator guarda, onde guarda e o que sai do seu computador: nada, a menos que você mesmo envie um relatório.",
+    "h1": "Privacidade",
+    "lede": "O TUI Navigator não envia nada para lugar nenhum. O que ele guarda fica no seu computador, e um relatório de erro só sai dele quando você mesmo o envia.",
+    "keepHeading": "O que ele guarda, no seu computador",
+    "keepSettings": "<strong>Suas configurações:</strong> a cor e a espessura do anel, a rolagem, os sites em que você o desativou e se você quer o resumo semanal. Ficam no armazenamento de extensões do Chrome.",
+    "keepCounts": "<strong>Suas contagens de uso:</strong> quantas vezes você pressionou cada tecla a que a extensão responde, por dia e hora, para a página de estatísticas e o resumo semanal. Só números: nada de endereços nem conteúdo das páginas. Ficam no armazenamento de extensões do Chrome.",
+    "keepLog": "<strong>Um registro curto do que a extensão fez na página em que você está:</strong> as teclas a que ela respondeu (setas, <kbd>Enter</kbd>, <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>F10</kbd>, <kbd>Esc</kbd>) e os elementos entre os quais se moveu, descritos apenas pela forma: tag, papel, alguns nomes de classe, posição e tamanho. Ele nunca guarda o texto da página, rótulos, links, ids nem nada do que você digita. Guarda os últimos 20 eventos, vive só na memória daquela página e some quando a página é recarregada ou fechada.",
+    "sendHeading": "O que ele envia",
+    "send": "Nada, a menos que você envie um relatório de erro (abaixo). Fora o relatório, a única requisição que ele faz é a de uma folha de estilos: a página de estatísticas carrega o CSS do Bootstrap de <code>cdn.jsdelivr.net</code>, o que, como qualquer requisição na web, mostra o seu endereço IP a esse servidor.",
+    "reportsHeading": "Relatórios de erro",
+    "reports1": "<kbd>F10</kbd> → <em>Report a problem</em> abre uma janela em que você escreve o que aconteceu. O relatório inclui a sua descrição, o endereço completo da página (tirado da aba e colocado no título do relatório), o registro acima, a versão da extensão, a versão do navegador e o tamanho da janela; <em>What is sent</em>, abaixo dos botões, mostra tudo isso.",
+    "reports2": "Nada é enviado até você pressionar <em>Send report</em>. Então o relatório vai, como um único arquivo zip, para o servidor de relatórios do TUI Navigator (rodando na Cloudflare, em <code>tui-reports.taliandeyal.workers.dev</code>). Ele fica lá só até o desenvolvedor baixá-lo e depois é apagado do servidor. Os relatórios não são publicados, e nenhuma conta, nome ou e-mail é pedido ou enviado. Como qualquer requisição na web, o envio mostra o seu endereço IP ao servidor; ele é usado só para limitar quantos relatórios um endereço pode enviar por minuto e não é guardado com o relatório.",
+    "reports3": "<em>Attach a copy of the page</em> já vem marcado. Essa cópia contém tudo o que está na página, então desmarque se houver algo privado. Na primeira vez que você enviar com a opção marcada, o Chrome pede a permissão <code>pageCapture</code>; sem ela, o relatório vai sem a cópia.",
+    "permissionsHeading": "Permissões",
+    "permStorage": "<code>storage</code>: suas configurações e contagens de uso.",
+    "permActiveTab": "<code>activeTab</code>: as configurações da janelinha para o site em que você está.",
+    "permRecap": "<code>notifications</code>, <code>alarms</code>: o resumo semanal, que você pode desativar.",
+    "permPageCapture": "<code>pageCapture</code> (opcional, pedida só quando você inclui uma cópia da página em um relatório): fazer essa cópia.",
+    "permSites": "Acesso a todos os sites: as setas precisam funcionar onde quer que você navegue.",
+    "questionsHeading": "Dúvidas",
+    "questions": "Abra uma issue no <a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a>."
+  }
+}

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR" dir="ltr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacidade — TUI Navigator</title>
+  <meta name="description" content="O que o TUI Navigator guarda, onde guarda e o que sai do seu computador: nada, a menos que você mesmo envie um relatório.">
+  <link rel="canonical" href="https://eyal7773.github.io/tui/pt/privacy.html">
+  <link rel="alternate" hreflang="en" href="https://eyal7773.github.io/tui/privacy.html">
+  <link rel="alternate" hreflang="he" href="https://eyal7773.github.io/tui/he/privacy.html">
+  <link rel="alternate" hreflang="es" href="https://eyal7773.github.io/tui/es/privacy.html">
+  <link rel="alternate" hreflang="zh-Hans" href="https://eyal7773.github.io/tui/zh/privacy.html">
+  <link rel="alternate" hreflang="ar" href="https://eyal7773.github.io/tui/ar/privacy.html">
+  <link rel="alternate" hreflang="pt-BR" href="https://eyal7773.github.io/tui/pt/privacy.html">
+  <link rel="alternate" hreflang="id" href="https://eyal7773.github.io/tui/id/privacy.html">
+  <link rel="alternate" hreflang="fr" href="https://eyal7773.github.io/tui/fr/privacy.html">
+  <link rel="alternate" hreflang="ja" href="https://eyal7773.github.io/tui/ja/privacy.html">
+  <link rel="alternate" hreflang="ru" href="https://eyal7773.github.io/tui/ru/privacy.html">
+  <link rel="alternate" hreflang="de" href="https://eyal7773.github.io/tui/de/privacy.html">
+  <link rel="alternate" hreflang="hi" href="https://eyal7773.github.io/tui/hi/privacy.html">
+  <link rel="alternate" hreflang="x-default" href="https://eyal7773.github.io/tui/privacy.html">
+  <link rel="icon" href="../icon.png">
+  <style>
+    :root {
+      --paper: #eaece9;
+      --ink: #17181a;
+      --ink-dim: #5a635c;
+      --rule: #c9cec9;
+      --phosphor: #00893a;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    /* Scripts the faces above do not cover. The labels set in mono fall
+       back to a sans, since a monospace face with these letters is rare. */
+    :root:lang(he) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Heebo", "Segoe UI", Arial, sans-serif;
+      --serif: "Frank Ruhl Libre", "David Libre", "Times New Roman", serif;
+    }
+
+    :root:lang(ar) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+      --serif: "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif;
+    }
+
+    :root:lang(hi) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Devanagari", "Nirmala UI", sans-serif;
+      --serif: "Noto Serif Devanagari", "Nirmala UI", "Mangal", serif;
+    }
+
+    /* Chinese and Japanese read better in the system's own sans than in a
+       serif fetched for the occasion, which would be several megabytes. */
+    :root:lang(zh) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      --serif: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans GB", sans-serif;
+    }
+
+    :root:lang(ja) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Hiragino Sans", "Yu Gothic UI", "Meiryo", "Noto Sans JP", sans-serif;
+      --serif: "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
+    }
+
+    /* Spacing letters apart breaks Arabic's joined letters, and does nothing
+       for the other scripts here but crowd them. */
+    :lang(ar) *, :lang(he) *, :lang(hi) *, :lang(zh) *, :lang(ja) * {
+      letter-spacing: 0 !important;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #14161a;
+        --ink: #dfe3df;
+        --ink-dim: #8b948c;
+        --rule: #333a36;
+        --phosphor: #00ff6a;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    .wrap {
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+
+    h1 {
+      font-weight: 400;
+      font-size: 2.2rem;
+      line-height: 1.15;
+      margin: 0 0 0.5rem;
+    }
+
+    h2 {
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--phosphor);
+      margin: 2.25rem 0 0.5rem;
+    }
+
+    .dim {
+      color: var(--ink-dim);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    code,
+    kbd {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Privacidade</h1>
+    <p class="dim">O TUI Navigator não envia nada para lugar nenhum. O que ele guarda fica no seu computador, e um relatório de erro só sai dele quando você mesmo o envia.</p>
+
+    <h2>O que ele guarda, no seu computador</h2>
+    <ul>
+      <li><strong>Suas configurações:</strong> a cor e a espessura do anel, a rolagem, os sites em que você o desativou e se você quer o resumo semanal. Ficam no armazenamento de extensões do Chrome.</li>
+      <li><strong>Suas contagens de uso:</strong> quantas vezes você pressionou cada tecla a que a extensão responde, por dia e hora, para a página de estatísticas e o resumo semanal. Só números: nada de endereços nem conteúdo das páginas. Ficam no armazenamento de extensões do Chrome.</li>
+      <li><strong>Um registro curto do que a extensão fez na página em que você está:</strong> as teclas a que ela respondeu (setas, <kbd>Enter</kbd>, <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>F10</kbd>, <kbd>Esc</kbd>) e os elementos entre os quais se moveu, descritos apenas pela forma: tag, papel, alguns nomes de classe, posição e tamanho. Ele nunca guarda o texto da página, rótulos, links, ids nem nada do que você digita. Guarda os últimos 20 eventos, vive só na memória daquela página e some quando a página é recarregada ou fechada.</li>
+    </ul>
+
+    <h2>O que ele envia</h2>
+    <p>Nada, a menos que você envie um relatório de erro (abaixo). Fora o relatório, a única requisição que ele faz é a de uma folha de estilos: a página de estatísticas carrega o CSS do Bootstrap de <code>cdn.jsdelivr.net</code>, o que, como qualquer requisição na web, mostra o seu endereço IP a esse servidor.</p>
+
+    <h2>Relatórios de erro</h2>
+    <p><kbd>F10</kbd> → <em>Report a problem</em> abre uma janela em que você escreve o que aconteceu. O relatório inclui a sua descrição, o endereço completo da página (tirado da aba e colocado no título do relatório), o registro acima, a versão da extensão, a versão do navegador e o tamanho da janela; <em>What is sent</em>, abaixo dos botões, mostra tudo isso.</p>
+    <p>Nada é enviado até você pressionar <em>Send report</em>. Então o relatório vai, como um único arquivo zip, para o servidor de relatórios do TUI Navigator (rodando na Cloudflare, em <code>tui-reports.taliandeyal.workers.dev</code>). Ele fica lá só até o desenvolvedor baixá-lo e depois é apagado do servidor. Os relatórios não são publicados, e nenhuma conta, nome ou e-mail é pedido ou enviado. Como qualquer requisição na web, o envio mostra o seu endereço IP ao servidor; ele é usado só para limitar quantos relatórios um endereço pode enviar por minuto e não é guardado com o relatório.</p>
+    <p><em>Attach a copy of the page</em> já vem marcado. Essa cópia contém tudo o que está na página, então desmarque se houver algo privado. Na primeira vez que você enviar com a opção marcada, o Chrome pede a permissão <code>pageCapture</code>; sem ela, o relatório vai sem a cópia.</p>
+
+    <h2>Permissões</h2>
+    <ul>
+      <li><code>storage</code>: suas configurações e contagens de uso.</li>
+      <li><code>activeTab</code>: as configurações da janelinha para o site em que você está.</li>
+      <li><code>notifications</code>, <code>alarms</code>: o resumo semanal, que você pode desativar.</li>
+      <li><code>pageCapture</code> (opcional, pedida só quando você inclui uma cópia da página em um relatório): fazer essa cópia.</li>
+      <li>Acesso a todos os sites: as setas precisam funcionar onde quer que você navegue.</li>
+    </ul>
+
+    <h2>Dúvidas</h2>
+    <p>Abra uma issue no <a href="https://github.com/eyal7773/tui/issues">GitHub</a>.</p>
+
+    <footer><a href="index.html">TUI Navigator</a></footer>
+  </div>
+</body>
+
+</html>

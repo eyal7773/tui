@@ -1,0 +1,126 @@
+{
+  "lang": "id",
+  "dir": "ltr",
+  "name": "Bahasa Indonesia",
+  "meta": {
+    "title": "TUI Navigator — lebih sedikit mouse, lebih sedikit nyeri",
+    "description": "Ekstensi Chrome untuk menjelajahi situs web apa pun dengan tombol panah, sehingga tangan tetap di keyboard dan pergelangan tangan, lengan bawah, serta bahu bisa beristirahat.",
+    "ogDescription": "Lebih sedikit mouse. Lebih sedikit nyeri.",
+    "ogLocale": "id_ID"
+  },
+  "bar": {
+    "languages": "Bahasa"
+  },
+  "store": {
+    "add": "Tambahkan ke Chrome — gratis",
+    "addShort": "Tambahkan ke Chrome",
+    "soon": "Segera hadir di Chrome Web Store",
+    "soonShort": "Segera hadir"
+  },
+  "hero": {
+    "title": "Lebih sedikit mouse.<br>Lebih sedikit nyeri.",
+    "lede": "TUI Navigator memungkinkan Anda menjelajahi situs web apa pun dengan tombol panah. Tangan tetap di keyboard, dan pergelangan tangan, lengan bawah, serta bahu bisa beristirahat."
+  },
+  "story": {
+    "heading": "mengapa saya membuatnya",
+    "p1": "Saya bekerja di depan komputer sepanjang hari, dan suatu saat saya mulai merasakan nyeri yang kuat di jari-jari tangan kanan, tangan yang memegang mouse. Saya pergi ke fisioterapis dan melakukan latihannya, dan itu sedikit membantu. Tetapi rasanya saya hanya mengobati gejalanya, bukan penyebabnya, dan saya khawatir nyerinya akan datang lagi dan lagi.",
+    "p2": "Saya mencari cara untuk menyelesaikannya dari akarnya, lalu muncul pemikiran sederhana: kalau saya lebih jarang mengeklik, itu bisa sangat membantu. Sebagian besar hari saya habiskan di Chrome, jadi saya menulis ekstensi untuknya yang memungkinkan saya menjelajah dengan tombol panah.",
+    "p3": "Sejak itu ada perbaikan yang berarti. Saya memakai tombol panah hampir sepanjang waktu dan mouse hanya sesekali, dan nyerinya hilang.",
+    "name": "Eyal Bardugo",
+    "role": "pembuat TUI Navigator",
+    "note": "Ini pengalaman pribadi saya, bukan saran medis."
+  },
+  "figure": {
+    "heading": "yang dihemat untuk tubuh Anda",
+    "intro": "Mouse membuat tangan terus menggenggam, pergelangan tangan tertekuk, dan lengan terulur ke samping. Dengan tombol panah, tangan tetap di tempat mengetik. Kira-kira inilah yang dihemat untuk tubuh Anda dalam seminggu menjelajah seperti biasa dengan ekstensi ini.",
+    "note": "Minggu ini hanyalah contoh, bukan data siapa pun: lima hari kerja, dengan sekitar 80 tautan dibuka dan sekitar 400 tekanan tombol panah per hari. Halaman statistik ekstensi menampilkan gambar yang sama dari penjelajahan Anda sendiri, dihitung di komputer Anda dan tidak pernah dikirim ke mana pun.",
+    "strings": {
+      "play": "Putar",
+      "stop": "Hentikan",
+      "playLabel": "Putar animasi",
+      "stopLabel": "Hentikan animasi",
+      "today": "+{n} hari ini",
+      "howSummary": "Perkiraan, bukan pengukuran: cara menghitungnya",
+      "howClicks": "Setiap Enter yang dikirim ekstensi adalah satu klik yang tidak dilakukan tangan Anda.",
+      "howGrip": "Waktu menggenggam: {click} dtk untuk setiap klik, {arrow} dtk untuk setiap panah (gerakan penunjuk yang pendek atau satu putaran roda).",
+      "howReach": "Serangkaian tombol setelah jeda lebih dari {gap} dtk dihitung sebagai satu kali meraih mouse, sekitar {cm} cm ke setiap arah.",
+      "units": { "s": "dtk", "min": "mnt", "h": "jam", "m": "m", "km": "km" },
+      "wrist": {
+        "title": "Pergelangan tangan & jari",
+        "unit": "klik yang tidak dilakukan tangan Anda",
+        "why": "Mengeklik dan menyeret dengan mouse meningkatkan tekanan di dalam terowongan karpal."
+      },
+      "forearm": {
+        "title": "Lengan bawah",
+        "unit": "tanpa menggenggam mouse",
+        "why": "Memegang mouse membuat otot lengan bawah tetap tegang; di antara tekanan tombol ada jeda singkat."
+      },
+      "shoulder": {
+        "title": "Bahu & leher",
+        "unit": "kali meraih mouse yang terhindarkan",
+        "extra": "≈ {distance} yang tidak ditempuh lengan Anda",
+        "why": "Mouse di samping keyboard menarik bahu ke samping; dengan tombol, kedua tangan tetap berdekatan."
+      }
+    }
+  },
+  "demo": {
+    "heading": "coba sendiri",
+    "chrome": "hasil untuk &ldquo;navigasi keyboard&rdquo;",
+    "row1": "Menjelajah hanya dengan keyboard lebih cepat dari yang Anda kira",
+    "meta1": "example.com — baca 4 menit",
+    "row2": "Mengapa penanda fokus itu penting",
+    "meta2": "example.org — baca 7 menit",
+    "row3": "Sejarah singkat antarmuka berbasis teks",
+    "meta3": "example.net — baca 12 menit",
+    "next": "Halaman berikutnya",
+    "filter": "Saring",
+    "hint": "Ini tiruan, bukan ekstensinya, tetapi cincinnya asli. Klik salah satu baris, lalu tekan <b>&darr; &uarr; &larr; &rarr;</b>."
+  },
+  "keys": {
+    "heading": "tombol",
+    "upDown": "Pindah ke elemen di atas atau di bawah.",
+    "leftRight": "Bergerak di sepanjang baris tempat Anda berada.",
+    "homeEnd": "Melompat ke salah satu ujung garis tempat Anda berada. Panah terakhir yang Anda tekan menentukan arti garis: setelah bergerak ke samping, itu barisnya; setelah bergerak ke atas atau ke bawah, itu kolomnya.",
+    "enter": "Mengaktifkan elemen yang dipilih. Pada kotak teks atau daftar tarik-turun, fokus diserahkan kepadanya agar Anda bisa mengetik atau memilih. Pada baris dalam daftar, tautan di dalam baris itulah yang diaktifkan, karena di sanalah baris menyimpan alamatnya.",
+    "esc": "Keluar dari kotak teks dan kembali menavigasi halaman.",
+    "again": "lagi",
+    "escAgain": "Mengembalikan keyboard ke situs agar pintasannya sendiri berfungsi: spasi untuk memutar video, atau tombol lain yang dipakai situs. Tekan sekali lagi untuk lanjut bernavigasi.",
+    "f10": "Membuka menu: menggandakan halaman, kembali, memilih teks, atau melaporkan masalah. <kbd>Esc</kbd> menutupnya."
+  },
+  "how": {
+    "heading": "cara kerjanya",
+    "p1": "Ekstensi membaca halaman, menentukan elemen mana yang layak disinggahi, dan memperlakukannya sebagai kisi. Tombol panah berpindah di antara elemen menurut posisinya di layar, bukan menurut urutan kode, sehingga panah kanan menuju yang ada di sebelah kanan, bukan ke apa pun yang kebetulan muncul berikutnya di HTML.",
+    "p2": "Tekanan tombol ditangkap sebelum halaman melihatnya, sehingga situs yang punya pintasan panah sendiri tidak berebut kendali dengan Anda. Kotak teks, daftar tarik-turun, dan apa pun yang memerlukan panah untuk dirinya sendiri dibiarkan sampai Anda menyerahkan fokus kepadanya dengan <kbd>Enter</kbd>.",
+    "p3": "Jendela kecil dari ikon di bilah alat menghitung tindakan yang telah Anda lakukan dan menautkan ke halaman statistik. Saat ada yang salah, <kbd>F10</kbd> → <em>Report a problem</em> menampilkan log singkat tentang apa yang dilakukan ekstensi di halaman itu, lalu mengirimkannya ke pengembang bersama deskripsi Anda. Tidak ada yang dikirim sampai Anda menekan <em>Send report</em>; lihat halaman <a href=\"privacy.html\">privasi</a>."
+  },
+  "closing": "Siap memberi tangan Anda istirahat?",
+  "footer": {
+    "privacy": "privasi",
+    "source": "kode sumber",
+    "report": "laporkan masalah"
+  },
+  "privacy": {
+    "title": "Privasi — TUI Navigator",
+    "description": "Apa yang disimpan TUI Navigator, di mana disimpan, dan apa yang keluar dari komputer Anda: tidak ada, kecuali Anda sendiri mengirim laporan.",
+    "h1": "Privasi",
+    "lede": "TUI Navigator tidak mengirim apa pun ke mana pun. Apa yang disimpannya tetap di komputer Anda, dan laporan bug hanya keluar dari sana saat Anda sendiri mengirimnya.",
+    "keepHeading": "Apa yang disimpan, di komputer Anda",
+    "keepSettings": "<strong>Pengaturan Anda:</strong> warna dan ketebalan cincin, pengguliran, situs tempat Anda menonaktifkannya, dan apakah Anda ingin ringkasan mingguan. Disimpan di penyimpanan ekstensi Chrome.",
+    "keepCounts": "<strong>Hitungan penggunaan Anda:</strong> berapa kali Anda menekan setiap tombol yang ditanggapi ekstensi, per hari dan jam, untuk halaman statistik dan ringkasan mingguan. Hanya angka: tanpa alamat dan tanpa isi halaman. Disimpan di penyimpanan ekstensi Chrome.",
+    "keepLog": "<strong>Log singkat tentang apa yang dilakukan ekstensi di halaman tempat Anda berada:</strong> tombol yang ditanggapinya (panah, <kbd>Enter</kbd>, <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>F10</kbd>, <kbd>Esc</kbd>) dan elemen yang dilaluinya, dijelaskan hanya dari bentuknya: tag, peran, beberapa nama kelas, posisi, dan ukuran. Log ini tidak pernah menyimpan teks halaman, label, tautan, id, atau apa pun yang Anda ketik. Isinya 20 peristiwa terakhir, hanya ada di memori halaman itu, dan hilang saat halaman dimuat ulang atau ditutup.",
+    "sendHeading": "Apa yang dikirim",
+    "send": "Tidak ada, kecuali Anda mengirim laporan bug (di bawah). Selain laporan, satu-satunya permintaan yang dibuatnya adalah untuk lembar gaya: halaman statistik memuat CSS Bootstrap dari <code>cdn.jsdelivr.net</code>, yang, seperti permintaan web mana pun, memperlihatkan alamat IP Anda kepada server itu.",
+    "reportsHeading": "Laporan bug",
+    "reports1": "<kbd>F10</kbd> → <em>Report a problem</em> membuka jendela tempat Anda menulis apa yang terjadi. Laporan berisi deskripsi Anda, alamat lengkap halaman (diambil dari tab dan dicantumkan di judul laporan), log di atas, versi ekstensi, versi browser, dan ukuran jendela; <em>What is sent</em>, di bawah tombol, menampilkan semuanya.",
+    "reports2": "Tidak ada yang dikirim sampai Anda menekan <em>Send report</em>. Setelah itu laporan dikirim, sebagai satu file zip, ke server laporan TUI Navigator (berjalan di Cloudflare, di <code>tui-reports.taliandeyal.workers.dev</code>). Laporan disimpan di sana hanya sampai pengembang mengunduhnya, lalu dihapus dari server. Laporan tidak dipublikasikan, dan tidak ada akun, nama, atau alamat email yang diminta atau dikirim. Seperti permintaan web mana pun, pengiriman memperlihatkan alamat IP Anda kepada server; alamat itu hanya dipakai untuk membatasi berapa banyak laporan yang bisa dikirim satu alamat per menit, dan tidak disimpan bersama laporan.",
+    "reports3": "<em>Attach a copy of the page</em> sudah dicentang sejak awal. Salinan itu berisi semua yang ada di halaman, jadi hapus centangnya jika ada sesuatu yang pribadi. Pertama kali Anda mengirim dengan opsi ini dicentang, Chrome meminta izin <code>pageCapture</code>; tanpa izin itu, laporan dikirim tanpa salinan.",
+    "permissionsHeading": "Izin",
+    "permStorage": "<code>storage</code>: pengaturan dan hitungan penggunaan Anda.",
+    "permActiveTab": "<code>activeTab</code>: pengaturan di jendela kecil untuk situs tempat Anda berada.",
+    "permRecap": "<code>notifications</code>, <code>alarms</code>: ringkasan mingguan, yang bisa Anda matikan.",
+    "permPageCapture": "<code>pageCapture</code> (opsional, hanya diminta saat Anda menyertakan salinan halaman dalam laporan): membuat salinan itu.",
+    "permSites": "Akses ke semua situs: tombol panah harus berfungsi di mana pun Anda menjelajah.",
+    "questionsHeading": "Pertanyaan",
+    "questions": "Buka issue di <a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a>."
+  }
+}

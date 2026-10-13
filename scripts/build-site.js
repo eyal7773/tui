@@ -47,19 +47,21 @@ function storeButton(config, strings, small) {
   return `<span class="get soon">${soon}</span>`;
 }
 
-function head(config, lang, page) {
+function head(config, all, lang, page) {
   const lines = [];
   const absolute = l => config.base + folder(config, l) + (page === 'index.html' ? '' : page);
   lines.push(`<link rel="canonical" href="${absolute(lang)}">`);
   for (const l of config.languages) {
-    lines.push(`<link rel="alternate" hreflang="${l}" href="${absolute(l)}">`);
+    lines.push(`<link rel="alternate" hreflang="${all[l].lang}" href="${absolute(l)}">`);
   }
   lines.push(`<link rel="alternate" hreflang="x-default" href="${absolute(config.languages[0])}">`);
 
-  if (lang === 'he') {
+  // A script the default fonts draw badly gets a face of its own.
+  const fonts = config.fonts && config.fonts[lang];
+  if (fonts) {
     lines.push('<link rel="preconnect" href="https://fonts.googleapis.com">');
     lines.push('<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>');
-    lines.push('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=Heebo:wght@400;600&display=swap">');
+    lines.push(`<link rel="stylesheet" href="https://fonts.googleapis.com/css2?${fonts}&display=swap">`);
   }
 
   // The root page sends a browser set to another of the site's languages to
@@ -73,7 +75,8 @@ function head(config, lang, page) {
         if (localStorage.getItem('tui-lang')) return;
         var wanted = String((navigator.languages && navigator.languages[0]) || navigator.language || '');
         var lang = wanted.toLowerCase().split('-')[0];
-        if (lang === 'iw') lang = 'he';
+        // Codes older browsers still report: Hebrew, Indonesian.
+        lang = { iw: 'he', 'in': 'id' }[lang] || lang;
         if (pages[lang]) location.replace(pages[lang]);
       } catch (e) { /* storage off: stay on this page */ }
     })();
@@ -82,18 +85,21 @@ function head(config, lang, page) {
   return lines.join('\n  ');
 }
 
+/** The language menu: the current language, opening onto every other. */
 function languages(config, all, lang, page) {
-  return config.languages.map(l => {
+  const items = config.languages.map(l => {
     const current = l === lang ? ' aria-current="page"' : '';
-    return `<a href="${link(config, lang, l, page)}" hreflang="${l}" lang="${l}" data-lang="${l}"${current}>${all[l].name}</a>`;
+    const dir = all[l].dir === 'rtl' ? ' dir="rtl"' : '';
+    return `<li><a href="${link(config, lang, l, page)}" hreflang="${all[l].lang}" lang="${all[l].lang}"${dir} data-lang="${l}"${current}>${all[l].name}</a></li>`;
   }).join('');
+  return `<details class="langs"><summary aria-label="${all[lang].bar.languages}">${all[lang].name}</summary><ul>${items}</ul></details>`;
 }
 
 function special(name, config, all, lang, page) {
   const strings = all[lang];
   switch (name) {
     case 'root': return folder(config, lang) ? '../' : '';
-    case 'head': return head(config, lang, page);
+    case 'head': return head(config, all, lang, page);
     case 'languages': return languages(config, all, lang, page);
     case 'store': return storeButton(config, strings, false);
     case 'storeSmall': return storeButton(config, strings, true);

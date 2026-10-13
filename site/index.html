@@ -28,11 +28,39 @@
       --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
     }
 
-    /* Hebrew: the serif above has no Hebrew letters, and a monospace face
-       with them is rare, so the labels set in mono fall back to a sans. */
+    /* Scripts the faces above do not cover. The labels set in mono fall
+       back to a sans, since a monospace face with these letters is rare. */
     :root:lang(he) {
       --mono: ui-monospace, "Cascadia Mono", Consolas, "Heebo", "Segoe UI", Arial, sans-serif;
       --serif: "Frank Ruhl Libre", "David Libre", "Times New Roman", serif;
+    }
+
+    :root:lang(ar) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+      --serif: "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif;
+    }
+
+    :root:lang(hi) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Devanagari", "Nirmala UI", sans-serif;
+      --serif: "Noto Serif Devanagari", "Nirmala UI", "Mangal", serif;
+    }
+
+    /* Chinese and Japanese read better in the system's own sans than in a
+       serif fetched for the occasion, which would be several megabytes. */
+    :root:lang(zh) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      --serif: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans GB", sans-serif;
+    }
+
+    :root:lang(ja) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Hiragino Sans", "Yu Gothic UI", "Meiryo", "Noto Sans JP", sans-serif;
+      --serif: "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
+    }
+
+    /* Spacing letters apart breaks Arabic's joined letters, and does nothing
+       for the other scripts here but crowd them. */
+    :lang(ar) *, :lang(he) *, :lang(hi) *, :lang(zh) *, :lang(ja) * {
+      letter-spacing: 0 !important;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -65,7 +93,9 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    :lang(he) body {
+    :lang(he) body,
+    :lang(ar) body,
+    :lang(hi) body {
       font-size: 18px;
     }
 
@@ -108,9 +138,55 @@
       border-bottom-color: var(--rule);
     }
 
+    /* The language menu: a <details>, so it opens without a script. */
     .langs {
-      display: flex;
-      gap: 0.6rem;
+      position: relative;
+    }
+
+    .langs summary {
+      cursor: pointer;
+      list-style: none;
+      color: var(--ink-dim);
+      padding: 0.35rem 0.6rem;
+      border: 1px solid var(--rule);
+    }
+
+    .langs summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .langs summary::after {
+      content: " \25BE";
+    }
+
+    .langs summary:hover,
+    .langs[open] summary {
+      color: var(--ink);
+    }
+
+    .langs ul {
+      position: absolute;
+      inset-inline-end: 0;
+      top: calc(100% + 4px);
+      z-index: 10;
+      margin: 0;
+      padding: 0.35rem 0;
+      list-style: none;
+      min-width: 10rem;
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .langs li a {
+      display: block;
+      padding: 0.35rem 0.9rem;
+      border: none;
+      text-align: start;
+    }
+
+    .langs li a:hover {
+      background: var(--ring-wash);
     }
 
     .langs [aria-current] {
@@ -172,8 +248,8 @@
       max-width: 16ch;
     }
 
-    :lang(he) h1 {
-      letter-spacing: 0;
+    :lang(he) h1,
+    :lang(ar) h1 {
       font-weight: 500;
     }
 
@@ -471,7 +547,9 @@
         font-size: 16px;
       }
 
-      :lang(he) body {
+      :lang(he) body,
+      :lang(ar) body,
+      :lang(hi) body {
         font-size: 17px;
       }
 
@@ -514,7 +592,7 @@
     <header class="bar">
       <span class="name">tui navigator</span>
       <span class="spacer"></span>
-      <nav class="langs" aria-label="{{bar.languages}}">{{languages}}</nav>
+      {{languages}}
       {{storeSmall}}
     </header>
 
@@ -611,6 +689,15 @@
   </div>
 
   <script>
+    // The language menu closes on a click outside it, as a menu does.
+    (function () {
+      var menu = document.querySelector('.langs');
+      if (!menu) return;
+      document.addEventListener('click', function (e) {
+        if (menu.open && !menu.contains(e.target)) menu.open = false;
+      });
+    })();
+
     // Remembers the language the reader picked, so the English page stops
     // sending a Hebrew browser to /he/ once they chose English themselves.
     (function () {

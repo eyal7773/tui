@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="zh-Hans" dir="ltr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TUI Navigator — 少用鼠标，少些疼痛</title>
+  <meta name="description" content="一款 Chrome 扩展，让你用方向键浏览任何网站：手留在键盘上，手腕、前臂和肩膀得到休息。">
+  <link rel="canonical" href="https://eyal7773.github.io/tui/zh/">
+  <link rel="alternate" hreflang="en" href="https://eyal7773.github.io/tui/">
+  <link rel="alternate" hreflang="he" href="https://eyal7773.github.io/tui/he/">
+  <link rel="alternate" hreflang="es" href="https://eyal7773.github.io/tui/es/">
+  <link rel="alternate" hreflang="zh-Hans" href="https://eyal7773.github.io/tui/zh/">
+  <link rel="alternate" hreflang="ar" href="https://eyal7773.github.io/tui/ar/">
+  <link rel="alternate" hreflang="pt-BR" href="https://eyal7773.github.io/tui/pt/">
+  <link rel="alternate" hreflang="id" href="https://eyal7773.github.io/tui/id/">
+  <link rel="alternate" hreflang="fr" href="https://eyal7773.github.io/tui/fr/">
+  <link rel="alternate" hreflang="ja" href="https://eyal7773.github.io/tui/ja/">
+  <link rel="alternate" hreflang="ru" href="https://eyal7773.github.io/tui/ru/">
+  <link rel="alternate" hreflang="de" href="https://eyal7773.github.io/tui/de/">
+  <link rel="alternate" hreflang="hi" href="https://eyal7773.github.io/tui/hi/">
+  <link rel="alternate" hreflang="x-default" href="https://eyal7773.github.io/tui/">
+  <link rel="icon" href="../icon.png">
+  <link rel="stylesheet" href="../benefit/benefit-figure.css">
+  <meta property="og:title" content="TUI Navigator">
+  <meta property="og:description" content="少用鼠标，少些疼痛。">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="zh_CN">
+  <style>
+    :root {
+      --paper: #eaece9;
+      --panel: #f6f7f5;
+      --ink: #17181a;
+      --ink-dim: #5a635c;
+      --rule: #c9cec9;
+      --phosphor: #00893a;
+      --ring: #00a63f;
+      --ring-wash: rgba(0, 166, 63, 0.10);
+      --pulse-fade: rgba(0, 166, 63, 0);
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    /* Scripts the faces above do not cover. The labels set in mono fall
+       back to a sans, since a monospace face with these letters is rare. */
+    :root:lang(he) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Heebo", "Segoe UI", Arial, sans-serif;
+      --serif: "Frank Ruhl Libre", "David Libre", "Times New Roman", serif;
+    }
+
+    :root:lang(ar) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+      --serif: "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif;
+    }
+
+    :root:lang(hi) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Devanagari", "Nirmala UI", sans-serif;
+      --serif: "Noto Serif Devanagari", "Nirmala UI", "Mangal", serif;
+    }
+
+    /* Chinese and Japanese read better in the system's own sans than in a
+       serif fetched for the occasion, which would be several megabytes. */
+    :root:lang(zh) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      --serif: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans GB", sans-serif;
+    }
+
+    :root:lang(ja) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Hiragino Sans", "Yu Gothic UI", "Meiryo", "Noto Sans JP", sans-serif;
+      --serif: "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
+    }
+
+    /* Spacing letters apart breaks Arabic's joined letters, and does nothing
+       for the other scripts here but crowd them. */
+    :lang(ar) *, :lang(he) *, :lang(hi) *, :lang(zh) *, :lang(ja) * {
+      letter-spacing: 0 !important;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #14161a;
+        --panel: #1c1f24;
+        --ink: #dfe3df;
+        --ink-dim: #8b948c;
+        --rule: #333a36;
+        --phosphor: #00ff6a;
+        --ring: #00ff00;
+        --ring-wash: rgba(0, 255, 0, 0.12);
+        --pulse-fade: rgba(0, 255, 0, 0);
+      }
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    :lang(he) body,
+    :lang(ar) body,
+    :lang(hi) body {
+      font-size: 18px;
+    }
+
+    .wrap {
+      max-width: 54rem;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ---- top bar ---- */
+
+    .bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+
+    .bar .name {
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .bar .spacer {
+      flex: 1;
+    }
+
+    .bar a {
+      color: var(--ink-dim);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+
+    .bar a:hover {
+      color: var(--ink);
+      border-bottom-color: var(--rule);
+    }
+
+    /* The language menu: a <details>, so it opens without a script. */
+    .langs {
+      position: relative;
+    }
+
+    .langs summary {
+      cursor: pointer;
+      list-style: none;
+      color: var(--ink-dim);
+      padding: 0.35rem 0.6rem;
+      border: 1px solid var(--rule);
+    }
+
+    .langs summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .langs summary::after {
+      content: " \25BE";
+    }
+
+    .langs summary:hover,
+    .langs[open] summary {
+      color: var(--ink);
+    }
+
+    .langs ul {
+      position: absolute;
+      inset-inline-end: 0;
+      top: calc(100% + 4px);
+      z-index: 10;
+      margin: 0;
+      padding: 0.35rem 0;
+      list-style: none;
+      min-width: 10rem;
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .langs li a {
+      display: block;
+      padding: 0.35rem 0.9rem;
+      border: none;
+      text-align: start;
+    }
+
+    .langs li a:hover {
+      background: var(--ring-wash);
+    }
+
+    .langs [aria-current] {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    /* ---- the button to the store ---- */
+
+    .get {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      text-decoration: none;
+      color: var(--paper);
+      background: var(--ink);
+      padding: 0.75rem 1.3rem;
+      border: 1px solid var(--ink);
+    }
+
+    a.get:hover {
+      background: transparent;
+      color: var(--ink);
+    }
+
+    /* Not in the store yet: the same shape, plainly not a link. */
+    .get.soon {
+      color: var(--ink-dim);
+      background: transparent;
+      border: 1px dashed var(--rule);
+    }
+
+    .bar .get {
+      font-size: 0.75rem;
+      padding: 0.35rem 0.75rem;
+    }
+
+    .bar a.get {
+      color: var(--paper);
+      border-bottom: 1px solid var(--ink);
+    }
+
+    .bar a.get:hover {
+      color: var(--ink);
+    }
+
+    /* ---- hero ---- */
+
+    .hero {
+      padding: 4.5rem 0 1rem;
+    }
+
+    h1 {
+      font-size: clamp(2.3rem, 7vw, 3.8rem);
+      line-height: 1.08;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      margin: 0 0 1.25rem;
+      max-width: 16ch;
+    }
+
+    :lang(he) h1,
+    :lang(ar) h1 {
+      font-weight: 500;
+    }
+
+    .lede {
+      margin: 0 0 2rem;
+      max-width: 52ch;
+      color: var(--ink-dim);
+      font-size: 1.15rem;
+    }
+
+    /* ---- the story ---- */
+
+    .story {
+      margin: 0;
+      max-width: 44rem;
+    }
+
+    .story blockquote {
+      margin: 0;
+      padding-inline-start: 1.25rem;
+      border-inline-start: 3px solid var(--phosphor);
+    }
+
+    .story blockquote p {
+      margin: 0 0 1rem;
+      font-size: 1.2rem;
+    }
+
+    .story figcaption {
+      margin-top: 0.25rem;
+      padding-inline-start: 1.25rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--ink-dim);
+    }
+
+    .story figcaption strong {
+      color: var(--ink);
+    }
+
+    .story .note {
+      display: block;
+      margin-top: 0.35rem;
+      font-size: 0.75rem;
+    }
+
+    /* ---- the demo ---- */
+
+    .demo {
+      margin: 0;
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      padding: 0.5rem;
+    }
+
+    .demo-chrome {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--ink-dim);
+      padding: 0.35rem 0.6rem 0.6rem;
+      border-bottom: 1px dashed var(--rule);
+      margin-bottom: 0.5rem;
+    }
+
+    .rows {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .row {
+      display: block;
+      width: 100%;
+      text-align: start;
+      padding: 0.7rem 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: var(--ink);
+      background: none;
+      border: none;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .row .meta {
+      display: block;
+      color: var(--ink-dim);
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem 0.25rem;
+    }
+
+    .chip {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      padding: 0.3rem 0.7rem;
+      border: 1px solid var(--rule);
+      background: transparent;
+      color: var(--ink-dim);
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* The one bold moment: the ring, ported from the extension's styles.css.
+       The extension paints its own indicator rather than leaning on native
+       focus, so the demo carries the state in a class the same way. */
+    .tui-on {
+      outline: 3px solid var(--ring);
+      outline-offset: 2px;
+      background-color: var(--ring-wash);
+      animation: tui-pulse 1.4s ease-out infinite;
+    }
+
+    @keyframes tui-pulse {
+      0% {
+        box-shadow: 0 0 0 0 var(--ring-wash);
+      }
+
+      70% {
+        box-shadow: 0 0 0 6px var(--pulse-fade);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 var(--pulse-fade);
+      }
+    }
+
+    .demo-hint {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-dim);
+      margin: 0.75rem 0 0;
+      padding: 0 0.75rem 0.4rem;
+      max-width: none;
+    }
+
+    .demo-hint b {
+      color: var(--phosphor);
+      font-weight: 600;
+    }
+
+    /* ---- sections ---- */
+
+    section {
+      padding: 3.5rem 0 0;
+    }
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--ink-dim);
+      margin: 0 0 1.5rem;
+    }
+
+    h2::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--rule);
+    }
+
+    p {
+      max-width: 64ch;
+    }
+
+    /* ---- body figure (benefit/benefit-figure.css) ---- */
+
+    #week-figure {
+      --bf-accent: var(--phosphor);
+      --bf-ink: var(--ink);
+      --bf-dim: var(--ink-dim);
+      --bf-rule: var(--rule);
+      --bf-bg: var(--panel);
+      margin: 1.5rem 0 0;
+    }
+
+    #week-figure .bf-num {
+      font-family: var(--mono);
+    }
+
+    .week-note {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: var(--ink-dim);
+    }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      padding: 0.05em 0.35em;
+      word-break: break-word;
+    }
+
+    /* ---- keys ---- */
+
+    dl.keys {
+      display: grid;
+      grid-template-columns: 9rem 1fr;
+      gap: 0;
+      margin: 0;
+      max-width: 46rem;
+      align-items: baseline;
+    }
+
+    dl.keys dt {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      padding-block: 0.5rem;
+      padding-inline-end: 1.5rem;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    dl.keys dd {
+      margin: 0;
+      padding: 0.5rem 0;
+      font-size: 0.95rem;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    /* Keys are physical: an arrow points where it moves in either language. */
+    kbd {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      border: 1px solid var(--rule);
+      background: var(--panel);
+      padding: 0.1rem 0.4rem;
+      display: inline-block;
+      min-width: 1.6rem;
+      text-align: center;
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+
+    /* ---- the closing call ---- */
+
+    .closing {
+      padding-top: 4rem;
+      text-align: center;
+    }
+
+    .closing p {
+      margin: 0 auto 1.25rem;
+      font-size: 1.25rem;
+    }
+
+    /* ---- footer ---- */
+
+    footer {
+      margin-top: 4.5rem;
+      padding: 1.25rem 0 3rem;
+      border-top: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-dim);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+    }
+
+    footer a {
+      color: var(--ink-dim);
+    }
+
+    footer a:hover {
+      color: var(--ink);
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid var(--ring);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .tui-on {
+        animation: none;
+      }
+    }
+
+    @media (max-width: 34rem) {
+      body {
+        font-size: 16px;
+      }
+
+      :lang(he) body,
+      :lang(ar) body,
+      :lang(hi) body {
+        font-size: 17px;
+      }
+
+      .wrap {
+        padding: 0 1rem;
+      }
+
+      .hero {
+        padding: 2.5rem 0 0.5rem;
+      }
+
+      .story blockquote,
+      .story figcaption {
+        padding-inline-start: 1rem;
+      }
+
+      .story blockquote p {
+        font-size: 1.1rem;
+      }
+
+      dl.keys {
+        grid-template-columns: 1fr;
+      }
+
+      dl.keys dt {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      dl.keys dd {
+        padding-top: 0.15rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="bar">
+      <span class="name">tui navigator</span>
+      <span class="spacer"></span>
+      <details class="langs"><summary aria-label="语言">简体中文</summary><ul><li><a href="../" hreflang="en" lang="en" data-lang="en">English</a></li><li><a href="../he/" hreflang="he" lang="he" dir="rtl" data-lang="he">עברית</a></li><li><a href="../es/" hreflang="es" lang="es" data-lang="es">Español</a></li><li><a href="../zh/" hreflang="zh-Hans" lang="zh-Hans" data-lang="zh" aria-current="page">简体中文</a></li><li><a href="../ar/" hreflang="ar" lang="ar" dir="rtl" data-lang="ar">العربية</a></li><li><a href="../pt/" hreflang="pt-BR" lang="pt-BR" data-lang="pt">Português</a></li><li><a href="../id/" hreflang="id" lang="id" data-lang="id">Bahasa Indonesia</a></li><li><a href="../fr/" hreflang="fr" lang="fr" data-lang="fr">Français</a></li><li><a href="../ja/" hreflang="ja" lang="ja" data-lang="ja">日本語</a></li><li><a href="../ru/" hreflang="ru" lang="ru" data-lang="ru">Русский</a></li><li><a href="../de/" hreflang="de" lang="de" data-lang="de">Deutsch</a></li><li><a href="../hi/" hreflang="hi" lang="hi" data-lang="hi">हिन्दी</a></li></ul></details>
+      <span class="get soon">即将推出</span>
+    </header>
+
+    <div class="hero">
+      <h1>少用鼠标，<br>少些疼痛。</h1>
+      <p class="lede">TUI Navigator 让你用方向键浏览任何网站。手一直放在键盘上，手腕、前臂和肩膀都能得到休息。</p>
+      <span class="get soon">即将登陆 Chrome 应用商店</span>
+    </div>
+
+    <section id="story">
+      <h2>我为什么做这个</h2>
+      <figure class="story">
+        <blockquote>
+          <p>我每天都在电脑前工作。有一段时间，我右手的手指开始剧烈疼痛，那正是握鼠标的手。我去看了理疗师，也做了练习，有一点帮助。但我觉得那只是在处理症状，而不是原因，也担心疼痛会一次又一次地回来。</p>
+          <p>我想从根本上解决问题，于是想到一个简单的办法：如果少点几下鼠标，也许会大有帮助。我一天大部分时间都在用 Chrome，所以给它写了一个扩展，让我可以用方向键浏览网页。</p>
+          <p>从那以后，情况有了明显改善。我大部分时间用方向键，只是偶尔用一下鼠标，疼痛已经消失了。</p>
+        </blockquote>
+        <figcaption><strong>Eyal Bardugo</strong>, TUI Navigator 的开发者
+          <span class="note">这是我个人的经历，不构成医疗建议。</span></figcaption>
+      </figure>
+    </section>
+
+    <section id="spared">
+      <h2>它为你的身体省下了什么</h2>
+      <p>使用鼠标时，手要一直握着，手腕弯曲，手臂伸向一侧。用方向键时，双手留在打字的位置。下面大致展示了用这个扩展正常浏览一周，能为身体省下多少。</p>
+      <div id="week-figure"></div>
+      <p class="week-note">这一周只是示例，不是任何人的真实数据：五个工作日，每天打开约 80 个链接、按约 400 次方向键。扩展的统计页面会按你自己的浏览情况显示同样的图示，数据只在你的电脑上计算，不会发送到任何地方。</p>
+    </section>
+
+    <section id="try">
+      <h2>试一试</h2>
+      <div class="demo">
+        <div class="demo-chrome">“键盘导航”的搜索结果</div>
+        <ul class="rows">
+          <li><button class="row" type="button">只用键盘浏览，比你想象的更快
+              <span class="meta">example.com — 阅读约 4 分钟</span></button></li>
+          <li><button class="row" type="button">为什么焦点指示很重要
+              <span class="meta">example.org — 阅读约 7 分钟</span></button></li>
+          <li><button class="row" type="button">文本界面简史
+              <span class="meta">example.net — 阅读约 12 分钟</span></button></li>
+        </ul>
+        <div class="row-actions">
+          <button class="chip" type="button">下一页</button>
+          <button class="chip" type="button">筛选</button>
+        </div>
+        <p class="demo-hint" id="hint">这是演示，不是扩展本身，但这个光环和扩展里的一模一样。点击一行，然后按 <b>&darr; &uarr; &larr; &rarr;</b>。</p>
+      </div>
+    </section>
+
+    <section id="keys">
+      <h2>按键</h2>
+      <dl class="keys">
+        <dt><kbd>&darr;</kbd> <kbd>&uarr;</kbd></dt>
+        <dd>移到上方或下方的元素。</dd>
+
+        <dt><kbd>&larr;</kbd> <kbd>&rarr;</kbd></dt>
+        <dd>沿当前所在的行移动。</dd>
+
+        <dt><kbd>Home</kbd> <kbd>End</kbd></dt>
+        <dd>跳到当前这条线的任一端。最后按的方向键决定“线”指什么：横向移动之后是行，纵向移动之后是列。</dd>
+
+        <dt><kbd>Enter</kbd></dt>
+        <dd>激活当前选中的元素。在文本框或下拉列表上，会把焦点交给它，方便你输入或选择。在列表的一行上，会激活行里的链接，因为行的地址保存在那里。</dd>
+
+        <dt><kbd>Esc</kbd></dt>
+        <dd>离开文本框，回到页面导航。</dd>
+
+        <dt><kbd>Esc</kbd> 再按一次</dt>
+        <dd>把键盘交还给网站，让它自己的快捷键生效，比如用空格播放视频，或网站设定的其他按键。再按一次即可继续导航。</dd>
+
+        <dt><kbd>F10</kbd></dt>
+        <dd>打开菜单：复制页面、后退、选择文字或报告问题。按 <kbd>Esc</kbd> 关闭。</dd>
+      </dl>
+    </section>
+
+    <section id="how">
+      <h2>工作原理</h2>
+      <p>扩展会读取页面，找出值得停留的元素，并把它们当作网格。方向键按元素在屏幕上的位置移动，而不是按代码顺序，所以按右键会去到右边的东西，而不是 HTML 中恰好排在后面的元素。</p>
+      <p>按键会在页面收到之前被截获，所以自带方向键快捷键的网站不会和你抢控制权。文本框、下拉列表以及其他需要方向键的控件会保持原样，直到你用 <kbd>Enter</kbd> 把焦点交给它们。</p>
+      <p>工具栏图标打开的小窗口会统计你的操作次数，并链接到统计页面。出问题时，<kbd>F10</kbd> → <em>Report a problem</em> 会显示扩展在这个页面上所做操作的简短日志，并连同你的描述一起发送给开发者。在你按下 <em>Send report</em> 之前，什么都不会发送；详见<a href="privacy.html">隐私</a>页面。</p>
+    </section>
+
+    <section class="closing">
+      <p>准备好让你的手休息一下了吗？</p>
+      <span class="get soon">即将登陆 Chrome 应用商店</span>
+    </section>
+
+    <footer>
+      <a href="privacy.html">隐私</a>
+      <a href="https://github.com/eyal7773/tui">源代码</a>
+      <a href="https://github.com/eyal7773/tui/issues">报告问题</a>
+    </footer>
+
+  </div>
+
+  <script>
+    // The language menu closes on a click outside it, as a menu does.
+    (function () {
+      var menu = document.querySelector('.langs');
+      if (!menu) return;
+      document.addEventListener('click', function (e) {
+        if (menu.open && !menu.contains(e.target)) menu.open = false;
+      });
+    })();
+
+    // Remembers the language the reader picked, so the English page stops
+    // sending a Hebrew browser to /he/ once they chose English themselves.
+    (function () {
+      var links = document.querySelectorAll('[data-lang]');
+      Array.prototype.forEach.call(links, function (a) {
+        a.addEventListener('click', function () {
+          try { localStorage.setItem('tui-lang', a.getAttribute('data-lang')); } catch (e) { /* fine */ }
+        });
+      });
+    })();
+
+    (function () {
+      var demo = document.querySelector('.demo');
+      if (!demo) return;
+
+      // Only the elements inside the demo take part. `current` is the one place
+      // the ring's position is stored; paint() is the only thing that writes it.
+      var items = Array.prototype.slice.call(demo.querySelectorAll('.row, .chip'));
+      var current = null;
+
+      function paint(el) {
+        items.forEach(function (i) { i.classList.toggle('tui-on', i === el); });
+        current = el;
+      }
+
+      // Nearest item in the direction travelled, which is the idea the
+      // extension applies to a real page. Distance along the direction comes
+      // from the centres; drift across it comes from the leading edges, so a
+      // narrow button under a full-width row still lines up with its start.
+      // Directions are physical, so a right-to-left page works the same.
+      function next(from, dir) {
+        var box = from.getBoundingClientRect();
+        var vertical = (dir === 'ArrowUp' || dir === 'ArrowDown');
+        var rtl = getComputedStyle(demo).direction === 'rtl';
+        var edge = function (r) { return rtl ? r.right : r.left; };
+        var best = null;
+        var bestScore = Infinity;
+
+        items.forEach(function (el) {
+          if (el === from) return;
+
+          var r = el.getBoundingClientRect();
+          var along, across;
+
+          if (vertical) {
+            along = (r.top + r.height / 2) - (box.top + box.height / 2);
+            if (dir === 'ArrowUp') along = -along;
+            across = Math.abs(edge(r) - edge(box));
+          } else {
+            // Sideways moves stay on the band they started on, so they never
+            // hop between rows.
+            if (r.bottom <= box.top || r.top >= box.bottom) return;
+            along = (r.left + r.width / 2) - (box.left + box.width / 2);
+            if (dir === 'ArrowLeft') along = -along;
+            across = Math.abs(r.top - box.top);
+          }
+
+          if (along < 6) return;               // behind us, or level with us
+          var score = along + across * 2;      // prefer straight ahead
+          if (score < bestScore) { bestScore = score; best = el; }
+        });
+
+        return best;
+      }
+
+      // Starting the demo takes a deliberate click or tab into it.
+      items.forEach(function (el) {
+        el.addEventListener('click', function () { paint(el); });
+        el.addEventListener('focus', function () {
+          if (current !== el) paint(el);       // guard against a paint/focus loop
+        });
+      });
+
+      // Clicking anywhere else hands the arrow keys back to the page.
+      document.addEventListener('click', function (e) {
+        if (!demo.contains(e.target)) paint(null);
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (!current) return;                  // demo has not been started
+        if (e.key.indexOf('Arrow') !== 0) return;
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+        // Focus moved on to a real element elsewhere: stop intercepting.
+        var active = document.activeElement;
+        if (active && active !== document.body && !demo.contains(active)) {
+          paint(null);
+          return;
+        }
+
+        var target = next(current, e.key);
+        if (!target) return;
+
+        e.preventDefault();                    // do not scroll the page
+        paint(target);
+        target.focus({ preventScroll: true });
+      });
+    })();
+  </script>
+  <script src="../benefit/benefit-rules.js"></script>
+  <script src="../benefit/benefit-figure.js"></script>
+  <script>
+    // The typical week, drawn at once (Stop button and all) so the page does
+    // not jump, and started over, numbers counting up, the first time it
+    // scrolls into view.
+    (function () {
+      var box = document.getElementById('week-figure');
+      if (!box || !window.TuiBenefitFigure) return;
+      var week = TuiBenefitRules.typicalWeek();
+      var options = { animate: true, images: '../benefit/body/', strings: {"play":"播放","stop":"停止","playLabel":"播放动画","stopLabel":"停止动画","today":"今天 +{n}","howSummary":"估算而非测量：计算方法","howClicks":"扩展每发送一次 Enter，就是你的手少点了一次鼠标。","howGrip":"握持时间：每次点击按 {click} 秒计，每次方向键按 {arrow} 秒计（相当于鼠标的一小段移动或滚轮的一次滚动）。","howReach":"停顿超过 {gap} 秒后的一串按键，算作一次伸手去拿鼠标，单程约 {cm} 厘米。","units":{"s":"秒","min":"分钟","h":"小时","m":"米","km":"公里"},"wrist":{"title":"手腕和手指","unit":"次你的手不必做的点击","why":"用鼠标点击和拖动会增加腕管内的压力。"},"forearm":{"title":"前臂","unit":"不必握着鼠标","why":"握鼠标会让前臂肌肉一直紧绷；按键之间则有短暂的停顿。"},"shoulder":{"title":"肩膀和颈部","unit":"次省下的伸手拿鼠标","extra":"≈ 手臂少移动了 {distance}","why":"放在键盘旁的鼠标会把肩膀拉向一侧；用键盘时双手靠得很近。"}} };
+      TuiBenefitFigure.render(box, week, Object.assign({}, options, { countUp: false }));
+      if (!('IntersectionObserver' in window)) return;
+      var seen = new IntersectionObserver(function (entries) {
+        if (!entries[0].isIntersecting) return;
+        seen.disconnect();
+        TuiBenefitFigure.render(box, week, options);
+      }, { threshold: 0.4 });
+      seen.observe(box);
+    })();
+  </script>
+</body>
+
+</html>

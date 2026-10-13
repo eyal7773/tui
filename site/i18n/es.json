@@ -1,0 +1,126 @@
+{
+  "lang": "es",
+  "dir": "ltr",
+  "name": "Español",
+  "meta": {
+    "title": "TUI Navigator — menos ratón, menos dolor",
+    "description": "Una extensión de Chrome para navegar por cualquier sitio web con las flechas del teclado: la mano se queda en el teclado y la muñeca, el antebrazo y el hombro descansan.",
+    "ogDescription": "Menos ratón. Menos dolor.",
+    "ogLocale": "es_ES"
+  },
+  "bar": {
+    "languages": "Idioma"
+  },
+  "store": {
+    "add": "Añadir a Chrome — es gratis",
+    "addShort": "Añadir a Chrome",
+    "soon": "Muy pronto en Chrome Web Store",
+    "soonShort": "Muy pronto"
+  },
+  "hero": {
+    "title": "Menos ratón.<br>Menos dolor.",
+    "lede": "TUI Navigator te permite navegar por cualquier sitio web con las flechas del teclado. La mano se queda en el teclado, y la muñeca, el antebrazo y el hombro descansan."
+  },
+  "story": {
+    "heading": "por qué lo creé",
+    "p1": "Trabajo frente al ordenador todo el día, y en algún momento empecé a sentir un dolor fuerte en los dedos de la mano derecha, la del ratón. Fui al fisioterapeuta e hice los ejercicios, y ayudaron un poco. Pero sentía que trataba el síntoma y no la causa, y me preocupaba que el dolor volviera una y otra vez.",
+    "p2": "Busqué una forma de resolverlo de raíz y se me ocurrió algo sencillo: si hacía menos clics, podía ayudar mucho. Paso la mayor parte del día en Chrome, así que escribí una extensión que me permite navegar con las flechas.",
+    "p3": "Desde entonces he notado una mejora importante. Uso las flechas casi todo el tiempo y el ratón solo de vez en cuando, y el dolor ha desaparecido.",
+    "name": "Eyal Bardugo",
+    "role": "creador de TUI Navigator",
+    "note": "Es mi experiencia personal, no un consejo médico."
+  },
+  "figure": {
+    "heading": "lo que le ahorra a tu cuerpo",
+    "intro": "El ratón mantiene la mano agarrando, la muñeca doblada y el brazo estirado hacia un lado. Con las flechas, las manos se quedan donde escriben. Esto es, más o menos, lo que una semana normal de navegación con la extensión le ahorra a tu cuerpo.",
+    "note": "La semana es un ejemplo, no datos de nadie: cinco días de trabajo, unos 80 enlaces abiertos y unas 400 pulsaciones de flecha al día. La página de estadísticas de la extensión muestra la misma figura con tu propia navegación, contada en tu ordenador y sin enviarse a ningún sitio.",
+    "strings": {
+      "play": "Reproducir",
+      "stop": "Detener",
+      "playLabel": "Reproducir la animación",
+      "stopLabel": "Detener la animación",
+      "today": "+{n} hoy",
+      "howSummary": "Estimaciones, no mediciones: cómo se calculan",
+      "howClicks": "Cada Enter que envía la extensión es un clic que tu mano no hizo.",
+      "howGrip": "Tiempo de agarre: {click} s por cada clic, {arrow} s por cada flecha (un pequeño movimiento del puntero o un giro de la rueda).",
+      "howReach": "Una serie de teclas tras una pausa de más de {gap} s cuenta como un gesto para alcanzar el ratón, de unos {cm} cm en cada sentido.",
+      "units": { "s": "s", "min": "min", "h": "h", "m": "m", "km": "km" },
+      "wrist": {
+        "title": "Muñeca y dedos",
+        "unit": "clics que tu mano no hizo",
+        "why": "Hacer clic y arrastrar con el ratón aumenta la presión dentro del túnel carpiano."
+      },
+      "forearm": {
+        "title": "Antebrazo",
+        "unit": "sin agarrar el ratón",
+        "why": "Sujetar el ratón mantiene tensos los músculos del antebrazo; entre pulsación y pulsación de teclas hay pausas breves."
+      },
+      "shoulder": {
+        "title": "Hombro y cuello",
+        "unit": "veces que no tuviste que alcanzar el ratón",
+        "extra": "≈ {distance} que tu brazo no recorrió",
+        "why": "Un ratón al lado del teclado tira del hombro hacia fuera; con las teclas, las manos se quedan juntas."
+      }
+    }
+  },
+  "demo": {
+    "heading": "pruébalo",
+    "chrome": "resultados de &ldquo;navegación con teclado&rdquo;",
+    "row1": "Navegar solo con el teclado es más rápido de lo que crees",
+    "meta1": "example.com — 4 min de lectura",
+    "row2": "Por qué importan los indicadores de foco",
+    "meta2": "example.org — 7 min de lectura",
+    "row3": "Una breve historia de las interfaces de texto",
+    "meta3": "example.net — 12 min de lectura",
+    "next": "Página siguiente",
+    "filter": "Filtrar",
+    "hint": "Es una maqueta, no la extensión, pero el anillo es el de verdad. Haz clic en una fila y pulsa <b>&darr; &uarr; &larr; &rarr;</b>."
+  },
+  "keys": {
+    "heading": "teclas",
+    "upDown": "Ir al elemento de arriba o de abajo.",
+    "leftRight": "Moverse por la fila en la que estás.",
+    "homeEnd": "Saltar a uno de los extremos de la línea en la que estás. La última flecha que pulsaste decide qué es una línea: después de moverte en horizontal es la fila; después de moverte en vertical, la columna.",
+    "enter": "Activar el elemento seleccionado. En un cuadro de texto o una lista desplegable, le pasa el foco para que puedas escribir o elegir. En una fila de una lista, activa el enlace que contiene, porque ahí guarda la fila su dirección.",
+    "esc": "Salir de un cuadro de texto y volver a navegar por la página.",
+    "again": "otra vez",
+    "escAgain": "Devolver el teclado al sitio para que funcionen sus propios atajos: la barra espaciadora para reproducir un vídeo o cualquier otra tecla que use. Púlsala una vez más para seguir navegando.",
+    "f10": "Abrir el menú: duplicar la página, volver atrás, seleccionar texto o informar de un problema. <kbd>Esc</kbd> lo cierra."
+  },
+  "how": {
+    "heading": "cómo funciona",
+    "p1": "La extensión lee la página, decide en qué elementos merece la pena detenerse y los trata como una cuadrícula. Las flechas se mueven entre ellos según su posición en la pantalla y no según el orden del código, así que la flecha derecha va a lo que está a la derecha, no a lo que aparezca después en el HTML.",
+    "p2": "Las pulsaciones se capturan antes de que la página las vea, así que los sitios con sus propios atajos de flechas no te disputan el control. Los cuadros de texto, las listas desplegables y todo lo que necesita las flechas para sí se dejan en paz hasta que les pasas el foco con <kbd>Enter</kbd>.",
+    "p3": "La ventana del icono de la barra de herramientas lleva la cuenta de tus acciones y enlaza a una página de estadísticas. Cuando algo falla, <kbd>F10</kbd> → <em>Report a problem</em> muestra un breve registro de lo que hizo la extensión en la página y lo envía al desarrollador junto con tu descripción. No se envía nada hasta que pulsas <em>Send report</em>; consulta la página de <a href=\"privacy.html\">privacidad</a>."
+  },
+  "closing": "¿Listo para darle un descanso a tu mano?",
+  "footer": {
+    "privacy": "privacidad",
+    "source": "código fuente",
+    "report": "informar de un problema"
+  },
+  "privacy": {
+    "title": "Privacidad — TUI Navigator",
+    "description": "Qué guarda TUI Navigator, dónde lo guarda y qué sale de tu ordenador: nada, salvo que tú mismo envíes un informe.",
+    "h1": "Privacidad",
+    "lede": "TUI Navigator no envía nada a ningún sitio. Lo que guarda se queda en tu ordenador, y un informe de errores solo sale de él cuando lo envías tú.",
+    "keepHeading": "Qué guarda, en tu ordenador",
+    "keepSettings": "<strong>Tus ajustes:</strong> el color y el grosor del anillo, el desplazamiento, los sitios en los que lo desactivaste y si quieres el resumen semanal. Se guardan en el almacenamiento de extensiones de Chrome.",
+    "keepCounts": "<strong>Tus recuentos de uso:</strong> cuántas veces pulsaste cada tecla a la que responde la extensión, por día y por hora, para la página de estadísticas y el resumen semanal. Solo números: ni direcciones ni contenido de las páginas. Se guardan en el almacenamiento de extensiones de Chrome.",
+    "keepLog": "<strong>Un breve registro de lo que hizo la extensión en la página en la que estás:</strong> las teclas a las que respondió (flechas, <kbd>Enter</kbd>, <kbd>Home</kbd>/<kbd>End</kbd>, <kbd>F10</kbd>, <kbd>Esc</kbd>) y los elementos entre los que se movió, descritos solo por su forma: etiqueta, rol, algunos nombres de clase, posición y tamaño. Nunca guarda el texto de la página, etiquetas, enlaces, identificadores ni nada de lo que escribas. Conserva los últimos 20 eventos, vive solo en la memoria de esa página y desaparece al recargarla o cerrarla.",
+    "sendHeading": "Qué envía",
+    "send": "Nada, salvo que envíes un informe de errores (más abajo). Aparte de un informe, la única petición que hace es la de una hoja de estilos: la página de estadísticas carga el CSS de Bootstrap desde <code>cdn.jsdelivr.net</code>, que, como cualquier petición web, muestra tu dirección IP a ese servidor.",
+    "reportsHeading": "Informes de errores",
+    "reports1": "<kbd>F10</kbd> → <em>Report a problem</em> abre una ventana donde escribes lo que pasó. El informe incluye tu descripción, la dirección completa de la página (tomada de la pestaña y puesta en el título del informe), el registro anterior, la versión de la extensión, la versión del navegador y el tamaño de la ventana; <em>What is sent</em>, bajo los botones, lo muestra todo.",
+    "reports2": "No se envía nada hasta que pulsas <em>Send report</em>. Entonces el informe se envía, como un único archivo zip, al servidor de informes de TUI Navigator (alojado en Cloudflare, en <code>tui-reports.taliandeyal.workers.dev</code>). Se guarda allí solo hasta que el desarrollador lo descarga y después se borra del servidor. Los informes no se publican, y no se pide ni se envía ninguna cuenta, nombre ni correo electrónico. Como cualquier petición web, el envío muestra tu dirección IP al servidor; solo se usa para limitar cuántos informes puede enviar una dirección por minuto y no se guarda con el informe.",
+    "reports3": "<em>Attach a copy of the page</em> viene marcado. Esa copia contiene todo lo que hay en la página, así que desmárcalo si hay algo privado. La primera vez que envíes con la casilla marcada, Chrome te pedirá el permiso <code>pageCapture</code>; sin él, el informe se envía sin la copia.",
+    "permissionsHeading": "Permisos",
+    "permStorage": "<code>storage</code>: tus ajustes y recuentos de uso.",
+    "permActiveTab": "<code>activeTab</code>: los ajustes de la ventana de la extensión para el sitio en el que estás.",
+    "permRecap": "<code>notifications</code>, <code>alarms</code>: el resumen semanal, que puedes desactivar.",
+    "permPageCapture": "<code>pageCapture</code> (opcional; solo se pide cuando incluyes una copia de la página en un informe): crear esa copia.",
+    "permSites": "Acceso a todos los sitios: las flechas tienen que funcionar dondequiera que navegues.",
+    "questionsHeading": "Preguntas",
+    "questions": "Abre una incidencia en <a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a>."
+  }
+}
