@@ -281,6 +281,17 @@ class SpatialEngine {
             }
         });
 
+        // Background asks again whenever the tab finishes loading, which for a
+        // slow page or a single-page app's pushState is after the broadcast
+        // below; an unanswered ask clears the badge. The top page answers for
+        // the tab, as it does for the broadcast.
+        if (!this.isSubframe) {
+            chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+                if (!message || message.type !== 'GET_STATUS') return;
+                sendResponse({ supported: true, enabled: this.isEnabled });
+            });
+        }
+
         // Broadcast initial status (always supported now)
         this.broadcastStatus();
 

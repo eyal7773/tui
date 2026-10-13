@@ -1,0 +1,10 @@
+# The ON badge on the toolbar icon went blank whenever the tab finished loading after the extension had reported in: a slow page, or a single-page app changing its address. Background asked the page again and no one answered.
+pages/badge-after-load.html
+expect-badge:ON
+eval:location.hash = 'sent'
+wait:1000
+expect-badge:ON
+key:Escape
+expect-badge:
+key:Escape
+expect-badge:ON

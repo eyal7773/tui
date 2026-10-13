@@ -18,6 +18,8 @@
  *   expect:<what>    fail unless the ring is on that element
  *   expect-not:<what> fail if it is; for pages whose right answer changes
  *   expect-ring:<what> fail unless the ring is drawn around it, focus or not
+ *   expect-badge:<text> fail unless the toolbar badge for the tab reads <text>
+ *                    (expect-badge: with nothing after it: no badge)
  *   click:<what>     a real mouse click
  *   type:<text>      type into whatever has focus
  *   wait:<ms>        pause
@@ -345,6 +347,16 @@ async function runStep(page, step, state) {
             else { console.log(`  FAIL   expected ${want ? '' : 'anything but '}"${arg}", ring is on ${fmt(r.ring)}`); state.failed++; }
             break;
         }
+        case 'expect-badge': {
+            // The page's tab is the active one: the harness opens no other.
+            const text = await state.sw.evaluate(async () => {
+                const [tab] = await chrome.tabs.query({ active: true });
+                return tab ? chrome.action.getBadgeText({ tabId: tab.id }) : null;
+            });
+            if (text === arg) console.log(`  PASS   badge is "${arg}"`);
+            else { console.log(`  FAIL   expected badge "${arg}", it is "${text}"`); state.failed++; }
+            break;
+        }
         case 'click': (await find(page, arg)).click(); await page.waitForTimeout(500); break;
         case 'type': await page.keyboard.type(arg); break;
         case 'wait': await page.waitForTimeout(Number(arg) || 500); break;
@@ -479,6 +491,7 @@ async function main() {
         let [sw] = ctx.serviceWorkers();
         if (!sw) sw = await ctx.waitForEvent('serviceworker', { timeout: 10000 });
         const version = await sw.evaluate(() => chrome.runtime.getManifest().version);
+        state.sw = sw;
         // Admin mode is what the popup's switch sets; it makes the log verbose and prints it.
         await sw.evaluate((on) => chrome.storage.session.set({ tuiAdminMode: on }), opts.debug);
         console.log(`TUI Navigator ${version} from ${EXT}\nopen ${url}` +
