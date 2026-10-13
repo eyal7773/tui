@@ -97,7 +97,8 @@
   "footer": {
     "privacy": "privacidad",
     "source": "código fuente",
-    "report": "informar de un problema"
+    "report": "informar de un problema",
+    "updates": "novedades"
   },
   "privacy": {
     "title": "Privacidad — TUI Navigator",
@@ -122,5 +123,16 @@
     "permSites": "Acceso a todos los sitios: las flechas tienen que funcionar dondequiera que navegues.",
     "questionsHeading": "Preguntas",
     "questions": "Abre una incidencia en <a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a>."
+  },
+  "updates": {
+    "title": "Novedades — TUI Navigator",
+    "description": "Lo que ha cambiado últimamente en TUI Navigator: cada error corregido y cada función nueva.",
+    "h1": "Novedades",
+    "lede": "Corregimos cada error que nos informan. Esto es lo que ha cambiado últimamente, de lo más nuevo a lo más antiguo.",
+    "fixed": "Corregido",
+    "added": "Nuevo",
+    "loading": "Cargando las últimas novedades…",
+    "error": "No se pudieron cargar las novedades ahora mismo. Puedes verlas en <a href=\"https://github.com/eyal7773/tui/commits/main\">GitHub</a>.",
+    "english": "Las novedades están escritas en inglés."
   }
 }

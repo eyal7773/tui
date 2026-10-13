@@ -97,7 +97,8 @@
   "footer": {
     "privacy": "الخصوصية",
     "source": "الشيفرة المصدرية",
-    "report": "الإبلاغ عن مشكلة"
+    "report": "الإبلاغ عن مشكلة",
+    "updates": "التحديثات"
   },
   "privacy": {
     "title": "الخصوصية — TUI Navigator",
@@ -122,5 +123,16 @@
     "permSites": "الوصول إلى كل المواقع: يجب أن تعمل الأسهم أينما تصفحت.",
     "questionsHeading": "أسئلة",
     "questions": "افتح issue على <a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a>."
+  },
+  "updates": {
+    "title": "التحديثات — TUI Navigator",
+    "description": "ما تغيّر مؤخرًا في TUI Navigator: كل خطأ أُصلح وكل ميزة جديدة.",
+    "h1": "التحديثات",
+    "lede": "نُصلح كل خطأ يُبلَّغ عنه. هذا ما تغيّر مؤخرًا، الأحدث أولًا.",
+    "fixed": "أُصلح",
+    "added": "جديد",
+    "loading": "جارٍ تحميل آخر التحديثات…",
+    "error": "تعذّر تحميل التحديثات الآن. يمكنك رؤيتها على <a href=\"https://github.com/eyal7773/tui/commits/main\">GitHub</a>.",
+    "english": "التحديثات مكتوبة بالإنجليزية."
   }
 }

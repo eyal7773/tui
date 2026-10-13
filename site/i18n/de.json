@@ -97,7 +97,8 @@
   "footer": {
     "privacy": "Datenschutz",
     "source": "Quellcode",
-    "report": "Problem melden"
+    "report": "Problem melden",
+    "updates": "Neuigkeiten"
   },
   "privacy": {
     "title": "Datenschutz — TUI Navigator",
@@ -122,5 +123,16 @@
     "permSites": "Zugriff auf alle Websites: Die Pfeiltasten müssen überall funktionieren, wo Sie surfen.",
     "questionsHeading": "Fragen",
     "questions": "Eröffnen Sie ein Issue auf <a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a>."
+  },
+  "updates": {
+    "title": "Neuigkeiten — TUI Navigator",
+    "description": "Was sich zuletzt in TUI Navigator geändert hat: jeder behobene Fehler und jede neue Funktion.",
+    "h1": "Neuigkeiten",
+    "lede": "Wir beheben jeden gemeldeten Fehler. Hier steht, was sich zuletzt geändert hat, das Neueste zuerst.",
+    "fixed": "Behoben",
+    "added": "Neu",
+    "loading": "Die neuesten Änderungen werden geladen…",
+    "error": "Die Neuigkeiten lassen sich gerade nicht laden. Sie stehen auch auf <a href=\"https://github.com/eyal7773/tui/commits/main\">GitHub</a>.",
+    "english": "Die Einträge sind auf Englisch."
   }
 }

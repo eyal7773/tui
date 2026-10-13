@@ -97,7 +97,8 @@
   "footer": {
     "privacy": "隐私",
     "source": "源代码",
-    "report": "报告问题"
+    "report": "报告问题",
+    "updates": "更新"
   },
   "privacy": {
     "title": "隐私 — TUI Navigator",
@@ -122,5 +123,16 @@
     "permSites": "访问所有网站：方向键需要在你浏览的任何地方都能用。",
     "questionsHeading": "问题",
     "questions": "请在 <a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a> 上提交 issue。"
+  },
+  "updates": {
+    "title": "更新 — TUI Navigator",
+    "description": "TUI Navigator 最近的变化：修复的每个错误和每项新功能。",
+    "h1": "更新",
+    "lede": "我们会修复每一个报告的错误。以下是最近的变化，最新的在前。",
+    "fixed": "已修复",
+    "added": "新功能",
+    "loading": "正在加载最新更新…",
+    "error": "暂时无法加载更新。你可以在 <a href=\"https://github.com/eyal7773/tui/commits/main\">GitHub</a> 上查看。",
+    "english": "更新内容以英文书写。"
   }
 }

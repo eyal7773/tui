@@ -127,6 +127,15 @@ button:disabled {
   outline-offset: 2px;
 }
 
+.fixes {
+  margin-top: 8px;
+}
+
+.fixes a {
+  color: var(--accent-hover);
+  font-weight: 600;
+}
+
 #status {
   min-height: 1.5em;
   margin: 8px 0 0;

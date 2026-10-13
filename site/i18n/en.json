@@ -69,7 +69,8 @@
   "footer": {
     "privacy": "privacy",
     "source": "source code",
-    "report": "report a problem"
+    "report": "report a problem",
+    "updates": "updates"
   },
   "privacy": {
     "title": "Privacy — TUI Navigator",
@@ -94,5 +95,16 @@
     "permSites": "Access to every site: the arrow keys have to work wherever you browse.",
     "questionsHeading": "Questions",
     "questions": "Open an issue on <a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a>."
+  },
+  "updates": {
+    "title": "Updates — TUI Navigator",
+    "description": "What changed in TUI Navigator lately: every bug fixed and every new feature.",
+    "h1": "Updates",
+    "lede": "We fix every bug that is reported. Here is what changed lately, newest first.",
+    "fixed": "Fixed",
+    "added": "New",
+    "loading": "Loading the latest updates…",
+    "error": "The updates could not be loaded right now. You can see them on <a href=\"https://github.com/eyal7773/tui/commits/main\">GitHub</a>.",
+    "english": ""
   }
 }

@@ -17,7 +17,8 @@
   report as it is. What is sent is under "What is sent", after the button, so
   it is never in the way of the Tabs.
   "Send report" posts a zip to the report server (report.js); nothing is sent
-  before it is pressed.
+  before it is pressed. Under it, a link to the site's updates page, where
+  the fixes show up; it comes after the button, so it is not in the Tabs either.
   The extension does not run on its own pages, so this page has to work with
   the keyboard by itself.
 -->
@@ -47,6 +48,8 @@
     <div class="actions">
       <button id="send" type="button">Send report</button>
     </div>
+    <p class="note fixes">We fix every bug that is reported. You can follow the fixes on the
+      <a href="https://eyal7773.github.io/tui/updates.html" target="_blank" rel="noopener">updates page</a>.</p>
     <p id="status" role="status"></p>
 
     <details>

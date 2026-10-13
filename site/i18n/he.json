@@ -97,7 +97,8 @@
   "footer": {
     "privacy": "פרטיות",
     "source": "קוד מקור",
-    "report": "דיווח על בעיה"
+    "report": "דיווח על בעיה",
+    "updates": "עדכונים"
   },
   "privacy": {
     "title": "פרטיות — TUI Navigator",
@@ -122,5 +123,16 @@
     "permSites": "גישה לכל האתרים: מקשי החיצים צריכים לעבוד בכל מקום שבו אתם גולשים.",
     "questionsHeading": "שאלות",
     "questions": "פתחו issue ב-<a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a>."
+  },
+  "updates": {
+    "title": "עדכונים — TUI Navigator",
+    "description": "מה השתנה לאחרונה ב-TUI Navigator: כל באג שתוקן וכל תכונה חדשה.",
+    "h1": "עדכונים",
+    "lede": "אנחנו מתקנים כל באג שמדווח. הנה מה שהשתנה לאחרונה, מהחדש לישן.",
+    "fixed": "תוקן",
+    "added": "חדש",
+    "loading": "טוען את העדכונים האחרונים…",
+    "error": "לא ניתן לטעון את העדכונים כרגע. אפשר לראות אותם ב-<a href=\"https://github.com/eyal7773/tui/commits/main\">GitHub</a>.",
+    "english": "העדכונים כתובים באנגלית."
   }
 }

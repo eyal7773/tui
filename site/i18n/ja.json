@@ -97,7 +97,8 @@
   "footer": {
     "privacy": "プライバシー",
     "source": "ソースコード",
-    "report": "問題を報告"
+    "report": "問題を報告",
+    "updates": "更新情報"
   },
   "privacy": {
     "title": "プライバシー — TUI Navigator",
@@ -122,5 +123,16 @@
     "permSites": "すべてのサイトへのアクセス：どこを閲覧していても矢印キーが使えるようにするためです。",
     "questionsHeading": "お問い合わせ",
     "questions": "<a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a> で issue を作成してください。"
+  },
+  "updates": {
+    "title": "更新情報 — TUI Navigator",
+    "description": "TUI Navigator の最近の変更：修正したすべてのバグと新機能。",
+    "h1": "更新情報",
+    "lede": "報告されたバグはすべて修正しています。最近の変更を新しい順に掲載しています。",
+    "fixed": "修正",
+    "added": "新機能",
+    "loading": "最新の更新情報を読み込んでいます…",
+    "error": "現在、更新情報を読み込めません。<a href=\"https://github.com/eyal7773/tui/commits/main\">GitHub</a> でご覧いただけます。",
+    "english": "更新情報は英語で書かれています。"
   }
 }

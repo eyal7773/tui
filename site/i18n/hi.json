@@ -97,7 +97,8 @@
   "footer": {
     "privacy": "गोपनीयता",
     "source": "सोर्स कोड",
-    "report": "समस्या की रिपोर्ट करें"
+    "report": "समस्या की रिपोर्ट करें",
+    "updates": "अपडेट"
   },
   "privacy": {
     "title": "गोपनीयता — TUI Navigator",
@@ -122,5 +123,16 @@
     "permSites": "सभी साइटों तक पहुँच: एरो कीज़ को हर जगह काम करना है जहाँ आप ब्राउज़ करते हैं।",
     "questionsHeading": "सवाल",
     "questions": "<a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a> पर issue खोलें।"
+  },
+  "updates": {
+    "title": "अपडेट — TUI Navigator",
+    "description": "TUI Navigator में हाल में क्या बदला: हर ठीक किया गया बग और हर नई सुविधा।",
+    "h1": "अपडेट",
+    "lede": "रिपोर्ट किया गया हर बग हम ठीक करते हैं। यह रहा हाल में क्या बदला, सबसे नया पहले।",
+    "fixed": "ठीक किया",
+    "added": "नया",
+    "loading": "ताज़ा अपडेट लोड हो रहे हैं…",
+    "error": "अभी अपडेट लोड नहीं हो सके। आप इन्हें <a href=\"https://github.com/eyal7773/tui/commits/main\">GitHub</a> पर देख सकते हैं।",
+    "english": "अपडेट अंग्रेज़ी में लिखे गए हैं।"
   }
 }

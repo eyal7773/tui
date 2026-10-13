@@ -16,7 +16,7 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const site = path.join(root, 'site');
-const PAGES = ['index.html', 'privacy.html'];
+const PAGES = ['index.html', 'privacy.html', 'updates.html'];
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));

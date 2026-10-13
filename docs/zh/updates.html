@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-Hans" dir="ltr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>更新 — TUI Navigator</title>
+  <meta name="description" content="TUI Navigator 最近的变化：修复的每个错误和每项新功能。">
+  <link rel="canonical" href="https://eyal7773.github.io/tui/zh/updates.html">
+  <link rel="alternate" hreflang="en" href="https://eyal7773.github.io/tui/updates.html">
+  <link rel="alternate" hreflang="he" href="https://eyal7773.github.io/tui/he/updates.html">
+  <link rel="alternate" hreflang="es" href="https://eyal7773.github.io/tui/es/updates.html">
+  <link rel="alternate" hreflang="zh-Hans" href="https://eyal7773.github.io/tui/zh/updates.html">
+  <link rel="alternate" hreflang="ar" href="https://eyal7773.github.io/tui/ar/updates.html">
+  <link rel="alternate" hreflang="pt-BR" href="https://eyal7773.github.io/tui/pt/updates.html">
+  <link rel="alternate" hreflang="id" href="https://eyal7773.github.io/tui/id/updates.html">
+  <link rel="alternate" hreflang="fr" href="https://eyal7773.github.io/tui/fr/updates.html">
+  <link rel="alternate" hreflang="ja" href="https://eyal7773.github.io/tui/ja/updates.html">
+  <link rel="alternate" hreflang="ru" href="https://eyal7773.github.io/tui/ru/updates.html">
+  <link rel="alternate" hreflang="de" href="https://eyal7773.github.io/tui/de/updates.html">
+  <link rel="alternate" hreflang="hi" href="https://eyal7773.github.io/tui/hi/updates.html">
+  <link rel="alternate" hreflang="x-default" href="https://eyal7773.github.io/tui/updates.html">
+  <link rel="icon" href="../icon.png">
+  <style>
+    :root {
+      --paper: #eaece9;
+      --ink: #17181a;
+      --ink-dim: #5a635c;
+      --rule: #c9cec9;
+      --phosphor: #00893a;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    /* Scripts the faces above do not cover. The labels set in mono fall
+       back to a sans, since a monospace face with these letters is rare. */
+    :root:lang(he) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Heebo", "Segoe UI", Arial, sans-serif;
+      --serif: "Frank Ruhl Libre", "David Libre", "Times New Roman", serif;
+    }
+
+    :root:lang(ar) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+      --serif: "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif;
+    }
+
+    :root:lang(hi) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Noto Sans Devanagari", "Nirmala UI", sans-serif;
+      --serif: "Noto Serif Devanagari", "Nirmala UI", "Mangal", serif;
+    }
+
+    /* Chinese and Japanese read better in the system's own sans than in a
+       serif fetched for the occasion, which would be several megabytes. */
+    :root:lang(zh) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      --serif: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans GB", sans-serif;
+    }
+
+    :root:lang(ja) {
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "Hiragino Sans", "Yu Gothic UI", "Meiryo", "Noto Sans JP", sans-serif;
+      --serif: "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
+    }
+
+    /* Spacing letters apart breaks Arabic's joined letters, and does nothing
+       for the other scripts here but crowd them. */
+    :lang(ar) *, :lang(he) *, :lang(hi) *, :lang(zh) *, :lang(ja) * {
+      letter-spacing: 0 !important;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #14161a;
+        --ink: #dfe3df;
+        --ink-dim: #8b948c;
+        --rule: #333a36;
+        --phosphor: #00ff6a;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    .wrap {
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+
+    h1 {
+      font-weight: 400;
+      font-size: 2.2rem;
+      line-height: 1.15;
+      margin: 0 0 0.5rem;
+    }
+
+    h2 {
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--phosphor);
+      margin: 2.25rem 0 0.5rem;
+    }
+
+    .dim {
+      color: var(--ink-dim);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    code,
+    kbd {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+
+    .small {
+      font-size: 0.9rem;
+    }
+
+    .english:empty {
+      display: none;
+    }
+
+    #days section {
+      margin-top: 2rem;
+    }
+
+    #days h2 {
+      margin: 0 0 0.6rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    #days ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    #days li {
+      display: flex;
+      gap: 0.75rem;
+      align-items: baseline;
+      padding: 0.35rem 0;
+    }
+
+    .tag {
+      flex: none;
+      min-width: 4.5rem;
+      padding: 0.05rem 0.5rem;
+      border-radius: 999px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-align: center;
+      border: 1px solid var(--phosphor);
+    }
+
+    .tag.fix {
+      color: var(--phosphor);
+    }
+
+    .tag.feat {
+      color: var(--paper);
+      background: var(--phosphor);
+    }
+
+    .what {
+      text-align: start;
+    }
+
+    #error {
+      color: var(--ink-dim);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>更新</h1>
+    <p class="dim">我们会修复每一个报告的错误。以下是最近的变化，最新的在前。</p>
+    <p class="dim small english">更新内容以英文书写。</p>
+
+    <p id="loading" class="dim">正在加载最新更新…</p>
+    <p id="error" hidden>暂时无法加载更新。你可以在 <a href="https://github.com/eyal7773/tui/commits/main">GitHub</a> 上查看。</p>
+    <div id="days"></div>
+
+    <span id="label-fix" hidden>已修复</span>
+    <span id="label-feat" hidden>新功能</span>
+
+    <footer><a href="index.html">TUI Navigator</a> · <a href="privacy.html">隐私</a></footer>
+  </div>
+
+  <!--
+    The list is read from the repository's commits when the page opens, so it
+    is never out of date and nothing has to be written by hand: a commit whose
+    subject starts with "fix:" is a fix, "feat:" something new. Other commits
+    (docs, chores, tests) are not for users. A few fixes and features are about
+    the website or the developer's tools rather than the extension; the words
+    in TOOLING keep those off the list.
+  -->
+  <script>
+    (function () {
+      var API = 'https://api.github.com/repos/eyal7773/tui/commits?sha=main&per_page=100';
+      var KIND = /^(feat|fix)(\([^)]*\))?!?:\s*(.+)$/;
+      var TOOLING = /pull-reports|testenv|website|\bsite\b|scenarios?\b|harness/i;
+      var MAX = 60;
+      var lang = document.documentElement.lang;
+      var label = { fix: text('label-fix'), feat: text('label-feat') };
+
+      function text(id) { return document.getElementById(id).textContent; }
+
+      function dayOf(iso) {
+        var d = new Date(iso);
+        return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+      }
+
+      function fail() {
+        document.getElementById('loading').hidden = true;
+        document.getElementById('error').hidden = false;
+      }
+
+      function show(commits) {
+        var days = [];
+        var byDay = {};
+        var count = 0;
+        commits.forEach(function (c) {
+          if (count >= MAX) return;
+          var subject = c.commit.message.split('\n')[0];
+          var m = subject.match(KIND);
+          if (!m || TOOLING.test(m[3])) return;
+          var when = c.commit.committer.date;
+          var key = dayOf(when);
+          if (!byDay[key]) { byDay[key] = { when: when, items: [] }; days.push(byDay[key]); }
+          byDay[key].items.push({ kind: m[1], text: m[3].charAt(0).toUpperCase() + m[3].slice(1) });
+          count++;
+        });
+        if (!days.length) return fail();
+
+        var format = new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric' });
+        var root = document.getElementById('days');
+        days.forEach(function (day) {
+          var section = document.createElement('section');
+          var h2 = document.createElement('h2');
+          var time = document.createElement('time');
+          time.dateTime = day.when.slice(0, 10);
+          time.textContent = format.format(new Date(day.when));
+          h2.appendChild(time);
+          section.appendChild(h2);
+
+          var ul = document.createElement('ul');
+          day.items.forEach(function (item) {
+            var li = document.createElement('li');
+            var tag = document.createElement('span');
+            tag.className = 'tag ' + item.kind;
+            tag.textContent = label[item.kind];
+            var what = document.createElement('span');
+            what.className = 'what';
+            what.lang = 'en';
+            what.dir = 'ltr';
+            what.textContent = item.text;
+            li.appendChild(tag);
+            li.appendChild(what);
+            ul.appendChild(li);
+          });
+          section.appendChild(ul);
+          root.appendChild(section);
+        });
+        document.getElementById('loading').hidden = true;
+      }
+
+      fetch(API, { headers: { Accept: 'application/vnd.github+json' } })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(show)
+        .catch(fail);
+    })();
+  </script>
+</body>
+
+</html>

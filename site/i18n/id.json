@@ -97,7 +97,8 @@
   "footer": {
     "privacy": "privasi",
     "source": "kode sumber",
-    "report": "laporkan masalah"
+    "report": "laporkan masalah",
+    "updates": "pembaruan"
   },
   "privacy": {
     "title": "Privasi — TUI Navigator",
@@ -122,5 +123,16 @@
     "permSites": "Akses ke semua situs: tombol panah harus berfungsi di mana pun Anda menjelajah.",
     "questionsHeading": "Pertanyaan",
     "questions": "Buka issue di <a href=\"https://github.com/eyal7773/tui/issues\">GitHub</a>."
+  },
+  "updates": {
+    "title": "Pembaruan — TUI Navigator",
+    "description": "Apa yang berubah belakangan ini di TUI Navigator: setiap bug yang diperbaiki dan setiap fitur baru.",
+    "h1": "Pembaruan",
+    "lede": "Kami memperbaiki setiap bug yang dilaporkan. Inilah yang berubah belakangan ini, dari yang terbaru.",
+    "fixed": "Diperbaiki",
+    "added": "Baru",
+    "loading": "Memuat pembaruan terbaru…",
+    "error": "Pembaruan tidak dapat dimuat saat ini. Lihat di <a href=\"https://github.com/eyal7773/tui/commits/main\">GitHub</a>.",
+    "english": "Pembaruan ditulis dalam bahasa Inggris."
   }
 }
