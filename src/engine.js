@@ -1950,6 +1950,8 @@ class SpatialEngine {
      * unionRect in view-rules.js).
      */
     rectOf(el) {
+        const box = this.wrappedBoxRect(el);
+        if (box) return box;
         const rect = el.getBoundingClientRect();
         if (rect.width < 4 || rect.height < 4) {
             const stretched = this.stretchedRect(el);
@@ -1971,6 +1973,26 @@ class SpatialEngine {
             .map(c => c.getBoundingClientRect());
         if (!empty) parts.push(rect);
         return window.TuiViewRules.unionRect(rect, parts);
+    }
+
+    /**
+     * A text box is reached through its parent (see focusElement), and the
+     * ring is drawn round that parent. When the parent also holds other
+     * controls, it is drawn round the box alone, and the arrows measure from
+     * it: a form group held a label, a Copy button and the box, the ring took
+     * in all three after ArrowDown from Copy, so it seemed not to have moved,
+     * and ArrowUp, measured from the group's top, skipped Copy.
+     */
+    wrappedBoxRect(el) {
+        const input = el._tui_input;
+        if (!input || input === el || !input.isConnected || !el.contains(input)) return null;
+        const others = el.querySelectorAll('a[href], button, input, select, textarea, [role="button"], [role="link"], [tabindex]:not([tabindex="-1"])');
+        for (const other of others) {
+            if (other === input || input.contains(other)) continue;
+            const r = other.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) return input.getBoundingClientRect();
+        }
+        return null;
     }
 
     /**

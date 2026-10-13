@@ -1,0 +1,12 @@
+# A text box whose parent also holds its label and a Copy button: ArrowDown from Copy reached the box, but the ring went round the whole group, Copy included, so it seemed not to have moved, and ArrowUp, measured from the group's top, skipped Copy. The ring goes round the box, the arrows measure from it, and Enter still goes in.
+pages/confirm-phrase-group.html
+start:css=#copy
+key:ArrowDown
+expect-ring:css=#confirm-input
+key:ArrowUp
+expect:css=#copy
+key:ArrowDown
+expect-ring:css=#confirm-input
+key:Enter
+type:restore orchard
+eval:(() => { const v = document.getElementById('confirm-input').value; if (v !== 'restore orchard') throw new Error(v); return v; })()
