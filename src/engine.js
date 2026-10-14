@@ -1142,6 +1142,12 @@ class SpatialEngine {
         // isUntouchedBox.
         if (this.shouldTrapArrows(active) && !this.isUntouchedBox(e)) {
             if (e.key === 'Escape') {
+                // The page may put focus straight back in the box, as it may
+                // when the ring arrives (see focusElement): ASOS focuses its
+                // search box whenever the wrapper gets focus, and Escape
+                // could never leave it. Back in so soon, the box is taken as
+                // untouched, and the arrows step on (see isUntouchedBox).
+                this.arrival = { box: active, at: performance.now() };
                 // Return focus to wrapper if possible, otherwise blur
                 const parent = active.parentElement;
                 if (parent && parent.hasAttribute('tabindex')) {

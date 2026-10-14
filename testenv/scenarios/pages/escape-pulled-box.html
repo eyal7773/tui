@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A box the page always focuses</title>
+<style>
+  body { font: 16px/1.5 sans-serif; margin: 20px; }
+  .field { display: flex; gap: 12px; align-items: center; width: 420px; padding: 6px; margin: 14px 0; }
+  .field input { flex: 1; }
+</style>
+</head>
+<body>
+  <!-- The search box's wrapper hands its focus to the box every time it
+       gets it, as ASOS does. Escape in the box gives focus to the wrapper,
+       the page puts it straight back, and the arrows stayed in the box: no
+       way out but Tab or the mouse. -->
+  <a id="top" href="#top">Top link</a>
+  <div class="field" id="search-box" tabindex="0"><label for="search">Search</label><input id="search" value="boots"></div>
+  <a id="below" href="#below">Below link</a>
+  <script>
+    const search = document.getElementById('search');
+    document.getElementById('search-box').addEventListener('focus', () => setTimeout(() => search.focus(), 30));
+  </script>
+</body>
+</html>

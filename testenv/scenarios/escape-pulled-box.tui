@@ -1,0 +1,23 @@
+# A search box whose wrapper hands it focus every time (ASOS): Escape leaves it although the page puts focus straight back, the ring looks plain, and the arrows step on, up or down. A letter typed gives the box the keys again, and Escape still leaves.
+pages/escape-pulled-box.html
+start:css=#top
+key:ArrowDown
+type:s
+wait:200
+eval:(() => { if (!document.getElementById('tui-spotlight').classList.contains('tui-editing')) throw new Error('not in the box after typing'); return 'in the box'; })()
+key:Escape
+wait:300
+eval:(() => { if (document.activeElement.id !== 'search') throw new Error('the page did not put focus back: ' + document.activeElement.id); if (document.getElementById('tui-spotlight').classList.contains('tui-editing')) throw new Error('still drawn as in the box'); return 'focus back in the box, ring plain'; })()
+key:ArrowDown
+expect:Below link
+eval:(() => { if (document.getElementById('search').value !== 'sboots') throw new Error('the box changed: ' + document.getElementById('search').value); return 'the arrow left the box'; })()
+key:ArrowUp
+wait:300
+type:t
+wait:200
+key:ArrowDown
+eval:(() => { if (document.activeElement.id !== 'search') throw new Error('ArrowDown left a box being typed in'); return 'typing gave the box its arrows back'; })()
+key:Escape
+wait:300
+key:ArrowUp
+expect:Top link
