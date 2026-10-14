@@ -2479,6 +2479,25 @@ class SpatialEngine {
 
         // 2. Filter candidates
         this.candidates = all.filter(el => {
+            const rect = this.rectOf(el);
+
+            // Near enough to the screen to be worth navigating to?
+            // Not the viewport exactly: the next row down a column usually sits
+            // just past the bottom edge, and clipping it there made ArrowDown
+            // leave the column for whatever sidebar item happened to be visible.
+            // See view-rules.js for why the band reaches past top and bottom but
+            // not past the sides.
+            // First, because it is the cheapest check and drops the most: on
+            // Wikipedia 226 of 6698 elements are within reach, and running
+            // the checks below (styles, text, ancestors) on all of them took
+            // 140ms a key press.
+            if (window.TuiViewRules) {
+                if (!window.TuiViewRules.withinReach(rect, undefined, this.reachRatio)) return false;
+            } else if (rect.bottom < 0 || rect.top > window.innerHeight ||
+                       rect.right < 0 || rect.left > window.innerWidth) {
+                return false;
+            }
+
             // Visibility Check
             // Hidden parent. A fixed element has no offsetParent either,
             // however visible: Target's full-window bot check is a fixed
@@ -2487,8 +2506,6 @@ class SpatialEngine {
             if (el.offsetParent === null && window.getComputedStyle(el).position !== 'fixed') {
                 return false;
             }
-
-            const rect = this.rectOf(el);
 
             // FILTER: Negative Tabindex on native controls (unless part of a widget)
             // This excludes helper inputs used by libraries (e.g. Jira, React-Select)
@@ -2611,19 +2628,6 @@ class SpatialEngine {
             // from the logo spent every try on its buttons, each refused, so
             // the ring never moved.
             if (this.composedClosest(el, '[inert]')) return false;
-
-            // Near enough to the screen to be worth navigating to?
-            // Not the viewport exactly: the next row down a column usually sits
-            // just past the bottom edge, and clipping it there made ArrowDown
-            // leave the column for whatever sidebar item happened to be visible.
-            // See view-rules.js for why the band reaches past top and bottom but
-            // not past the sides.
-            if (window.TuiViewRules) {
-                if (!window.TuiViewRules.withinReach(rect, undefined, this.reachRatio)) return false;
-            } else if (rect.bottom < 0 || rect.top > window.innerHeight ||
-                       rect.right < 0 || rect.left > window.innerWidth) {
-                return false;
-            }
 
             // Exclude aria-hidden elements (decorative dividers, spacers, etc.)
             // EXCEPTION: Allow LABELs with aria-hidden since they often control inputs

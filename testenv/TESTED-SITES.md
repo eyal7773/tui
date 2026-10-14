@@ -277,6 +277,20 @@ average and 50 at most, longest single run 50).
 | Stack Overflow (question) | 49 | 20 | 2527! | 318! | 518! | 518! |
 | Wikipedia (United_States) | 1 | 15 | 0 | 131! | 250! | 250! |
 
+After the candidate filter checks reach first (see PERF-FINDINGS.md, cause
+1), the old and new builds measured one after the other, same day. Live
+sites vary from run to run; the CPU profile (`profile:ArrowDown*10`) is the
+steadier number.
+
+| Site | Key avg before | Key avg after | Profile, ms a press |
+|---|---|---|---|
+| Wikipedia (United_States) | 424 | 72 | 167 → 84 |
+| CNN | 161 | 109 | |
+| BBC News | 43 | 27 | |
+| Microsoft | 100 | 119 | 51 → 55 (same) |
+| Amazon (s?k=headphones) | 90 | 104 | 31 → 32 (same) |
+| Stack Overflow (question) | 182 | 182 | |
+
 ## Blocked (not counted)
 
 Answered the harness with a bot check, so the page itself was never seen:

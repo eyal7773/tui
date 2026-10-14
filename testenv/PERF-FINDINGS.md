@@ -2,7 +2,7 @@
 
 Measured 2026-10-14 on version 0.1.100 with `node perf.js --runs 2` (see
 README, "Measure how long the extension takes"). The full table is in
-TESTED-SITES.md, "Timed". Nothing in src/ has been changed for this yet.
+TESTED-SITES.md, "Timed". Fix 1 below is in src/; the rest is not yet.
 
 ## What was found
 
@@ -40,6 +40,16 @@ far from the screen (`withinReach`) comes near the end. Hot lines: 2487
 Likely fix: take the rectangle and drop what is out of reach first, before
 any other check. Expected: most of the 140ms.
 
+*Done (fix 1):* the filter now takes the rectangle and checks reach first.
+Wikipedia went from 167 to 84ms a press in the profile (perf.js: 424 to 72
+on average), CNN and BBC a third less; Microsoft and Amazon the same, their
+time is elsewhere. What is left on Wikipedia: `rectOf` on all 6698
+elements (44ms a press; `getBoundingClientRect` 22ms of it), and
+`findBestCandidate`'s check of what covers each candidate
+(`elementFromPoint`, 19ms). A plain `getBoundingClientRect` before `rectOf`
+would be cheaper, but `rectOf` moves some boxes (a stretched link's card,
+an inline link around a block picture), so that needs care.
+
 **2. Stack Overflow (80ms a press): the page search is redone on every
 press.** The page keeps changing (ads, animations), every change marks the
 search stale, so `discover` runs each time (43ms a press). In it, the walk
@@ -56,8 +66,8 @@ worktree).
 ## Where to start
 
 1. **Done:** the profile step, and the two causes above.
-2. **Cause 1 (filter order)**, then **cause 2 (search redone)**; profile CNN,
-   eBay and Amazon too, to see which of the two they share.
+2. **Done:** cause 1 (filter order). **Next:** cause 2 (search redone), which
+   is also most of Microsoft's time; profile CNN, eBay and Amazon too.
 3. **Frames**: load only a small starter script in a frame, and the rest of
    the engine on the first arrow it receives. Needs the background to inject
    the scripts (chrome.scripting) or a dynamic import; check what is allowed.
