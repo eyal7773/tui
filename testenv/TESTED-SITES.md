@@ -290,6 +290,7 @@ Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed o
 | CNN | Ad iframes skipped; ring following layout shifts and late ads | 1ddd0e5, 22d89bd, 5707fd1 |
 | ESPN | OneTrust cookie strip focused on load | 9c1f976 |
 | Fox News | ArrowDown staying in its column across gaps between stories | 8747745 |
+| Wikipedia | Shift+ArrowDown scrolling the article 40px a press, the ring staying on the main menu button | the commit adding Shift+arrow scrolling |
 | Google Search | Edge-to-edge related-search chips | f135756 |
 | The Guardian | Sourcepoint consent iframe; support banner pinned over the page | 82e8a29, 3e3df69, f461870 |
 | IKEA | Neighbour in the same row taken as "below" | 8d02a26 |
@@ -310,4 +311,4 @@ Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed o
 ## Local pages only (no real site)
 
 modal-over-page, fixed-frame-over-page, select-text, select-text-menu,
-report-log, stretched-link.
+report-log, stretched-link, shift-scroll.

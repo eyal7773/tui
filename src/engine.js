@@ -962,8 +962,18 @@ class SpatialEngine {
             return;
         }
 
-        // Shift+arrow selects, as it does in any editor: it starts text mode
-        // from the text under the ring. Inside a text box it never gets here.
+        // Shift+ArrowUp and Shift+ArrowDown scroll, and the ring stays where
+        // it is. Inside a text box they never get here: they select there.
+        const step = window.TuiTextRules ? window.TuiTextRules.scrollStep(e) : 0;
+        if (step) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            this.scrollByKey(e, step);
+            return;
+        }
+
+        // Shift+ArrowLeft or Shift+ArrowRight selects, as in any editor: it
+        // starts text mode from the text under the ring.
         if (window.TuiTextRules && window.TuiTextRules.startsTextMode(e)) {
             e.preventDefault();
             e.stopImmediatePropagation();
@@ -3518,12 +3528,44 @@ class SpatialEngine {
      */
     scrollBoxOf(el, key) {
         for (let node = this.composedParent(el); node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
-            if (node.nodeType !== 1 || node.scrollHeight <= node.clientHeight + 1) continue;
-            if (!/auto|scroll|overlay/.test(window.getComputedStyle(node).overflowY)) continue;
-            if (key === 'ArrowDown' && node.scrollTop + node.clientHeight < node.scrollHeight - 1) return node;
-            if (key === 'ArrowUp' && node.scrollTop > 0) return node;
+            if (this.scrollsOnItsOwn(node, key)) return node;
         }
         return null;
+    }
+
+    /** Whether node is a box that scrolls on its own and has further to go this way. */
+    scrollsOnItsOwn(node, key) {
+        if (node.nodeType !== 1 || node.scrollHeight <= node.clientHeight + 1) return false;
+        if (!/auto|scroll|overlay/.test(window.getComputedStyle(node).overflowY)) return false;
+        if (key === 'ArrowDown') return node.scrollTop + node.clientHeight < node.scrollHeight - 1;
+        if (key === 'ArrowUp') return node.scrollTop > 0;
+        return false;
+    }
+
+    /**
+     * Shift+ArrowUp or Shift+ArrowDown: scrolls by step pixels what the
+     * mouse wheel would, without moving the ring. That is the box the ring
+     * is in when it scrolls on its own (a chat list, an open message in
+     * Gmail), or the ring's element itself when it is such a box; once that
+     * box is at its end, the next one out, and last the page. With nothing
+     * left to scroll the key does nothing, rather than reaching the page,
+     * where Shift and an arrow would select text.
+     */
+    scrollByKey(e, step) {
+        const key = step > 0 ? 'ArrowDown' : 'ArrowUp';
+        const at = this.isActiveMode && this.lastActiveElement && this.lastActiveElement.isConnected
+            ? this.lastActiveElement : this.deepActiveElement();
+        const own = at && at !== document.body && at !== document.documentElement && this.scrollsOnItsOwn(at, key);
+        const box = own ? at : at && this.scrollBoxOf(at, key);
+        const scroller = box || (this.canScrollPage(key) ? window : null);
+        LOG.event('scroll', { key: key, why: 'shift', box: box ? LOG.describe(box) : undefined, none: !scroller || undefined });
+        if (!scroller) return;
+        // Scrolling away from where the ring arrived: a layout shift must
+        // not pull the page back to it (keepArrivalInView).
+        this.lastArrivalAt = 0;
+        // A held key repeats faster than a smooth scroll ends, and each new
+        // one would restart it from where it had got to.
+        scroller.scrollBy({ top: step, behavior: e.repeat ? 'instant' : this.scrollBehavior() });
     }
 
     /** Whether el scrolls with box: inside it, and not in a bar pinned inside it. */
@@ -3945,7 +3987,8 @@ class SpatialEngine {
             ['Moving', [
                 [['↑', '↓'], 'The item above or below'],
                 [['←', '→'], 'Along the row you are on'],
-                [['Home', 'End'], 'Either end of the line. The last arrow decides: after a sideways step the row, after up or down the column']
+                [['Home', 'End'], 'Either end of the line. The last arrow decides: after a sideways step the row, after up or down the column'],
+                [['Shift+↑↓'], 'Scroll the page, or the box the ring is in. The ring stays where it is']
             ]],
             ['Acting', [
                 [['Enter'], 'Click the item in the ring'],
@@ -3958,7 +4001,7 @@ class SpatialEngine {
                 [['Esc'], 'Again: take it back and carry on']
             ]],
             ['Selecting text', [
-                [['Shift+←→↑↓'], 'Start, from the text in the ring'],
+                [['Shift+←→'], 'Start, from the text in the ring'],
                 [['←→↑↓'], 'By character or line'],
                 [['Ctrl+←→↑↓'], 'By word or paragraph'],
                 [['Enter'], 'Copy what is selected. With nothing selected: drop an anchor, so the arrows select'],

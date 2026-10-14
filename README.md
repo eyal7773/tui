@@ -134,9 +134,21 @@ nothing expanded or toggled - a small picture beside the ring says so: the
 Enter key pressing twice, and ×2. A row that only got selected counts as
 nothing.
 
+## Scrolling
+
+**Shift+↑ and Shift+↓ scroll, and the ring stays where it is.** Each press
+scrolls 40 pixels, the browser's own step for an arrow key, and holding the
+key scrolls on. What scrolls is what the mouse wheel would: the box the ring
+is in when it scrolls on its own (a chat list, an open message in Gmail), and
+once that box is at its end the next one out, and last the page. With nothing
+left to scroll the key does nothing. The ring keeps to its element as the page
+moves, even out of sight, and the next arrow goes on from what is on the
+screen rather than pulling the page back. Inside a text box Shift+↑↓ select,
+as usual.
+
 ## Selecting text
 
-**Shift+arrow selects text.** It starts text mode from the text under the ring
+**Shift+← and Shift+→ select text.** They start text mode from the text under the ring
 (or, with no ring, from the page's main content), and the arrows move a caret
 through the text instead of the ring between controls:
 
@@ -393,7 +405,8 @@ not have it can be excluded (see Excluded sites).
 | **Arrow Left / Right** | Move across the current row |
 | **Home / End** | Jump to either end of the current line (see below) |
 | **Enter** | Activate the focused item (see below); twice for a double-click |
-| **Shift + Arrows** | Select text (see below) |
+| **Shift + ↑ / ↓** | Scroll, the ring stays put (see below) |
+| **Shift + ← / →** | Select text (see below) |
 | **Esc** | Leave a text box, or hand the keyboard back to the page |
 | **F10** | The menu: duplicate the page, go back, select text, report a problem, keyboard shortcuts |
 

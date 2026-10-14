@@ -1,0 +1,39 @@
+# Shift+ArrowUp and Shift+ArrowDown scroll what the mouse wheel would, and the ring stays on its element: the list the ring is in first, the page once the list is at its end. The next plain arrow goes on from the screen. Inside a text box they still select, and Shift+ArrowRight still starts text mode.
+pages/shift-scroll.html
+start:css=#list a[href="#i2"]
+key:ArrowDown
+expect:Item 3
+key:Shift+ArrowDown
+eval:(() => { const l = document.getElementById('list'); if (l.scrollTop !== 40) throw new Error('list at ' + l.scrollTop); if (scrollY !== 0) throw new Error('page at ' + scrollY); return 'list scrolled 40'; })()
+expect:Item 3
+key:Shift+ArrowUp
+eval:(() => { const l = document.getElementById('list'); if (l.scrollTop !== 0) throw new Error('list at ' + l.scrollTop); return 'list back'; })()
+eval:(() => { const l = document.getElementById('list'); l.scrollTop = l.scrollHeight; return l.scrollTop; })()
+wait:200
+key:Shift+ArrowDown
+eval:(() => { if (scrollY !== 40) throw new Error('page at ' + scrollY); return 'list at its end, page scrolled 40'; })()
+key:Shift+ArrowUp*2
+eval:(() => { const l = document.getElementById('list'); if (scrollY !== 40) throw new Error('page at ' + scrollY); if (l.scrollTop !== l.scrollHeight - l.clientHeight - 80) throw new Error('list at ' + l.scrollTop); return 'up scrolls the list again first'; })()
+eval:(() => { scrollTo(0, 0); document.getElementById('list').scrollTop = 0; return 'back to the top'; })()
+start:css=#list a[href="#i1"]
+key:ArrowUp*2
+expect:Top link
+key:Shift+ArrowUp
+eval:(() => { if (scrollY !== 0) throw new Error('page at ' + scrollY); if (String(getSelection())) throw new Error('selected "' + getSelection() + '"'); if (document.getElementById('tui-text-badge')) throw new Error('text mode'); return 'nothing to scroll: nothing happens'; })()
+expect:Top link
+key:Shift+ArrowDown*25
+eval:(() => { if (scrollY !== 1000) throw new Error('page at ' + scrollY); return scrollY; })()
+expect-ring:Top link
+key:ArrowDown
+eval:(() => { if (scrollY !== 1000) throw new Error('page moved to ' + scrollY); return scrollY; })()
+eval:(() => { const r = document.getElementById('tui-spotlight').getBoundingClientRect(); if (r.top < 0 || r.bottom > innerHeight) throw new Error('ring at ' + r.top); return 'ring on screen'; })()
+expect-not:Top link
+start:css=#name
+key:Enter
+key:End
+key:Shift+ArrowUp
+eval:(() => { const i = document.getElementById('name'); if (i.selectionStart !== 0 || i.selectionEnd !== i.value.length) throw new Error('selection ' + i.selectionStart + '-' + i.selectionEnd); return 'the box selects'; })()
+key:Escape
+start:css=#top
+key:Shift+ArrowRight
+eval:(() => { if (!document.getElementById('tui-text-badge')) throw new Error('not in text mode'); return 'text mode'; })()

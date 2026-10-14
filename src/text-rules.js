@@ -3,7 +3,8 @@
  * ring between controls, so a passage can be selected and copied from the
  * keyboard alone.
  *
- * Shift+arrow starts it, from the text under the ring. The keys are an
+ * Shift+ArrowLeft or Shift+ArrowRight starts it, from the text under the
+ * ring (Shift+ArrowUp and Shift+ArrowDown scroll; see scrollStep). The keys are an
  * editor's: arrows by character and line, Ctrl by word and paragraph,
  * Home/End to the ends of the line, Shift to extend. For anyone who cannot
  * hold two keys, Enter drops an anchor so plain arrows extend, and Enter
@@ -27,11 +28,32 @@
     End: { direction: 'forward', granularity: 'lineboundary', ctrl: 'documentboundary' }
   };
 
-  const ARROWS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']);
+  const SIDEWAYS = new Set(['ArrowLeft', 'ArrowRight']);
 
-  /** Whether a key in the ring's mode starts text mode: Shift and an arrow, nothing else. */
+  const onlyShift = (e) => !!e && !!e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey;
+
+  /** Whether a key in the ring's mode starts text mode: Shift and a sideways arrow, nothing else. */
   function startsTextMode(e) {
-    return !!e && ARROWS.has(e.key) && !!e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey;
+    return onlyShift(e) && SIDEWAYS.has(e.key);
+  }
+
+  /**
+   * How far one press scrolls: the browser's own step for an arrow key, so
+   * holding it down scrolls on as the browser does.
+   */
+  const SCROLL_STEP_PX = 40;
+
+  /**
+   * Shift+ArrowUp and Shift+ArrowDown in the ring's mode scroll, without
+   * moving the ring: pixels to scroll by, up negative, or 0 for any other
+   * key. They used to start text mode as the sideways ones do, which left a
+   * keyboard user no way to scroll a page with nothing to step to.
+   */
+  function scrollStep(e) {
+    if (!onlyShift(e)) return 0;
+    if (e.key === 'ArrowDown') return SCROLL_STEP_PX;
+    if (e.key === 'ArrowUp') return -SCROLL_STEP_PX;
+    return 0;
   }
 
   /**
@@ -83,6 +105,8 @@
 
   root.TuiTextRules = {
     startsTextMode: startsTextMode,
+    scrollStep: scrollStep,
+    SCROLL_STEP_PX: SCROLL_STEP_PX,
     textAction: textAction,
     isReadableText: isReadableText,
     firstCharOffset: firstCharOffset

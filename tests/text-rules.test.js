@@ -11,17 +11,31 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 
 require('../src/text-rules.js');
-const { startsTextMode, textAction, isReadableText, firstCharOffset } = globalThis.TuiTextRules;
+const { startsTextMode, scrollStep, SCROLL_STEP_PX, textAction, isReadableText, firstCharOffset } = globalThis.TuiTextRules;
 
 const key = (k, mods = {}) => ({ key: k, shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, ...mods });
 
-test('Shift and an arrow start text mode; nothing else does', () => {
+test('Shift and a sideways arrow start text mode; nothing else does', () => {
   assert.equal(startsTextMode(key('ArrowRight', { shiftKey: true })), true);
-  assert.equal(startsTextMode(key('ArrowDown', { shiftKey: true })), true);
+  assert.equal(startsTextMode(key('ArrowLeft', { shiftKey: true })), true);
+  assert.equal(startsTextMode(key('ArrowDown', { shiftKey: true })), false);
+  assert.equal(startsTextMode(key('ArrowUp', { shiftKey: true })), false);
   assert.equal(startsTextMode(key('ArrowRight')), false);
   assert.equal(startsTextMode(key('ArrowRight', { shiftKey: true, ctrlKey: true })), false);
   assert.equal(startsTextMode(key('Home', { shiftKey: true })), false);
   assert.equal(startsTextMode(key('Enter', { shiftKey: true })), false);
+});
+
+test('Shift and ArrowUp or ArrowDown scroll by the browser’s step; nothing else does', () => {
+  assert.equal(scrollStep(key('ArrowDown', { shiftKey: true })), SCROLL_STEP_PX);
+  assert.equal(scrollStep(key('ArrowUp', { shiftKey: true })), -SCROLL_STEP_PX);
+  assert.equal(SCROLL_STEP_PX, 40);
+  assert.equal(scrollStep(key('ArrowDown')), 0);
+  assert.equal(scrollStep(key('ArrowRight', { shiftKey: true })), 0);
+  assert.equal(scrollStep(key('ArrowDown', { shiftKey: true, ctrlKey: true })), 0);
+  assert.equal(scrollStep(key('ArrowDown', { shiftKey: true, altKey: true })), 0);
+  assert.equal(scrollStep(key('PageDown', { shiftKey: true })), 0);
+  assert.equal(scrollStep(null), 0);
 });
 
 test('the arrows move by character and line, with Ctrl by word and paragraph', () => {
