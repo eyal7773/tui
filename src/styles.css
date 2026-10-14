@@ -48,6 +48,15 @@
   max-height: none !important;
 }
 
+/* In a box: the keys are the box's (see editBox in engine.js). The ring
+   hugs it, a pixel thicker, with no fill over the text. Its transition
+   draws the change. */
+.tui-focus-indicator.tui-editing {
+  outline-offset: 0 !important;
+  outline-width: calc(var(--tui-ring-width, 3px) + 1px) !important;
+  background-color: transparent !important;
+}
+
 /* Specific overrides for common elements if needed */
 .tui-focus-indicator img {
   filter: brightness(1.2) !important;

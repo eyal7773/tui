@@ -1,0 +1,37 @@
+# Enter in a text box gives it the keys, and the ring hugs the box itself, without its gap and fill; Escape gives them back and the ring is as before; Tab to the next box gives that one the keys, and the ring goes with them. A box the page puts the user in when the ring arrives keeps the plain ring until a letter is typed, since until then the arrows still step on. A textarea and an editable div look the same, and the look goes when the page itself takes focus away.
+pages/edit-look.html
+start:css=#top
+key:ArrowDown
+eval:expectLook({ editing: false, offset: '2px', fill: 'wash', around: 'name wrapper' })
+key:Enter
+eval:expectLook({ editing: true, offset: '0px', fill: 'none', around: 'name' })
+type:x
+wait:200
+eval:expectLook({ editing: true, around: 'name' })
+key:Escape
+eval:expectLook({ editing: false, offset: '2px', fill: 'wash', around: 'name wrapper' })
+key:ArrowDown
+wait:300
+eval:(() => { if (document.activeElement.id !== 'city') throw new Error('the page did not put the user in the box: ' + document.activeElement.id); return expectLook({ editing: false, fill: 'wash' }); })()
+type:y
+wait:200
+eval:expectLook({ editing: true, offset: '0px', fill: 'none', around: 'city' })
+key:Escape
+eval:expectLook({ editing: false, around: 'city-box' })
+key:ArrowDown
+key:Enter
+eval:expectLook({ editing: true, fill: 'none', around: 'about' })
+key:Tab
+eval:(() => { if (document.activeElement.id !== 'notes') throw new Error('Tab went to ' + document.activeElement.id); return expectLook({ editing: true, offset: '0px', fill: 'none', around: 'notes' }); })()
+key:Escape
+eval:expectLook({ editing: false, offset: '2px', fill: 'wash', around: 'notes' })
+key:ArrowUp
+key:Enter
+eval:expectLook({ editing: true, around: 'about' })
+key:Escape
+eval:expectLook({ editing: false, offset: '2px', fill: 'wash', around: 'about' })
+key:Enter
+eval:expectLook({ editing: true, around: 'about' })
+eval:(() => { document.activeElement.blur(); return 'the page took focus away'; })()
+wait:200
+eval:expectLook({ editing: false, offset: '2px', fill: 'wash', around: 'about' })

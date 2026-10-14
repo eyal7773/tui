@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>In a box or not</title>
+<style>
+  body { font: 16px/1.5 sans-serif; margin: 20px; }
+  .field { display: flex; gap: 12px; align-items: center; width: 420px; padding: 6px; margin: 14px 0; }
+  .field input { flex: 1; }
+  textarea { width: 400px; height: 60px; display: block; margin: 14px 0; }
+  #notes { width: 400px; min-height: 40px; border: 1px solid #888; padding: 4px; margin: 14px 0; }
+</style>
+</head>
+<body>
+  <!-- Enter in a text box gives it the keys, and the ring hugs the box
+       without its gap and fill; Escape, Tab or a click elsewhere gives them
+       back. A box the page puts the user in when the ring arrives (#city's
+       wrapper focuses it, as ASOS does) keeps the plain ring until a letter
+       is typed: until then the arrows still step on. -->
+  <a id="top" href="#top">Top link</a>
+  <div class="field"><label for="name">Name</label><input id="name" value="Noa Shamir"></div>
+  <div class="field" id="city-box" tabindex="0"><label for="city">City</label><input id="city" value="Haifa"></div>
+  <textarea id="about">A few lines about the trip.</textarea>
+  <div id="notes" contenteditable="true">Notes to edit</div>
+  <a id="end" href="#end">End link</a>
+  <script>
+    const city = document.getElementById('city');
+    document.getElementById('city-box').addEventListener('focus', () => setTimeout(() => city.focus(), 50), { once: true });
+
+    // The ring as drawn: in a box or not, and around which element.
+    window.ringLook = () => {
+      const s = document.getElementById('tui-spotlight');
+      const st = getComputedStyle(s);
+      const r = s.getBoundingClientRect();
+      const around = ['name', 'city', 'about', 'notes', 'city-box'].find(id => {
+        const b = document.getElementById(id).getBoundingClientRect();
+        return Math.abs(b.left - r.left) <= 1 && Math.abs(b.top - r.top) <= 1 &&
+          Math.abs(b.width - r.width) <= 1 && Math.abs(b.height - r.height) <= 1;
+      }) || (document.getElementById('name').parentElement.contains(document.activeElement) ? 'name wrapper' : 'other');
+      return {
+        editing: s.classList.contains('tui-editing'),
+        offset: st.outlineOffset,
+        fill: st.backgroundColor === 'rgba(0, 0, 0, 0)' ? 'none' : 'wash',
+        around: around
+      };
+    };
+
+    window.expectLook = (want) => {
+      const got = ringLook();
+      for (const k of Object.keys(want)) {
+        if (got[k] !== want[k]) throw new Error('ring ' + k + ' is not ' + want[k] + ': ' + JSON.stringify(got));
+      }
+      return JSON.stringify(got);
+    };
+  </script>
+</body>
+</html>

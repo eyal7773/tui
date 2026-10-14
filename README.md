@@ -100,6 +100,16 @@ or end of the line.
 The geometry lives in `src/line-rules.js` as pure functions over rectangles, so
 the awkward cases can be tested against exact coordinates.
 
+## Typing in a box
+
+**Enter on a text box goes in, and the ring shows it.** On arrival the ring
+stands a little off the box with its tinted fill, and the arrows still move
+the ring. Once the box has the keys, after Enter, a click, or a first letter
+typed into a box the page put you in, the ring hugs the box, a pixel thicker
+and with no fill over the text: the arrows now move the caret. Esc gives the
+keys back and the ring steps out again. The same goes for a text area, an
+editable area and a slider.
+
 ## Enter on a list row
 
 **Enter activates the link in the row, not the row.** Lists are usually built

@@ -109,6 +109,9 @@ class SpatialEngine {
             const wasPrevented = e.defaultPrevented;
             this.handleKeydown(e);
             if (!wasPrevented && e.defaultPrevented) this.swallowedKeys.add(e.key);
+            // A first letter typed in a box the page put the user in makes
+            // its arrows the box's (see isUntouchedBox).
+            this.refreshEditLook();
         }, { capture: true });
         on(document, 'keyup', (e) => {
             if (!this.swallowedKeys.delete(e.key)) return;
@@ -123,7 +126,9 @@ class SpatialEngine {
             const pulledIn = !!this.arrival && e.target === this.arrival.box && e.timeStamp - this.arrival.at < 1000;
             if (pulledIn) this.arrivedIn = e.target;
             else if (e.target !== this.arrivedIn) this.arrivedIn = null;
+            this.refreshEditLook();
         }, { capture: true });
+        on(document, 'focusout', () => this.refreshEditLook(), { capture: true });
         on(document, 'mousedown', () => { this.arrival = null; this.arrivedIn = null; }, { capture: true, passive: true });
         // NOTE: We keep scroll passive and bubbling as scroll doesn't usually get trapped like keys
         // Captured on the document rather than heard on the window: scroll does
@@ -398,6 +403,12 @@ class SpatialEngine {
     highlight(el) {
         this.lastActiveElement = el; // Track what we are highlighting
 
+        // In a box, with its keys: drawn hugging it (see editBox). Before
+        // the ring may be hidden below, so a hidden ring is never left
+        // marked as in a box.
+        this.editing = !!this.editBox();
+        if (this.spotlight) this.spotlight.classList.toggle('tui-editing', this.editing);
+
         // In text mode the caret stands in for the ring.
         if (this.textMode) {
             if (this.spotlight) this.spotlight.style.display = 'none';
@@ -447,6 +458,33 @@ class SpatialEngine {
             // Ensure it's visible (in case it was hidden)
             this.spotlight.style.display = 'block';
         }
+    }
+
+    /**
+     * The box the keys are in, when the ring is on it: a text box, a list or
+     * a slider, entered with Enter, clicked, or typed into. Not one the page
+     * put the user in that they have not touched yet, whose arrows still
+     * step on (see isUntouchedBox). The ring then hugs the box, without its
+     * gap and fill (styles.css, tui-editing): it had looked the same in and
+     * out of a box, and nothing told whether the next arrow would move the
+     * caret or the ring.
+     */
+    editBox() {
+        const ring = this.lastActiveElement;
+        if (!this.isActiveMode || this.textMode || !ring || !ring.isConnected) return null;
+        const active = this.deepActiveElement();
+        if (!active || !this.shouldTrapArrows(active)) return null;
+        if (!this.userHasActed || this.arrivedIn === active) return null;
+        const holds = ring === active || ring._tui_input === active ||
+            this.composedContains(ring, active) || this.composedContains(active, ring);
+        return holds ? active : null;
+    }
+
+    /** Redraws the ring when the keys moved into a box or out of one. */
+    refreshEditLook() {
+        if (!this.spotlight || !this.lastActiveElement) return;
+        if (!!this.editBox() === !!this.editing) return;
+        this.highlight(this.lastActiveElement);
     }
 
     /**
@@ -4286,7 +4324,7 @@ class SpatialEngine {
             ['Acting', [
                 [['Enter'], 'Click the item in the ring'],
                 [['Enter Enter'], 'Twice, quickly: a double-click'],
-                [['Enter'], 'On a text box or a list: go in, to type or pick'],
+                [['Enter'], 'On a text box or a list: go in, to type or pick. The ring then hugs it'],
                 [['Esc'], 'Leave a text box']
             ]],
             ['The page’s own keys', [
