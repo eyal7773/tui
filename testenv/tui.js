@@ -27,6 +27,12 @@
  *   goto:<url>       navigate
  *   eval:<js>        run JS in the page and print the result
  *   ring             print where the ring is
+ *   timing           print how long the extension took in this run: its
+ *                    scripts loading in the page and in each frame, each
+ *                    key press, and all its work added up (see timing.js).
+ *                    With this step the run loads a timed copy of the
+ *                    extension from .work/; src/ is not changed. The numbers
+ *                    are also saved to .work/last-timing.json
   report           after F10 > Report a problem: read the log the report window shows
   report-has:<re>  fail unless that log matches the regular expression
   report-lacks:<re> fail if it does
@@ -66,6 +72,7 @@ const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
 const { unpack } = require('./mhtml');
+const timing = require('./timing');
 
 let EXT = path.resolve(__dirname, '../src');
 const WORK = path.join(__dirname, '.work');
@@ -362,6 +369,13 @@ async function runStep(page, step, state) {
         case 'wait': await page.waitForTimeout(Number(arg) || 500); break;
         case 'goto': await page.goto(arg, { waitUntil: 'domcontentloaded' }); await page.waitForTimeout(1500); break;
         case 'eval': console.log('  eval  ', await page.evaluate(arg)); break;
+        case 'timing': {
+            const frames = await timing.readTiming(page);
+            const { summary, lines } = timing.describe(frames);
+            for (const l of lines) console.log(`  ${l}`);
+            fs.writeFileSync(state.timingFile, JSON.stringify({ summary, frames }, null, 2));
+            break;
+        }
         case 'ring': { const r = await ring(page); console.log(`  ring → ${fmt(r.ring)}  focus → ${fmt(r.focus)}`); break; }
         case 'shot': {
             const dir = path.join(WORK, 'shots');
@@ -470,6 +484,9 @@ async function main() {
     const [w, h] = opts.viewport.split('x').map(Number);
 
     const profile = path.join(WORK, 'profiles', opts.profile);
+    // One per profile, so runs in parallel (perf.js) keep their own.
+    const suffix = opts.profile === 'default' ? '' : `-${opts.profile}`;
+    if (opts.steps.includes('timing')) EXT = timing.timedBuild(EXT, path.join(WORK, `timed-ext${suffix}`));
     // Chrome keeps the extension's service worker from the last run in the
     // profile and starts that one, so a change to background.js went untested.
     // Only the cached worker goes; sign-ins and cookies stay.
@@ -484,7 +501,7 @@ async function main() {
     });
     const missing = archive ? await replay(ctx, archive) : [];
     const state = { failed: 0, shots: 0, settle: 250, headed: opts.headed, ctx: ctx,
-        live: /^https?:/i.test(url) && !archive };
+        live: /^https?:/i.test(url) && !archive, timingFile: path.join(WORK, `last-timing${suffix}.json`) };
     // Routed after replay, so it is the one that answers the report's address.
     await standInServer(ctx, state);
     try {
@@ -505,7 +522,7 @@ async function main() {
             await cdp.send('Emulation.setUserAgentOverride', { userAgent: ua.replace('HeadlessChrome', 'Chrome') });
         }
         // One per profile, so runs in parallel (survey.js) keep their own.
-        const logFile = path.join(WORK, opts.profile === 'default' ? 'last-console.log' : `last-console-${opts.profile}.log`);
+        const logFile = path.join(WORK, `last-console${suffix}.log`);
         const log = fs.createWriteStream(logFile);
         page.on('console', (m) => {
             const t = m.text();

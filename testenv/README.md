@@ -73,5 +73,25 @@ step's element is not on it, tui.js exits 3 and the suite shows SKIP with
 the reason, not FAIL. `node suite.js --local` runs only the scenarios on
 local pages and reports, whose result depends on the extension alone.
 
+## Measure how long the extension takes
+
+    node tui.js https://en.wikipedia.org/wiki/United_States key:ArrowDown*5 timing
+    node perf.js
+
+The `timing` step prints how long the extension's scripts took to load in
+the page and in each frame, its work for each key press, and all its work in
+the run added up. A run with this step loads a copy of the extension made
+under `.work/`, with a script before the extension's own that times its
+listeners, observers and timers. Content scripts have their own JavaScript
+world, so only the extension's work is timed, never the page's. `src/` is
+not changed. The numbers match the long tasks Chrome itself reports for the
+same key presses.
+
+`perf.js` opens ten heavy live sites (Amazon, YouTube, CNN, Wikipedia, ...),
+presses the same keys on each, and prints a table. A number over its budget
+is marked `!` and the exit code is 1. `--runs n` keeps each site's best of n
+runs, and `--ext <dir>` measures an older build checked out with
+`git worktree add`, to see whether a change made the extension slower.
+
 Everything generated (unpacked reports, screenshots, profiles, the last
 console log) goes to `.work/`, which git ignores.

@@ -258,6 +258,25 @@ and a recheck.
 | Patreon | patreon.com | Long animated stretch: Down scrolls on to the next section | - |
 | Olympics | olympics.com | Modal consent card that focuses its own link: the press that stayed on it drew no ring | d9486bc |
 
+## Timed
+
+`node perf.js --runs 2` on 2026-10-14 (version 0.1.100): how long the
+extension takes, in ms. `!` is over budget (load 50, frames 300, a key 16 on
+average and 50 at most, longest single run 50).
+
+| Site | Frames | Load | Frames' load | Key avg | Key max | Longest |
+|---|---|---|---|---|---|---|
+| Amazon (s?k=headphones) | 3 | 12 | 12 | 64! | 150! | 150! |
+| YouTube | 1 | 25 | 0 | 20! | 44 | 44 |
+| Yahoo | 1 | 20 | 0 | 16 | 38 | 38 |
+| Booking.com | 5 | 19 | 27 | 57! | 142! | 142! |
+| eBay (search) | 17 | 17 | 111 | 109! | 227! | 227! |
+| CNN | 33 | 25 | 314! | 129! | 242! | 241! |
+| BBC News | 18 | 24 | 493! | 39! | 110! | 110! |
+| Microsoft | 4 | 29 | 27 | 57! | 101! | 101! |
+| Stack Overflow (question) | 49 | 20 | 2527! | 318! | 518! | 518! |
+| Wikipedia (United_States) | 1 | 15 | 0 | 131! | 250! | 250! |
+
 ## Blocked (not counted)
 
 Answered the harness with a bot check, so the page itself was never seen:
