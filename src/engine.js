@@ -1985,7 +1985,10 @@ class SpatialEngine {
             const stretched = this.stretchedRect(el);
             if (stretched) return stretched;
         }
-        if (!el.children || !el.children.length || !window.TuiViewRules) return rect;
+        // firstElementChild, not children: rectOf runs on every element of
+        // the page on every key press, and a children list made for each
+        // was a few ms of it.
+        if (!el.firstElementChild || !window.TuiViewRules) return rect;
         const head = this.cellHeadRect(el, rect);
         if (head) return head;
         const display = window.getComputedStyle(el).display;
@@ -1996,9 +1999,10 @@ class SpatialEngine {
         // from it. Children taken out of the flow are left out: a
         // screen-reader label parked at -9999px would stretch the box.
         const empty = rect.width < 4 || rect.height < 4;
-        const parts = Array.from(el.children)
-            .filter(c => !/absolute|fixed/.test(window.getComputedStyle(c).position))
-            .map(c => c.getBoundingClientRect());
+        const parts = [];
+        for (let c = el.firstElementChild; c; c = c.nextElementSibling) {
+            if (!/absolute|fixed/.test(window.getComputedStyle(c).position)) parts.push(c.getBoundingClientRect());
+        }
         if (!empty) parts.push(rect);
         return window.TuiViewRules.unionRect(rect, parts);
     }
@@ -2478,6 +2482,9 @@ class SpatialEngine {
         }
 
         // 2. Filter candidates
+        // The window's size, read once: read for each of thousands of
+        // elements it was 6ms a key press on Wikipedia.
+        const viewport = { width: window.innerWidth, height: window.innerHeight };
         this.candidates = all.filter(el => {
             const rect = this.rectOf(el);
 
@@ -2492,9 +2499,9 @@ class SpatialEngine {
             // the checks below (styles, text, ancestors) on all of them took
             // 140ms a key press.
             if (window.TuiViewRules) {
-                if (!window.TuiViewRules.withinReach(rect, undefined, this.reachRatio)) return false;
-            } else if (rect.bottom < 0 || rect.top > window.innerHeight ||
-                       rect.right < 0 || rect.left > window.innerWidth) {
+                if (!window.TuiViewRules.withinReach(rect, viewport, this.reachRatio)) return false;
+            } else if (rect.bottom < 0 || rect.top > viewport.height ||
+                       rect.right < 0 || rect.left > viewport.width) {
                 return false;
             }
 
@@ -2819,8 +2826,6 @@ class SpatialEngine {
             }
         }
 
-        let bestCandidate = null;
-        let minScore = Infinity;
         const scored = [];
 
         // Determine if we are currently starting from a sticky/fixed context (e.g. Header)
@@ -2914,105 +2919,6 @@ class SpatialEngine {
             }
 
             if (!isValid) return;
-
-            // Check for Overlapping Elements (Visual Obstruction)
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            const topEl = this.deepElementFromPoint(centerX, centerY);
-
-
-            // The hit missed the candidate: it may have been cut away by a box
-            // that hides its overflow. weather.com parks its hourly carousel's
-            // back button just outside the carousel, where it cannot be seen,
-            // and ArrowLeft from a daily row went 660px up to it. See
-            // clipState. Nothing is hit when the middle is off the window.
-            const hitSelf = topEl && (topEl === cand || this.composedContains(cand, topEl));
-
-            // Under a cover over the whole window, only what is in it or drawn
-            // above it can be used. That also rules out what is off screen,
-            // where there is nothing to hit, and what sits behind a bar on
-            // top of the cover, such as Reuters' consent banner.
-            if (cover && !hitSelf && !this.composedContains(cover, cand)) return;
-            const clip = hitSelf ? 'visible' : this.clipState(cand, rect, currentEl);
-            if (clip === 'clipped') return;
-
-            if (clip !== 'scrollable' && topEl && !this.composedContains(cand, topEl) && !this.composedContains(topEl, cand)) {
-                // FIX: Allow Label <-> Input obstruction
-                // If the candidate is a label and it's obscured by its target input (or vice versa), that's fine.
-                // This happens with custom checkboxes/radios where the input is on top of the label.
-                let isRelatedControl = false;
-                if (cand.tagName === 'LABEL' && cand.getAttribute('for') === topEl.id) {
-                    isRelatedControl = true;
-                } else if (topEl.tagName === 'LABEL' && topEl.getAttribute('for') === cand.id) {
-                    isRelatedControl = true;
-                }
-
-                if (isRelatedControl) {
-                    // Valid obstruction by related control -> Allow
-                } else if (this.spillsFromRing(currentEl, topEl, centerX, centerY)) {
-                    // Drawn by the ring's own element, and gone once the ring leaves it.
-                } else {
-                    // BUG FIX: Allow navigation to elements obscured by fixed/sticky containers (headers/footers)
-                    // We must traverse up the tree because elementFromPoint might return a child of the fixed element.
-                    // A hover card that says it is not there does not hide what
-                    // is under it either. Wikipedia's page previews stay open
-                    // over the next paragraph after focus has moved on, marked
-                    // aria-hidden, and every link under them was skipped.
-                    // Only the whole card, though: an icon marked so inside a
-                    // dialog still has the dialog around it. Google Calendar's
-                    // event details hide their icons that way, and the arrows
-                    // went to the buttons behind the dialog instead of its links.
-                    let isObstructingFixed = false;
-                    let obstacle = topEl;
-                    while (obstacle && obstacle !== document.body) {
-                        const hidden = obstacle.getAttribute && obstacle.getAttribute('aria-hidden');
-                        if ((hidden === '' || hidden === 'true' ||
-                            (obstacle.getAttribute && obstacle.getAttribute('role') === 'tooltip')) &&
-                            !this.drawnAround(obstacle, cand)) {
-                            isObstructingFixed = true;
-                            break;
-                        }
-                        const style = window.getComputedStyle(obstacle);
-                        // Nor does a cover that cannot be seen. eBay hides a
-                        // carousel's disabled back arrow at opacity 0, right
-                        // over the first chip, and ArrowDown passed the chip
-                        // for the sidebar. Only up to the box they share: a
-                        // transparent ancestor of both hides the candidate too.
-                        if (parseFloat(style.opacity) < 0.05 && !this.composedContains(obstacle, cand)) {
-                            isObstructingFixed = true;
-                            break;
-                        }
-                        if (style.position === 'fixed' || style.position === 'sticky') {
-                            // A bar or banner, which the page scrolls out from
-                            // under. Not a cover over most of the window: on
-                            // Target a bot check fills it, and ArrowDown went
-                            // to a button behind it. Taller than an edge bar
-                            // can be (see coveredEdges), it hides what it
-                            // covers, unless the candidate is inside it.
-                            // Nor a box floating in the middle of the window:
-                            // the LA Times' terms dialog is one, and ArrowDown
-                            // from its Privacy Policy link went to a page link
-                            // behind it rather than to its Continue button.
-                            // A bar lies along the top or bottom edge; a column
-                            // down the side is let through as before.
-                            const box = obstacle.getBoundingClientRect();
-                            const maxBar = window.innerHeight * (window.TuiViewRules ? window.TuiViewRules.MAX_EDGE_OVERLAY_RATIO : 0.6);
-                            const edges = window.TuiViewRules
-                                ? window.TuiViewRules.coveredEdges(window.innerHeight, [box], 40) : { top: 1 };
-                            const column = box.height >= box.width * 1.5;
-                            const bar = box.height <= maxBar && (edges.top > 0 || edges.bottom > 0 || column);
-                            isObstructingFixed = bar || this.composedContains(obstacle, cand);
-                            break;
-                        }
-                        obstacle = this.composedParent(obstacle);
-                    }
-
-                    if (!isObstructingFixed) {
-                        // Obscured by something unrelated (not a fixed/sticky header)
-                        return;
-                    }
-                }
-            }
 
             const targetIsSticky = this.isSticky(cand);
             let score;
@@ -3108,12 +3014,20 @@ class SpatialEngine {
             }
 
             scored.push({ cand, rect, score });
-
-            if (score < minScore) {
-                minScore = score;
-                bestCandidate = cand;
-            }
         });
+
+        // Nearest first, then the first one nothing hides (isBlocked). Asked
+        // of every candidate that way, the check was 11ms a key press on
+        // Wikipedia. The sort is stable, so of equal scores the first in the
+        // page still wins; a score that is no number, or Infinity, never does.
+        const rank = (s) => (s.score < Infinity ? s.score : Infinity);
+        scored.sort((a, b) => rank(a) - rank(b));
+        const clear = (s) => {
+            if (s.clear === undefined) s.clear = !this.isBlocked(s.cand, s.rect, currentEl, cover);
+            return s.clear;
+        };
+        const best = scored.find(s => s.score < Infinity && clear(s));
+        let bestCandidate = best ? best.cand : null;
 
         // A box taller than the window, with stops of its own, is entered
         // rather than stopped on: the ring around it shows nothing of where
@@ -3123,16 +3037,129 @@ class SpatialEngine {
         if (bestCandidate && mode !== 'extreme') {
             const box = scored.find(s => s.cand === bestCandidate).rect;
             if (box.height > window.innerHeight) {
-                const inside = scored.filter(s => s.cand !== bestCandidate && this.composedContains(bestCandidate, s.cand));
+                const inside = scored.filter(s => s.cand !== bestCandidate && this.composedContains(bestCandidate, s.cand) && clear(s));
                 if (inside.length) bestCandidate = inside.reduce((a, b) => (b.score < a.score ? b : a)).cand;
             }
         }
 
         // Only the five nearest are described, so a long list costs a sort, not a log line each.
-        this.lastRanking = scored.sort((a, b) => a.score - b.score).slice(0, 5)
+        const nearest = [];
+        for (const s of scored) {
+            if (nearest.length === 5) break;
+            if (clear(s)) nearest.push(s);
+        }
+        this.lastRanking = nearest
             .map(s => `${LOG.describe(s.cand, s.rect)} =${Math.round(s.score)}`).join(' | ') || 'none that way';
 
         return bestCandidate;
+    }
+
+    /**
+     * Is a candidate hidden where it stands: under something else (asked of
+     * the browser with elementFromPoint), cut away by a box that clips it, or
+     * behind a cover over the window? The costliest check of a step, so
+     * findBestCandidate asks it of the nearest candidates only.
+     */
+    isBlocked(cand, rect, currentEl, cover) {
+        // Check for Overlapping Elements (Visual Obstruction)
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const topEl = this.deepElementFromPoint(centerX, centerY);
+
+        // The hit missed the candidate: it may have been cut away by a box
+        // that hides its overflow. weather.com parks its hourly carousel's
+        // back button just outside the carousel, where it cannot be seen,
+        // and ArrowLeft from a daily row went 660px up to it. See
+        // clipState. Nothing is hit when the middle is off the window.
+        const hitSelf = topEl && (topEl === cand || this.composedContains(cand, topEl));
+
+        // Under a cover over the whole window, only what is in it or drawn
+        // above it can be used. That also rules out what is off screen,
+        // where there is nothing to hit, and what sits behind a bar on
+        // top of the cover, such as Reuters' consent banner.
+        if (cover && !hitSelf && !this.composedContains(cover, cand)) return true;
+        const clip = hitSelf ? 'visible' : this.clipState(cand, rect, currentEl);
+        if (clip === 'clipped') return true;
+
+        if (clip !== 'scrollable' && topEl && !this.composedContains(cand, topEl) && !this.composedContains(topEl, cand)) {
+            // FIX: Allow Label <-> Input obstruction
+            // If the candidate is a label and it's obscured by its target input (or vice versa), that's fine.
+            // This happens with custom checkboxes/radios where the input is on top of the label.
+            let isRelatedControl = false;
+            if (cand.tagName === 'LABEL' && cand.getAttribute('for') === topEl.id) {
+                isRelatedControl = true;
+            } else if (topEl.tagName === 'LABEL' && topEl.getAttribute('for') === cand.id) {
+                isRelatedControl = true;
+            }
+
+            if (isRelatedControl) {
+                // Valid obstruction by related control -> Allow
+            } else if (this.spillsFromRing(currentEl, topEl, centerX, centerY)) {
+                // Drawn by the ring's own element, and gone once the ring leaves it.
+            } else {
+                // BUG FIX: Allow navigation to elements obscured by fixed/sticky containers (headers/footers)
+                // We must traverse up the tree because elementFromPoint might return a child of the fixed element.
+                // A hover card that says it is not there does not hide what
+                // is under it either. Wikipedia's page previews stay open
+                // over the next paragraph after focus has moved on, marked
+                // aria-hidden, and every link under them was skipped.
+                // Only the whole card, though: an icon marked so inside a
+                // dialog still has the dialog around it. Google Calendar's
+                // event details hide their icons that way, and the arrows
+                // went to the buttons behind the dialog instead of its links.
+                let isObstructingFixed = false;
+                let obstacle = topEl;
+                while (obstacle && obstacle !== document.body) {
+                    const hidden = obstacle.getAttribute && obstacle.getAttribute('aria-hidden');
+                    if ((hidden === '' || hidden === 'true' ||
+                        (obstacle.getAttribute && obstacle.getAttribute('role') === 'tooltip')) &&
+                        !this.drawnAround(obstacle, cand)) {
+                        isObstructingFixed = true;
+                        break;
+                    }
+                    const style = window.getComputedStyle(obstacle);
+                    // Nor does a cover that cannot be seen. eBay hides a
+                    // carousel's disabled back arrow at opacity 0, right
+                    // over the first chip, and ArrowDown passed the chip
+                    // for the sidebar. Only up to the box they share: a
+                    // transparent ancestor of both hides the candidate too.
+                    if (parseFloat(style.opacity) < 0.05 && !this.composedContains(obstacle, cand)) {
+                        isObstructingFixed = true;
+                        break;
+                    }
+                    if (style.position === 'fixed' || style.position === 'sticky') {
+                        // A bar or banner, which the page scrolls out from
+                        // under. Not a cover over most of the window: on
+                        // Target a bot check fills it, and ArrowDown went
+                        // to a button behind it. Taller than an edge bar
+                        // can be (see coveredEdges), it hides what it
+                        // covers, unless the candidate is inside it.
+                        // Nor a box floating in the middle of the window:
+                        // the LA Times' terms dialog is one, and ArrowDown
+                        // from its Privacy Policy link went to a page link
+                        // behind it rather than to its Continue button.
+                        // A bar lies along the top or bottom edge; a column
+                        // down the side is let through as before.
+                        const box = obstacle.getBoundingClientRect();
+                        const maxBar = window.innerHeight * (window.TuiViewRules ? window.TuiViewRules.MAX_EDGE_OVERLAY_RATIO : 0.6);
+                        const edges = window.TuiViewRules
+                            ? window.TuiViewRules.coveredEdges(window.innerHeight, [box], 40) : { top: 1 };
+                        const column = box.height >= box.width * 1.5;
+                        const bar = box.height <= maxBar && (edges.top > 0 || edges.bottom > 0 || column);
+                        isObstructingFixed = bar || this.composedContains(obstacle, cand);
+                        break;
+                    }
+                    obstacle = this.composedParent(obstacle);
+                }
+
+                if (!isObstructingFixed) {
+                    // Obscured by something unrelated (not a fixed/sticky header)
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

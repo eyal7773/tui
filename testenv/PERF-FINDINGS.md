@@ -50,6 +50,22 @@ elements (44ms a press; `getBoundingClientRect` 22ms of it), and
 would be cheaper, but `rectOf` moves some boxes (a stretched link's card,
 an inline link around a block picture), so that needs care.
 
+*Done (fix 1, second part):* the window's size is read once per search,
+not once per element (6ms a press); `rectOf` walks the children without
+making a list of them; and what covers a candidate (`isBlocked`) is asked
+of the nearest ones only, until one is clear, instead of all of them
+(11ms to under 2). Wikipedia 84 to 58ms a press in the profile; with the
+`timing` step and perf.js's keys, run alone, 71 to 53, the same in three
+runs. The ring's path on six live sites is the same on both builds. What
+is left: `getBoundingClientRect` on every element (20ms a press), which
+only a way to skip elements, or to keep their boxes between presses,
+would save.
+
+perf.js runs three sites at a time, and that makes its numbers swing a
+lot: in one run Wikipedia showed 140 before and 175 after, while alone it
+was 71 and 53 every time. Compare builds one site at a time with the
+`timing` step, or with `profile`.
+
 **2. Stack Overflow (80ms a press): the page search is redone on every
 press.** The page keeps changing (ads, animations), every change marks the
 search stale, so `discover` runs each time (43ms a press). In it, the walk
@@ -66,7 +82,8 @@ worktree).
 ## Where to start
 
 1. **Done:** the profile step, and the two causes above.
-2. **Done:** cause 1 (filter order). **Next:** cause 2 (search redone), which
+2. **Done:** cause 1 (filter order, window size, children, covered
+   check). **Next:** cause 2 (search redone), which
    is also most of Microsoft's time; profile CNN, eBay and Amazon too.
 3. **Frames**: load only a small starter script in a frame, and the rest of
    the engine on the first arrow it receives. Needs the background to inject

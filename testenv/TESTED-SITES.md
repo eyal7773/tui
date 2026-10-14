@@ -291,6 +291,11 @@ steadier number.
 | Amazon (s?k=headphones) | 90 | 104 | 31 → 32 (same) |
 | Stack Overflow (question) | 182 | 182 | |
 
+Then the window's size read once, and what covers a candidate asked of the
+nearest only (PERF-FINDINGS.md, fix 1, second part). Wikipedia, perf.js's
+keys with the `timing` step, run alone three times on each build: 71 to 53
+a press on average; profile 84 to 58.
+
 ## Blocked (not counted)
 
 Answered the harness with a bot check, so the page itself was never seen:
