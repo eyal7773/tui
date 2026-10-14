@@ -23,6 +23,9 @@
  *   click:<what>     a real mouse click
  *   type:<text>      type into whatever has focus
  *   wait:<ms>        pause
+ *   motion:<reduce|no-preference> what the page reports for
+ *                    prefers-reduced-motion from now on, as the system
+ *                    setting to show fewer animations would
  *   shot[:<name>]    screenshot into .work/shots/
  *   goto:<url>       navigate
  *   eval:<js>        run JS in the page and print the result
@@ -373,6 +376,7 @@ async function runStep(page, step, state) {
         case 'click': (await find(page, arg)).click(); await page.waitForTimeout(500); break;
         case 'type': await page.keyboard.type(arg); break;
         case 'wait': await page.waitForTimeout(Number(arg) || 500); break;
+        case 'motion': await page.emulateMedia({ reducedMotion: arg || 'reduce' }); console.log(`  motion ${arg || 'reduce'}`); break;
         case 'goto': await page.goto(arg, { waitUntil: 'domcontentloaded' }); await page.waitForTimeout(1500); break;
         case 'eval': console.log('  eval  ', await page.evaluate(arg)); break;
         case 'profile': {

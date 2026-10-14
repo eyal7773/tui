@@ -199,7 +199,33 @@
     return width * height >= view.width * view.height * PAGE_FRAME_RATIO;
   }
 
+  /** Space kept between the scroll cue and the edge it sits by. */
+  const CUE_INSET = 8;
+
+  /**
+   * Where the scroll cue goes (see showScrollCue): by the right edge of the
+   * part of rect on screen, halfway down it, and inside the window however
+   * little of rect shows. rect is the box that scrolled, or the window.
+   *
+   * @param {{left:number,top:number,right:number,bottom:number}} rect
+   * @param {{width:number,height:number}} viewport
+   * @param {{width:number,height:number}} size the cue's own size
+   * @returns {{left:number,top:number}} in window coordinates
+   */
+  function scrollCueSpot(rect, viewport, size) {
+    const top = Math.max(rect.top, 0);
+    const bottom = Math.min(rect.bottom, viewport.height);
+    const right = Math.min(rect.right, viewport.width);
+    const clamp = (value, max) => Math.max(CUE_INSET, Math.min(value, max - CUE_INSET));
+    return {
+      left: clamp(right - size.width - CUE_INSET, viewport.width - size.width),
+      top: clamp((top + bottom - size.height) / 2, viewport.height - size.height)
+    };
+  }
+
   root.TuiViewRules = {
+    scrollCueSpot,
+    CUE_INSET,
     holdsPage,
     PAGE_FRAME_RATIO,
     firstInReadingOrder,

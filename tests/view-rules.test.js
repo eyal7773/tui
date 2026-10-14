@@ -11,7 +11,7 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 
 require('../src/view-rules.js');
-const { withinReach, onScreen, bandFor, holdsPage, VERTICAL_REACH_RATIO } = globalThis.TuiViewRules;
+const { withinReach, onScreen, bandFor, holdsPage, scrollCueSpot, CUE_INSET, VERTICAL_REACH_RATIO } = globalThis.TuiViewRules;
 
 const VIEW = { width: 1000, height: 800 };
 
@@ -210,4 +210,33 @@ test('only the part of a frame on screen counts', () => {
   // A tall frame scrolled mostly above the window.
   assert.equal(holdsPage(r(0, -2000, 1000, 2200), VIEW), false);
   assert.equal(holdsPage(r(0, 0, 1000, 5000), VIEW), true);
+});
+
+/* ── where the scroll cue goes ──────────────────────────────────────────── */
+
+const CUE = { width: 36, height: 36 };
+
+test('the page scrolled: the cue is by the right edge of the window, halfway down', () => {
+  const spot = scrollCueSpot(r(0, 0, 1000, 800), VIEW, CUE);
+  assert.deepEqual(spot, { left: 1000 - 36 - CUE_INSET, top: (800 - 36) / 2 });
+});
+
+test('a box scrolled: by its own right edge, halfway down it', () => {
+  const spot = scrollCueSpot(r(100, 200, 400, 300), VIEW, CUE);
+  assert.deepEqual(spot, { left: 500 - 36 - CUE_INSET, top: 200 + (300 - 36) / 2 });
+});
+
+test('a box partly off screen: halfway down the part that shows', () => {
+  const spot = scrollCueSpot(r(100, -500, 400, 900), VIEW, CUE);
+  assert.equal(spot.top, (0 + 400 - 36) / 2);
+});
+
+test('a box wider than the window: by the edge of the window', () => {
+  assert.equal(scrollCueSpot(r(-50, 0, 2000, 800), VIEW, CUE).left, 1000 - 36 - CUE_INSET);
+});
+
+test('the cue stays inside the window, however little of the box shows', () => {
+  const low = scrollCueSpot(r(0, 790, 20, 300), VIEW, CUE);
+  assert.ok(low.top + 36 <= 800 - CUE_INSET, JSON.stringify(low));
+  assert.ok(low.left >= CUE_INSET, JSON.stringify(low));
 });

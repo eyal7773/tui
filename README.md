@@ -69,7 +69,8 @@ for anyone who had set it, and made fast navigation feel sluggish for everyone
 else. **Settings -> Motion** can also force smooth or instant, overriding the
 system either way.
 
-The setting covers both the page scroll and the ring's own movement.
+The setting covers the page scroll, the ring's own movement, and the cues for
+Shift+↑↓ and Esc: with motion off they appear and go without moving.
 
 ## Home and End
 
@@ -145,6 +146,11 @@ left to scroll the key does nothing. The ring keeps to its element as the page
 moves, even out of sight, and the next arrow goes on from what is on the
 screen rather than pulling the page back. Inside a text box Shift+↑↓ select,
 as usual.
+
+A small arrow by the right edge of what scrolled, the window or the box,
+nudges the way it went, and stays while the key is held. With nothing left to
+scroll it bumps into a bar instead, so a press at the end of the page is still
+seen to have been heard.
 
 ## Selecting text
 
@@ -227,7 +233,9 @@ extension stops intercepting anything, so every shortcut the site defines behave
 exactly as it would with the extension uninstalled. **Esc again takes it back**
 and navigation resumes.
 
-The toolbar badge clears while the page has the keys, so the state is visible.
+A switch at the bottom of the window, beside an Esc key, slides off or on, and
+the ring shrinks away as the keys are handed over. The toolbar badge clears
+too while the page has the keys.
 It lasts until the page is reloaded and is never saved; a fresh page always
 starts out navigable. Inside a text box Escape keeps its existing meaning of
 leaving the box, so the handover needs a second press there.

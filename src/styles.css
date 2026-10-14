@@ -153,13 +153,15 @@
 /* A keycap: light face, a darker edge under it that the press pushes into.
    Drawn in the hint and in text mode's badge. */
 #tui-hint .tui-hint-chord,
-#tui-text-badge .tui-hint-chord {
+#tui-text-badge .tui-hint-chord,
+#tui-toggle-cue .tui-hint-chord {
   display: inline-flex;
   gap: 3px;
 }
 
 #tui-hint .tui-hint-key,
-#tui-text-badge .tui-hint-key {
+#tui-text-badge .tui-hint-key,
+#tui-toggle-cue .tui-hint-key {
   display: inline-block;
   padding: 5px 10px;
   background: linear-gradient(#fafafa, #e4e4e4);
@@ -415,4 +417,145 @@
   #tui-help .tui-help-card {
     transition: none;
   }
+}
+
+/* The cues (see showScrollCue and showToggleCue in engine.js): made once,
+   shown by tui-cue-visible, never in the mouse's way, in the ring's colour.
+   tui-still: motion is off, here or in the system, so they only appear and
+   go. */
+#tui-scroll-cue,
+#tui-toggle-cue {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  pointer-events: none !important;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s, transform 0.2s ease;
+  direction: ltr !important;
+}
+
+#tui-scroll-cue.tui-cue-visible,
+#tui-toggle-cue.tui-cue-visible {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.12s ease, visibility 0s, transform 0.2s ease;
+}
+
+#tui-scroll-cue.tui-still,
+#tui-scroll-cue.tui-still *,
+#tui-toggle-cue.tui-still,
+#tui-toggle-cue.tui-still * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Shift+ArrowUp or Shift+ArrowDown: an arrow by the edge of what scrolled.
+   At the end it bumps into a bar. */
+#tui-scroll-cue {
+  width: 36px;
+  height: 36px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 18px;
+  background: rgba(20, 20, 20, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+#tui-scroll-cue .tui-cue-arrow {
+  display: block;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 10px solid var(--tui-ring, #00ff00);
+}
+
+#tui-scroll-cue.tui-cue-down .tui-cue-arrow {
+  border-bottom: 0;
+  border-top: 10px solid var(--tui-ring, #00ff00);
+}
+
+#tui-scroll-cue .tui-cue-edge {
+  display: none;
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--tui-ring, #00ff00);
+}
+
+#tui-scroll-cue.tui-cue-bump .tui-cue-edge {
+  display: block;
+}
+
+/* The bar is on the side the arrow points to. */
+#tui-scroll-cue.tui-cue-down {
+  flex-direction: column-reverse;
+}
+
+/* Escape: Esc and a switch, at the bottom middle of the window. */
+#tui-toggle-cue {
+  left: 50% !important;
+  bottom: 24px !important;
+  transform: translate(-50%, 8px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background-color: #2d2d2d;
+  color: #ffffff;
+  border: 1px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  font: 13px/1 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  white-space: nowrap;
+}
+
+#tui-toggle-cue.tui-cue-visible {
+  transform: translate(-50%, 0);
+}
+
+/* Read out, not drawn. */
+#tui-toggle-cue .tui-cue-said {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+}
+
+#tui-toggle-cue .tui-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: #666;
+  transition: background-color 0.25s ease;
+}
+
+#tui-toggle-cue .tui-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  transition: transform 0.25s ease;
+}
+
+#tui-toggle-cue.tui-switch-on .tui-switch {
+  background: var(--tui-ring, #00ff00);
+}
+
+#tui-toggle-cue.tui-switch-on .tui-switch-knob {
+  transform: translateX(18px);
 }

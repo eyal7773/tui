@@ -221,7 +221,7 @@ class SpatialEngine {
             // on the target under its pinned header; on Microsoft's home
             // page, a class toggled on one box many times a second.
             records.forEach(r => {
-                if (r.target === this.spotlight) return;
+                if (r.target === this.spotlight || this.isCue(r.target)) return;
                 if (r.type === 'childList') this.discoveryDirty = true;
                 else this.restyled.add(r.target);
             });
@@ -238,7 +238,7 @@ class SpatialEngine {
             // pushes the story 300px down. Moving the ring writes its own
             // style, so its records are ignored or this would never settle.
             // scrollToReveal's scroll-margin on the target is ours as well.
-            const ours = (r) => r.target === this.spotlight ||
+            const ours = (r) => r.target === this.spotlight || this.isCue(r.target) ||
                 (r.target === this.lastActiveElement && r.attributeName === 'style');
             if (records.some(r => !ours(r))) this.scheduleRingUpdate(true);
         });
@@ -537,6 +537,7 @@ class SpatialEngine {
 
         // Logged by applyEnabledState, as handedOver.
         this.applyEnabledState();
+        this.showToggleCue(!suspended);
     }
 
     /** Recomputes isEnabled from its inputs and tidies up the ring if needed. */
@@ -550,9 +551,15 @@ class SpatialEngine {
             // Turned off while the page is open: drop the ring immediately rather
             // than leaving a stale highlight behind.
             this.isActiveMode = false;
-            if (this.spotlight) this.spotlight.style.display = 'none';
+            this.hideRingAway();
             if (this.isMenuOpen) this.closeMenu();
             this.exitTextMode(false);
+        } else if (this.ringFade) {
+            // Back on before the ring had faded: it stays hidden until an
+            // arrow, as it always has.
+            this.ringFade.cancel();
+            this.ringFade = null;
+            if (this.spotlight) this.spotlight.style.display = 'none';
         }
 
         console.log(`[TUI] ${this.isEnabled ? 'Enabled' : 'Disabled'}` +
@@ -566,6 +573,152 @@ class SpatialEngine {
             type: 'STATUS_CHANGED',
             payload: { supported: true, enabled: this.isEnabled }
         });
+    }
+
+    /**
+     * Hides the ring. Handed over with Escape, it shrinks and fades first, so
+     * the eye sees where it went; any other way, or with motion off, it goes
+     * at once. Scale and opacity, because styles.css pins the ring's
+     * transform.
+     */
+    hideRingAway() {
+        const spot = this.spotlight;
+        if (!spot) return;
+        const shown = spot.style.display !== 'none';
+        if (!shown || !this.isSuspended || !this.animates() || typeof spot.animate !== 'function') {
+            spot.style.display = 'none';
+            return;
+        }
+        const fade = spot.animate([{ opacity: 1, scale: '1' }, { opacity: 0, scale: '0.85' }],
+            { duration: 200, easing: 'ease-in' });
+        this.ringFade = fade;
+        fade.onfinish = () => {
+            if (this.ringFade !== fade) return;
+            this.ringFade = null;
+            if (!this.isEnabled) spot.style.display = 'none';
+        };
+    }
+
+    /** Whether things move: the motion setting, or the system's when it is on auto. */
+    animates() {
+        return this.motionSettings().behavior === 'smooth';
+    }
+
+    /** Whether node is one of the cues (showScrollCue, showToggleCue) or in one. */
+    isCue(node) {
+        return [this.scrollCue, this.toggleCue].some(cue => cue && (cue === node || cue.contains(node)));
+    }
+
+    /**
+     * Makes a cue: an element of ours over the page, never in its way, in the
+     * ring's colour. Made once and kept, shown and hidden by class, and the
+     * observer leaves its changes out: showing it on every press must not
+     * have the page searched again (see discover).
+     */
+    makeCue(id) {
+        const cue = document.createElement('div');
+        cue.id = id;
+        document.body.appendChild(cue);
+        return cue;
+    }
+
+    /** The ring's colour and the motion setting, onto a cue. */
+    styleCue(cue) {
+        const color = this.spotlight && this.spotlight.style.getPropertyValue('--tui-ring');
+        if (color) cue.style.setProperty('--tui-ring', color);
+        cue.classList.toggle('tui-still', !this.animates());
+    }
+
+    /**
+     * Escape handed the keyboard over or took it back: Esc and a switch, at
+     * the bottom of the window, the switch sliding to its new side. There
+     * was no sign of it on the page; only the toolbar icon changed.
+     */
+    showToggleCue(on) {
+        if (!document.body || window.innerWidth < 160 || window.innerHeight < 80) return;
+        let cue = this.toggleCue;
+        if (!cue || !cue.isConnected) {
+            cue = this.toggleCue = this.makeCue('tui-toggle-cue');
+            cue.setAttribute('role', 'status');
+            // Words for screen readers, which announce a status by its text.
+            const said = document.createElement('span');
+            said.className = 'tui-cue-said';
+            cue.appendChild(said);
+            cue.appendChild(this.keyChord(['Esc']));
+            const track = document.createElement('span');
+            track.className = 'tui-switch';
+            track.setAttribute('aria-hidden', 'true');
+            const knob = document.createElement('span');
+            knob.className = 'tui-switch-knob';
+            track.appendChild(knob);
+            cue.appendChild(track);
+        }
+        this.styleCue(cue);
+        cue.querySelector('.tui-cue-said').textContent = on
+            ? 'TUI Navigator on'
+            : 'TUI Navigator off: Escape turns it back on';
+        // Drawn on the side it leaves, then moved, so the knob slides across.
+        cue.classList.toggle('tui-switch-on', !on);
+        void cue.offsetWidth;
+        cue.classList.toggle('tui-switch-on', on);
+        cue.classList.add('tui-cue-visible');
+        clearTimeout(this.toggleCueTimer);
+        this.toggleCueTimer = setTimeout(() => cue.classList.remove('tui-cue-visible'), 1300);
+    }
+
+    /**
+     * Shift+ArrowUp or Shift+ArrowDown scrolled: a small arrow by the right
+     * edge of what scrolled, nudging the way it went. With nothing left to
+     * scroll it bumps against a bar and back, so the key is seen to have
+     * been heard. Held down, the cue stays until the key is let go.
+     *
+     * @param {Element|Window|null} scroller what scrolled; null for nothing
+     */
+    showScrollCue(scroller, key, repeat) {
+        if (!document.body || window.innerHeight < 80) return;
+        let cue = this.scrollCue;
+        if (!cue || !cue.isConnected) {
+            cue = this.scrollCue = this.makeCue('tui-scroll-cue');
+            cue.setAttribute('aria-hidden', 'true');
+            const edge = document.createElement('span');
+            edge.className = 'tui-cue-edge';
+            const arrow = document.createElement('span');
+            arrow.className = 'tui-cue-arrow';
+            cue.append(edge, arrow);
+        }
+        this.styleCue(cue);
+        const down = key === 'ArrowDown';
+        const bump = !scroller;
+        cue.classList.toggle('tui-cue-down', down);
+        cue.classList.toggle('tui-cue-bump', bump);
+
+        const viewport = { width: document.documentElement.clientWidth || window.innerWidth, height: window.innerHeight };
+        const rect = scroller && scroller !== window
+            ? scroller.getBoundingClientRect()
+            : { left: 0, top: 0, right: viewport.width, bottom: viewport.height };
+        const size = { width: cue.offsetWidth, height: cue.offsetHeight };
+        const spot = window.TuiViewRules
+            ? window.TuiViewRules.scrollCueSpot(rect, viewport, size)
+            : { left: viewport.width - size.width - 8, top: (viewport.height - size.height) / 2 };
+        cue.style.left = `${spot.left}px`;
+        cue.style.top = `${spot.top}px`;
+        cue.classList.add('tui-cue-visible');
+
+        // Once a press, not on every repeat of a held key. The last press's
+        // nudge holds the arrow where it ended; a new press starts from the
+        // middle, and with motion off stays there.
+        const arrow = cue.querySelector('.tui-cue-arrow');
+        if (!repeat && typeof arrow.getAnimations === 'function') arrow.getAnimations().forEach(a => a.cancel());
+        if (!repeat && this.animates() && typeof arrow.animate === 'function') {
+            const way = down ? 1 : -1;
+            const frames = bump
+                ? [{ transform: 'translateY(0)' }, { transform: `translateY(${way * 5}px)`, offset: 0.35 },
+                    { transform: `translateY(${-way * 2}px)`, offset: 0.7 }, { transform: 'translateY(0)' }]
+                : [{ transform: `translateY(${-way * 3}px)` }, { transform: `translateY(${way * 3}px)` }];
+            arrow.animate(frames, { duration: bump ? 350 : 250, easing: 'ease-out', fill: bump ? 'none' : 'forwards' });
+        }
+        clearTimeout(this.scrollCueTimer);
+        this.scrollCueTimer = setTimeout(() => cue.classList.remove('tui-cue-visible'), repeat ? 350 : 600);
     }
 
     /**
@@ -2225,7 +2378,7 @@ class SpatialEngine {
             '[role="treeitem"], [role="checkbox"], [role="radio"], [role="switch"], ' +
             '[contenteditable]:not([contenteditable="false"])';
         // The extension's own menu has pointer rows too.
-        const ours = '#tui-menu-container, #tui-hint, #tui-text-badge, #tui-help';
+        const ours = '#tui-menu-container, #tui-hint, #tui-text-badge, #tui-help, #tui-scroll-cue, #tui-toggle-cue';
         const found = [];
         const cursorOf = new Map();
         const cursor = (el) => {
@@ -3674,6 +3827,7 @@ class SpatialEngine {
         const box = own ? at : at && this.scrollBoxOf(at, key);
         const scroller = box || (this.canScrollPage(key) && !this.isPageScrollLocked() ? window : null);
         LOG.event('scroll', { key: key, why: 'shift', box: box ? LOG.describe(box) : undefined, none: !scroller || undefined });
+        this.showScrollCue(scroller, key, e.repeat);
         if (!scroller) return;
         // Scrolling away from where the ring arrived: a layout shift must
         // not pull the page back to it (keepArrivalInView).

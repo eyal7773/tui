@@ -1,0 +1,54 @@
+# Shift+ArrowUp and Shift+ArrowDown show an arrow by the right edge of what scrolled, the window or the box, and bump it against a bar when nothing can scroll; held, it stays up until the key is let go. Escape shows Esc and a switch at the bottom middle, off then on, and the ring fades out; not inside a text box. With fewer animations asked for, the same cues appear without moving.
+pages/cues.html
+start:css=#top
+key:Shift+ArrowDown
+eval:expectCue({ shown: true, down: true, bump: false, edge: null, still: false, moving: true }, 'window')
+wait:700
+eval:expectCue({ shown: false })
+key:Shift+ArrowUp*2
+eval:expectCue({ shown: true, down: false, bump: true, edge: 'above' }, 'window')
+start:css=#list a[href="#i3"]
+key:Shift+ArrowDown
+eval:expectCue({ shown: true, down: true, bump: false }, 'list')
+eval:holdShiftDown(15)
+wait:600
+eval:expectCue({ shown: false })
+eval:(() => { scrollTo(0, document.documentElement.scrollHeight); return scrollY; })()
+start:css=#end
+key:Shift+ArrowDown
+eval:expectCue({ shown: true, down: true, bump: true, edge: 'below' }, 'window')
+eval:(() => { document.body.style.overflow = 'hidden'; scrollTo(0, 0); return 'page locked'; })()
+start:css=#top
+key:Shift+ArrowDown
+eval:expectCue({ shown: true, down: true, bump: true }, 'window')
+eval:(() => { document.body.style.overflow = ''; return 'unlocked'; })()
+key:ArrowDown
+eval:(() => { document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); const s = document.getElementById('tui-spotlight'); if (s.style.display === 'none' || !s.getAnimations().length) throw new Error('the ring did not fade out'); return 'ring fading'; })()
+wait:300
+eval:expectSwitch({ shown: true, on: false, still: false, label: 'TUI Navigator off: Escape turns it back on' })
+eval:(() => { if (ringShown()) throw new Error('the ring is still up'); return 'ring gone'; })()
+key:Escape
+eval:expectSwitch({ shown: true, on: true, label: 'TUI Navigator on' })
+eval:(() => { if (ringShown()) throw new Error('the ring came back before an arrow'); return 'ring waits for an arrow'; })()
+wait:1700
+eval:expectSwitch({ shown: false })
+key:ArrowDown
+eval:(() => { if (!ringShown()) throw new Error('no ring after the arrow'); return 'ring back'; })()
+eval:(() => { const k = () => document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); k(); k(); return 'off and on at once'; })()
+wait:400
+eval:(() => { if (ringShown()) throw new Error('the ring stayed up after off and on'); return expectSwitch({ shown: true, on: true }); })()
+key:ArrowDown
+eval:(() => { if (!ringShown()) throw new Error('no ring after the arrow'); return 'ring back'; })()
+start:css=#name
+key:Enter
+wait:1700
+key:Escape
+eval:expectSwitch({ shown: false })
+motion:reduce
+start:css=#top
+key:Shift+ArrowDown
+eval:expectCue({ shown: true, down: true, still: true, moving: false }, 'window')
+key:Escape
+eval:expectSwitch({ shown: true, on: false, still: true })
+eval:(() => { const s = document.getElementById('tui-spotlight'); if (s.style.display !== 'none' || s.getAnimations().length) throw new Error('the ring did not go at once'); return 'ring gone at once'; })()
+key:Escape
