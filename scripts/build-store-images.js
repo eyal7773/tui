@@ -1,12 +1,15 @@
 /**
  * Builds the Chrome Web Store images in assets/store/ from raw screenshots:
- * four 1280x800 screenshots (a caption over a framed shot) and the 440x280
- * small promo tile.
+ * five 1280x800 screenshots (a caption over a framed shot) and the 440x280
+ * small promo tile. Five is as many as the store takes.
  *
  *   node scripts/build-store-images.js <dir with the raw 1280x800 shots>
  *
- * The raw shots were taken with testenv on a fresh profile (no sign-ins), with
- * made-up stats: ring.png, menu.png, f10.png, stats.png.
+ * The raw shots were taken with testenv at --viewport 1280x800 on a fresh
+ * profile (no sign-ins), with made-up stats: ring.png, menu.png, f10.png,
+ * stats.png, scroll.png. scroll.png is Wikipedia in the middle of a held
+ * Shift+ArrowDown (keydown events with repeat set, 60ms apart), so the cue
+ * is still up when the shot is taken.
  */
 
 const fs = require('node:fs');
@@ -33,7 +36,10 @@ const SHOTS = [
     sub: 'Duplicate the page, go back, select text, see every shortcut.' },
   { file: '4-stats.png', raw: 'stats.png',
     title: 'See what your hands <em>didn’t have to do</em>',
-    sub: 'Clicks, reaches and minutes saved. Kept on your computer only.' }
+    sub: 'Clicks, reaches and minutes saved. Kept on your computer only.' },
+  { file: '5-scroll.png', raw: 'scroll.png',
+    title: 'Scroll <em>without losing your place</em>',
+    sub: 'Shift+↑↓ scrolls the page. The ring stays on what you chose.' }
 ];
 
 const base = `
@@ -45,9 +51,9 @@ const base = `
 function shotPage({ title, sub }, dataUrl) {
   return `<!doctype html><html><head><style>${base}
     body { width: 1280px; height: 800px; display: flex; flex-direction: column; align-items: center; }
-    h1 { margin-top: 38px; font-size: 44px; font-weight: 700; letter-spacing: -0.5px; }
-    p { margin-top: 8px; font-size: 21px; color: #b8c2cf; }
-    .window { margin-top: 30px; width: 1040px; border-radius: 12px 12px 0 0; overflow: hidden;
+    h1 { margin-top: 42px; font-size: 48px; font-weight: 700; letter-spacing: -0.5px; }
+    p { margin-top: 9px; font-size: 22px; color: #b8c2cf; }
+    .window { margin-top: 36px; width: 1040px; border-radius: 12px 12px 0 0; overflow: hidden;
       background: #fff; box-shadow: 0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.08); }
     .bar { height: 30px; background: #e9ecef; display: flex; gap: 7px; align-items: center; padding-left: 14px; }
     .bar i { width: 11px; height: 11px; border-radius: 50%; background: #c4c9cf; }
