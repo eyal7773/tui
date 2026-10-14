@@ -113,6 +113,14 @@
   color: white;
 }
 
+/* Above Report a problem, set apart from what acts on the page. */
+.tui-menu-separator {
+  height: 1px;
+  margin: 5px 0;
+  padding: 0;
+  background-color: #444;
+}
+
 .tui-menu-footer {
   padding: 8px 15px;
   font-size: 11px;

@@ -416,7 +416,7 @@ not have it can be excluded (see Excluded sites).
 | **Shift + ↑ / ↓** | Scroll, the ring stays put (see below) |
 | **Shift + ← / →** | Select text (see below) |
 | **Esc** | Leave a text box, or hand the keyboard back to the page |
-| **F10** | The menu: duplicate the page, go back, select text, report a problem, keyboard shortcuts |
+| **F10** | The menu: duplicate the page, go back, select text, keyboard shortcuts, report a problem |
 
 ### The popup
 Click the extension icon for:

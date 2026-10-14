@@ -337,4 +337,4 @@ Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed o
 ## Local pages only (no real site)
 
 modal-over-page, fixed-frame-over-page, select-text, select-text-menu,
-report-log, stretched-link, shift-scroll, restyled-pointer, cues.
+report-log, stretched-link, shift-scroll, restyled-pointer, cues, menu-order.

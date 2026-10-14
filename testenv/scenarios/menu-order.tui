@@ -1,0 +1,20 @@
+# The F10 menu: Report a problem is last, under a line, and the arrows pass over the line both ways; ArrowUp from the first item goes round to it. Keyboard shortcuts lists Shift+arrows for scrolling.
+pages/help-window.html
+start:css=#first
+key:F10
+eval:(() => { const got = Array.from(document.querySelectorAll('#tui-menu-container .tui-menu-list li')).map(li => li.classList.contains('tui-menu-separator') ? '-' : li.textContent).join(' | '); const want = 'Duplicate page | Go to previous page | Select text | Keyboard shortcuts | - | Report a problem'; if (got !== want) throw new Error(got); return got; })()
+shot:menu
+key:ArrowUp
+eval:(() => { const s = document.querySelector('#tui-menu-container .tui-menu-item.selected'); if (!s || s.textContent !== 'Report a problem') throw new Error('selected: ' + (s && s.textContent)); return 'ArrowUp from the top: Report a problem'; })()
+key:ArrowUp
+eval:(() => { const s = document.querySelector('#tui-menu-container .tui-menu-item.selected'); if (!s || s.textContent !== 'Keyboard shortcuts') throw new Error('selected: ' + (s && s.textContent)); return 'up over the line: Keyboard shortcuts'; })()
+key:ArrowDown
+eval:(() => { const s = document.querySelector('#tui-menu-container .tui-menu-item.selected'); if (!s || s.textContent !== 'Report a problem') throw new Error('selected: ' + (s && s.textContent)); return 'down over the line: Report a problem'; })()
+key:ArrowDown
+eval:(() => { const s = document.querySelector('#tui-menu-container .tui-menu-item.selected'); if (!s || s.textContent !== 'Duplicate page') throw new Error('selected: ' + (s && s.textContent)); return 'round to the top'; })()
+key:ArrowDown*3
+key:Enter
+wait:300
+eval:(() => { const h = document.getElementById('tui-help'); if (!h || getComputedStyle(h).visibility !== 'visible') throw new Error('help not shown'); const dd = Array.from(h.querySelectorAll('dd')).find(d => /^Scroll the page/.test(d.textContent)); const dt = dd && dd.previousElementSibling; const keys = dt ? dt.textContent.replace(/\s+/g, '') : ''; if (!/Shift/.test(keys) || !/↑/.test(keys) || !/↓/.test(keys)) throw new Error('no Shift+↑↓ scroll row: ' + keys); return keys + ': ' + dd.textContent; })()
+shot:help
+key:Escape

@@ -30,7 +30,7 @@ the saved frame meant for it, matched by order.
 
 ## Check the report's log
 
-After `key:F10 key:ArrowDown*3 key:Enter` (Report a problem), the `report` step
+After `key:F10 key:ArrowUp key:Enter` (Report a problem, the last item), the `report` step
 reads the log the report window shows, and `report-has:<regex>` and
 `report-lacks:<regex>` check it. `scenarios/report-log.tui` uses them to make
 sure the log says what Enter did and holds nothing from the page.

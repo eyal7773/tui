@@ -2,7 +2,7 @@
 pages/help-window.html
 start:css=#first
 key:F10
-key:ArrowDown*4
+key:ArrowDown*3
 key:Enter
 wait:300
 eval:(() => { const h = document.getElementById('tui-help'); if (!h || getComputedStyle(h).visibility !== 'visible') throw new Error('help not shown'); const k = h.querySelector('kbd'); if (getComputedStyle(k).fontSize !== '12px') throw new Error('page CSS reached the keycaps: ' + getComputedStyle(k).fontSize); return h.querySelectorAll('section').length + ' sections'; })()

@@ -3,7 +3,7 @@
 pages/double-click-rows.html
 start:css=#file1
 key:F10
-key:ArrowDown*3
+key:ArrowUp
 key:Enter
 report
 report-server:500

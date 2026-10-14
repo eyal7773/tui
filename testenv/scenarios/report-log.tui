@@ -5,11 +5,11 @@ start:css=#file1
 key:Enter
 key:Enter
 key:F10
-key:ArrowDown*3
+key:ArrowUp
 key:Enter
 # Asking a second time brings the same window forward (report fails on two).
 key:F10
-key:ArrowDown*3
+key:ArrowUp
 key:Enter
 report
 report-has:^version: \d+\.\d+\.\d+$

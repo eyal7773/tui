@@ -4114,15 +4114,25 @@ class SpatialEngine {
 
         const list = document.createElement('ul');
         list.className = 'tui-menu-list';
+        // Report a problem is last, under a line: it is about the extension,
+        // not the page. F10 then ArrowUp reaches it, the selection going
+        // round from the first item. The line is no item, so the arrows
+        // pass over it.
         for (const [action, label] of [
             ['duplicate', 'Duplicate page'],
             ['back', 'Go to previous page'],
             ['select-text', 'Select text'],
-            ['report', 'Report a problem'],
-            // Last, so the items above keep their places: F10, three times
-            // down and Enter is still Report a problem.
-            ['help', 'Keyboard shortcuts']
+            ['help', 'Keyboard shortcuts'],
+            ['-'],
+            ['report', 'Report a problem']
         ]) {
+            if (action === '-') {
+                const line = document.createElement('li');
+                line.className = 'tui-menu-separator';
+                line.setAttribute('role', 'separator');
+                list.appendChild(line);
+                continue;
+            }
             const item = document.createElement('li');
             item.className = 'tui-menu-item';
             item.dataset.action = action;
@@ -4291,7 +4301,7 @@ class SpatialEngine {
                 [['Esc'], 'Leave text mode']
             ]],
             ['Menu', [
-                [['F10'], 'Open the menu: duplicate the page, go back, select text, report a problem, these keys'],
+                [['F10'], 'Open the menu: duplicate the page, go back, select text, these keys, report a problem'],
                 [['Esc'], 'Close it']
             ]]
         ];
