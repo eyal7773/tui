@@ -4,8 +4,8 @@
  * keyboard alone.
  *
  * Shift+ArrowLeft or Shift+ArrowRight starts it, from the text under the
- * ring (Shift+ArrowUp and Shift+ArrowDown scroll; see scrollStep). The keys are an
- * editor's: arrows by character and line, Ctrl by word and paragraph,
+ * ring; Shift+ArrowUp and Shift+ArrowDown scroll (see scrollStep). The keys
+ * are an editor's: arrows by character and line, Ctrl by word and paragraph,
  * Home/End to the ends of the line, Shift to extend. For anyone who cannot
  * hold two keys, Enter drops an anchor so plain arrows extend, and Enter
  * again copies what is selected. Escape leaves.

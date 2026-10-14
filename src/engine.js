@@ -3547,9 +3547,10 @@ class SpatialEngine {
      * mouse wheel would, without moving the ring. That is the box the ring
      * is in when it scrolls on its own (a chat list, an open message in
      * Gmail), or the ring's element itself when it is such a box; once that
-     * box is at its end, the next one out, and last the page. With nothing
-     * left to scroll the key does nothing, rather than reaching the page,
-     * where Shift and an arrow would select text.
+     * box is at its end, the next one out, and last the page, unless the
+     * page is locked. With nothing left to scroll the key does nothing,
+     * rather than reaching the page, where Shift and an arrow would select
+     * text.
      */
     scrollByKey(e, step) {
         const key = step > 0 ? 'ArrowDown' : 'ArrowUp';
@@ -3557,7 +3558,7 @@ class SpatialEngine {
             ? this.lastActiveElement : this.deepActiveElement();
         const own = at && at !== document.body && at !== document.documentElement && this.scrollsOnItsOwn(at, key);
         const box = own ? at : at && this.scrollBoxOf(at, key);
-        const scroller = box || (this.canScrollPage(key) ? window : null);
+        const scroller = box || (this.canScrollPage(key) && !this.isPageScrollLocked() ? window : null);
         LOG.event('scroll', { key: key, why: 'shift', box: box ? LOG.describe(box) : undefined, none: !scroller || undefined });
         if (!scroller) return;
         // Scrolling away from where the ring arrived: a layout shift must
@@ -3566,6 +3567,20 @@ class SpatialEngine {
         // A held key repeats faster than a smooth scroll ends, and each new
         // one would restart it from where it had got to.
         scroller.scrollBy({ top: step, behavior: e.repeat ? 'instant' : this.scrollBehavior() });
+    }
+
+    /**
+     * Whether the page has been locked against scrolling, as sites do while
+     * a dialog is open: overflow hidden or clip on <html>, or on <body> when
+     * <html> leaves it visible (the browser takes the window's overflow from
+     * there). The mouse wheel does not scroll such a page, but scrollBy from
+     * a script does, so Shift+ArrowDown moved the page behind the dialog.
+     */
+    isPageScrollLocked() {
+        const locked = (el) => !!el && /hidden|clip/.test(window.getComputedStyle(el).overflowY);
+        const root = document.documentElement;
+        if (window.getComputedStyle(root).overflowY !== 'visible') return locked(root);
+        return locked(document.body);
     }
 
     /** Whether el scrolls with box: inside it, and not in a bar pinned inside it. */

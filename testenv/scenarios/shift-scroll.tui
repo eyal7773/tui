@@ -1,4 +1,4 @@
-# Shift+ArrowUp and Shift+ArrowDown scroll what the mouse wheel would, and the ring stays on its element: the list the ring is in first, the page once the list is at its end. The next plain arrow goes on from the screen. Inside a text box they still select, and Shift+ArrowRight still starts text mode.
+# Shift+ArrowUp and Shift+ArrowDown scroll what the mouse wheel would, and the ring stays on its element: the list the ring is in first, the page once the list is at its end. The next plain arrow goes on from the screen. A page locked while a dialog is open does not scroll, and a held key scrolls at once rather than smoothly. Inside a text box they still select, and Shift+ArrowRight still starts text mode.
 pages/shift-scroll.html
 start:css=#list a[href="#i2"]
 key:ArrowDown
@@ -21,6 +21,11 @@ expect:Top link
 key:Shift+ArrowUp
 eval:(() => { if (scrollY !== 0) throw new Error('page at ' + scrollY); if (String(getSelection())) throw new Error('selected "' + getSelection() + '"'); if (document.getElementById('tui-text-badge')) throw new Error('text mode'); return 'nothing to scroll: nothing happens'; })()
 expect:Top link
+eval:(() => { document.body.style.overflow = 'hidden'; return 'page locked'; })()
+key:Shift+ArrowDown*3
+eval:(() => { if (scrollY !== 0) throw new Error('locked page scrolled to ' + scrollY); document.body.style.overflow = ''; return 'locked page stayed'; })()
+eval:(() => { const ev = { key: 'ArrowDown', shiftKey: true, repeat: true, bubbles: true, cancelable: true }; document.activeElement.dispatchEvent(new KeyboardEvent('keydown', ev)); const y = scrollY; scrollTo(0, 0); if (y !== 40) throw new Error('held key scrolled to ' + y + ' at once'); return 'held key scrolls at once'; })()
+wait:200
 key:Shift+ArrowDown*25
 eval:(() => { if (scrollY !== 1000) throw new Error('page at ' + scrollY); return scrollY; })()
 expect-ring:Top link
