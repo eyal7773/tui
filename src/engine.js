@@ -206,11 +206,28 @@ class SpatialEngine {
 
         // Dynamic DOM Observer
         // Marks candidates dirty so we re-scan when DOM changes
+        this.restyled = new Set();
         this.observer = new MutationObserver((records) => {
             this.candidatesDirty = true;
-            // The ring writes its own style on every move; finding the
-            // targets (see discover) is only redone when the page changed.
-            if (records.some(r => r.target !== this.spotlight)) this.discoveryDirty = true;
+            // Finding the targets (see discover) is only redone when the page
+            // changed, and the ring writes its own style on every move. An
+            // element added or removed has the whole page searched again.
+            // The attributes watched here (class, style, hidden, disabled)
+            // change nothing the search looks for (discoveryObserver watches
+            // those), only the cursor CSS may give an element, so only the
+            // pointer scan under the element is redone (see rescanRestyled).
+            // They had the whole page searched on every press: on Stack
+            // Overflow, the scroll-margin scrollToReveal sets and takes back
+            // on the target under its pinned header; on Microsoft's home
+            // page, a class toggled on one box many times a second.
+            records.forEach(r => {
+                if (r.target === this.spotlight) return;
+                if (r.type === 'childList') this.discoveryDirty = true;
+                else this.restyled.add(r.target);
+            });
+            // The whole search covers them, and the set holds no removed
+            // element until the next key press.
+            if (this.discoveryDirty) this.restyled.clear();
 
             // Sync with active element if it changed effectively during DOM updates
             // (e.g. "New Chat" clicked -> DOM updates -> input gets focus)
@@ -2221,19 +2238,83 @@ class SpatialEngine {
             if (!rules.isGenericTag(el)) return NodeFilter.FILTER_SKIP;
             return cursor(el) === 'pointer' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
         };
+        const consider = (el) => {
+            const parent = this.composedParent(el);
+            if (parent && parent.nodeType === 1 && cursor(parent) === 'pointer') return;
+            if (el.querySelector(controls)) return;
+            if (!el.textContent.trim() && !el.querySelector('img, svg')) return;
+            found.push(el);
+        };
         for (const scope of scopes) {
             // A shadow root inside a control or our UI belongs to it.
             if (scope.host && this.composedClosest(scope.host, controls + ', ' + ours)) continue;
-            const walker = document.createTreeWalker(scope, NodeFilter.SHOW_ELEMENT, skip);
-            for (let el = walker.nextNode(); el; el = walker.nextNode()) {
-                const parent = this.composedParent(el);
-                if (parent && parent.nodeType === 1 && cursor(parent) === 'pointer') continue;
-                if (el.querySelector(controls)) continue;
-                if (!el.textContent.trim() && !el.querySelector('img, svg')) continue;
-                found.push(el);
+            // An element (see rescanRestyled) is looked at itself as well,
+            // unless it is in a control or our UI.
+            if (scope.nodeType === 1) {
+                if (this.composedClosest(scope, controls + ', ' + ours)) continue;
+                if (skip(scope) === NodeFilter.FILTER_ACCEPT) consider(scope);
             }
+            const walker = document.createTreeWalker(scope, NodeFilter.SHOW_ELEMENT, skip);
+            for (let el = walker.nextNode(); el; el = walker.nextNode()) consider(el);
         }
         return found;
+    }
+
+    /**
+     * The pointer scan again, under the elements whose class, style, hidden
+     * or disabled changed since (restyled), instead of a search of the whole
+     * page. What the scan kept under them, in shadow roots too, is dropped
+     * and they are scanned anew. A rule reaching further, a sibling's
+     * (a + b) or a parent's (:has), waits for the next whole search, at most
+     * DISCOVERY_MAX_AGE_MS away.
+     *
+     * @returns {boolean} false when the whole search is needed after all: a
+     *   shadow root under them that the search has not met, whose targets
+     *   are on no list yet (a component that rendered itself into one).
+     */
+    rescanRestyled() {
+        if (!this.restyled || !this.restyled.size) return true;
+        const changed = new Set([...this.restyled].filter(el => el.isConnected));
+        this.restyled.clear();
+        if (!window.TuiTargetRules || !this.pointerScan || !this.scopes || !changed.size) return true;
+
+        // Only the outermost: a box under another changed box is scanned with it.
+        const under = (el) => {
+            for (let node = this.composedParent(el); node; node = this.composedParent(node)) {
+                if (changed.has(node)) return true;
+            }
+            return false;
+        };
+        const roots = [...changed].filter(el => !under(el));
+
+        const known = new Set(this.scopes);
+        for (const root of roots) {
+            const shadow = this.shadowRootOf(root);
+            if (shadow && !known.has(shadow)) return false;
+            for (const el of root.querySelectorAll('*')) {
+                const inner = this.shadowRootOf(el);
+                if (inner && !known.has(inner)) return false;
+            }
+        }
+        const shadows = this.scopes.filter(scope => scope.host && roots.some(root => this.composedContains(root, scope.host)));
+
+        this.pointerScan = this.pointerScan.filter(el => !changed.has(el) && !under(el));
+        this.scanPointerTargets([...roots, ...shadows]).forEach(el => this.pointerScan.push(el));
+
+        // In the order the whole search gives (each scope in turn, in the
+        // order of the page): of two targets that score the same, the first
+        // one wins.
+        const order = new Map(this.scopes.map((scope, i) => [scope, i]));
+        const scopeOf = (el) => {
+            const root = el.getRootNode();
+            return order.has(root) ? order.get(root) : order.size;
+        };
+        this.pointerScan.sort((x, y) => {
+            const byScope = scopeOf(x) - scopeOf(y);
+            if (byScope) return byScope;
+            return x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+        });
+        return true;
     }
 
     /** Starts watching shadow roots the observer does not cover yet. */
@@ -2434,7 +2515,7 @@ class SpatialEngine {
     discover() {
         const fresh = this.discoveryDirty === false && this.discovered &&
             performance.now() - this.discoveredAt < DISCOVERY_MAX_AGE_MS;
-        if (fresh) return this.discovered;
+        if (fresh && this.rescanRestyled()) return this.discovered;
 
         // NOTE: We MUST include tabindex="-1" because many modern apps (like WhatsApp) manage focus programmatically
         // on list items using roving tabindex, usually setting them to -1 when not active.
@@ -2462,6 +2543,8 @@ class SpatialEngine {
             });
         }
         this.pointerScan = targetRules ? this.scanPointerTargets(scopes) : [];
+        this.scopes = scopes;
+        if (this.restyled) this.restyled.clear();
 
         this.discovered = all;
         this.discoveredAt = performance.now();

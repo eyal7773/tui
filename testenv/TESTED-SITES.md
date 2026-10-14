@@ -296,6 +296,12 @@ nearest only (PERF-FINDINGS.md, fix 1, second part). Wikipedia, perf.js's
 keys with the `timing` step, run alone three times on each build: 71 to 53
 a press on average; profile 84 to 58.
 
+Then a class or style change rescans only the box it changed in
+(PERF-FINDINGS.md, fix 2). Profile, ms a press, before → after: Stack
+Overflow 68 → 31, Microsoft 50 → 35, CNN 60 → 42, YouTube 17 → 10, GitHub
+(microsoft/vscode) 32 → 22; Amazon, BBC, Wikipedia unchanged. Same ring path
+on both builds on Microsoft, CNN, YouTube, BBC, Wikipedia, GitHub and Amazon.
+
 ## Blocked (not counted)
 
 Answered the harness with a bot check, so the page itself was never seen:
@@ -330,4 +336,4 @@ Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed o
 ## Local pages only (no real site)
 
 modal-over-page, fixed-frame-over-page, select-text, select-text-menu,
-report-log, stretched-link, shift-scroll.
+report-log, stretched-link, shift-scroll, restyled-pointer.

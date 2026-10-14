@@ -2,7 +2,7 @@
 
 Measured 2026-10-14 on version 0.1.100 with `node perf.js --runs 2` (see
 README, "Measure how long the extension takes"). The full table is in
-TESTED-SITES.md, "Timed". Fix 1 below is in src/; the rest is not yet.
+TESTED-SITES.md, "Timed". Fixes 1 and 2 below are in src/.
 
 ## What was found
 
@@ -75,6 +75,21 @@ Possible fixes: find shadow roots without walking every element, limit the
 cursor scan to what is within reach, or redo only the part of the page that
 changed.
 
+*Done (fix 2):* two things marked the search stale on every press, found
+with a log of what the observer saw. On Stack Overflow, the scroll-margin
+`scrollToReveal` sets on the target and takes back, under the pinned
+header. On Microsoft's home page, a class toggled on one box many times a
+second. A class, style, hidden or disabled change cannot change what the
+search finds, only the cursor CSS gives an element, so now only the pointer
+scan under the changed element is redone (`rescanRestyled`), shadow roots
+under it included; a shadow root the search has not met yet has the whole
+page searched. Profile, ms a press: Stack Overflow 68 to 31, Microsoft 50
+to 35, CNN 60 to 42, YouTube 17 to 10, GitHub 32 to 22; Amazon, BBC and
+Wikipedia the same. The ring's path on seven live sites is the same on both
+builds. scenarios/restyled-pointer.tui fails if any part of the rescan is
+taken out. Left: a CSS rule that makes another element clickable (a + b,
+:has) is seen at the next whole search, at most 2 seconds later.
+
 Both are guesses about the fix until they are measured: change one, run
 `profile` and `perf.js` again, and compare with the old build (`--ext` on a
 worktree).
@@ -83,8 +98,9 @@ worktree).
 
 1. **Done:** the profile step, and the two causes above.
 2. **Done:** cause 1 (filter order, window size, children, covered
-   check). **Next:** cause 2 (search redone), which
-   is also most of Microsoft's time; profile CNN, eBay and Amazon too.
+   check) and cause 2 (search redone). What is left on a press is mostly
+   the box of every element (`getBoundingClientRect`) and, where the page
+   changes elements all the time, the whole search.
 3. **Frames**: load only a small starter script in a frame, and the rest of
    the engine on the first arrow it receives. Needs the background to inject
    the scripts (chrome.scripting) or a dynamic import; check what is allowed.

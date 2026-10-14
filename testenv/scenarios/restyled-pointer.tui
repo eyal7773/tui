@@ -1,0 +1,32 @@
+# Cards that become clickable by a class, on a page that keeps changing a class: the press right after reaches each one, though only the box that changed is scanned again. The class on their box, on the card, on the host of its shadow root, or a component rendered into a new shadow root, the class on it or on a box around it.
+pages/restyled-pointer.html
+start:css=#top
+key:ArrowDown
+expect:css=#on-box
+key:Enter
+key:ArrowDown
+expect:Mint card
+key:ArrowDown
+expect:Sage card
+key:ArrowDown
+expect:css=#on-card
+key:Enter
+key:ArrowDown
+expect:Basil card
+key:ArrowDown
+expect:css=#on-host
+key:Enter
+key:ArrowDown
+eval:ringOn('listed')
+key:ArrowDown
+expect:css=#on-late
+key:Enter
+key:ArrowDown
+eval:ringOn('late')
+key:ArrowDown
+expect:css=#on-inner
+key:Enter
+key:ArrowDown
+eval:ringOn('inner')
+key:ArrowDown
+expect:css=#end

@@ -1,0 +1,84 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Cards made clickable by a class</title>
+<style>
+  body { font: 15px sans-serif; margin: 20px; }
+  a, button { display: block; margin: 10px 0; }
+  .card { padding: 12px; margin: 6px 0; width: 300px; border: 1px solid #ccc; }
+  .live .card { cursor: pointer; }
+  .clickable { cursor: pointer; }
+  #ticker { width: 300px; padding: 6px; background: #eee; }
+  #ticker.blink { background: #ffd; }
+</style></head>
+<body>
+  <!-- A page that keeps changing a class (the ticker), and cards that only
+       become clickable when a button adds a class: to their box, to the card
+       itself, to the host of the shadow root the card is in, or a component
+       that renders itself into a new shadow root, the class on it or on a
+       box around it. The search for targets is
+       kept between presses, and a class change rescans only the box it
+       changed in; the press right after the button must reach the card all
+       the same. Each case has its own button: arriving on a card gives it a
+       tabindex, which has the next press search the whole page. -->
+  <a id="top" href="#top">Top link</a>
+  <button id="on-box" type="button">Turn on the box</button>
+  <div id="cards">
+    <div class="card">Mint card</div>
+    <div class="card">Sage card</div>
+  </div>
+  <button id="on-card" type="button">Turn on the card</button>
+  <div id="solo" class="card">Basil card</div>
+  <button id="on-host" type="button">Turn on the host</button>
+  <tea-list id="listed"></tea-list>
+  <button id="on-late" type="button">Turn on the component</button>
+  <late-card id="late"></late-card>
+  <button id="on-inner" type="button">Turn on the box of a component</button>
+  <div id="late-box"><late-row id="inner"></late-row></div>
+  <div id="ticker">Ticker</div>
+  <a id="end" href="#end">End link</a>
+  <script>
+    const ticker = document.getElementById('ticker');
+    setInterval(() => ticker.classList.toggle('blink'), 50);
+    const card = (root, name) => {
+      root.innerHTML = '<style>.item { padding: 12px; margin: 6px 0; width: 300px; border: 1px solid #ccc; }' +
+        ':host(.live) .item, .item.now { cursor: pointer; }</style><div class="item">' + name + '</div>';
+    };
+    customElements.define('tea-list', class extends HTMLElement {
+      constructor() { super(); card(this.attachShadow({ mode: 'open' }), 'Rooibos card'); }
+    });
+    const on = (id, act) => document.getElementById(id).addEventListener('click', act);
+    on('on-box', () => document.getElementById('cards').classList.add('live'));
+    on('on-card', () => document.getElementById('solo').classList.add('clickable'));
+    on('on-host', () => document.getElementById('listed').classList.add('live'));
+    on('on-late', () => {
+      customElements.define('late-card', class extends HTMLElement {
+        constructor() {
+          super();
+          card(this.attachShadow({ mode: 'open' }), 'Hibiscus card');
+          this.shadowRoot.querySelector('.item').classList.add('now');
+        }
+      });
+      document.getElementById('late').classList.add('ready');
+    });
+    on('on-inner', () => {
+      customElements.define('late-row', class extends HTMLElement {
+        constructor() {
+          super();
+          card(this.attachShadow({ mode: 'open' }), 'Linden card');
+          this.shadowRoot.querySelector('.item').classList.add('now');
+        }
+      });
+      document.getElementById('late-box').classList.add('ready');
+    });
+    // The harness cannot reach into a shadow root: is the ring around the
+    // card in the shadow root of host?
+    window.ringOn = (host) => {
+      const ring = document.getElementById('tui-spotlight').getBoundingClientRect();
+      const item = document.getElementById(host).shadowRoot.querySelector('.item').getBoundingClientRect();
+      const near = (a, b) => Math.abs(a - b) <= 2;
+      if (!(near(ring.left, item.left) && near(ring.top, item.top) && near(ring.right, item.right) && near(ring.bottom, item.bottom))) {
+        throw new Error('the ring is not around the card in #' + host + ': ' + JSON.stringify(ring));
+      }
+      return 'ring around the card in #' + host;
+    };
+  </script>
+</body></html>
