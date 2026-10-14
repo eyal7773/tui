@@ -87,6 +87,15 @@ world, so only the extension's work is timed, never the page's. `src/` is
 not changed. The numbers match the long tasks Chrome itself reports for the
 same key presses.
 
+To see where the time goes, `profile:<Key>[*n]` presses a key under
+Chrome's CPU profiler, on the extension as it is, and prints the extension's
+functions that took the time and the browser calls they made
+(`getBoundingClientRect`, `getComputedStyle`, ...). The profile is saved to
+`.work/last-profile.cpuprofile`, which DevTools opens (Performance, Load
+profile):
+
+    node tui.js https://en.wikipedia.org/wiki/United_States key:ArrowDown profile:ArrowDown*10
+
 `perf.js` opens ten heavy live sites (Amazon, YouTube, CNN, Wikipedia, ...),
 presses the same keys on each, and prints a table. A number over its budget
 is marked `!` and the exit code is 1. `--runs n` keeps each site's best of n

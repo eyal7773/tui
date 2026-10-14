@@ -21,15 +21,43 @@ TESTED-SITES.md, "Timed". Nothing in src/ has been changed for this yet.
   src/ build, with no timing script, showed the same long tasks
   (258, 112, 119 ... ms for ten ArrowDown).
 
+## The cause, from the CPU profile (2026-10-14)
+
+`node tui.js <url> key:ArrowDown profile:ArrowDown*10` (see profile.js)
+profiles ten presses with Chrome's own profiler, on src/ as it is. On both
+sites almost all of a press is `refreshCandidates` (engine.js), the search
+for what the ring could go to. Two different causes:
+
+**1. Wikipedia (160ms a press): every element is checked in full, though
+97% are far off screen.** The page has 6698 elements that could be targets;
+226 are within reach of the screen. `discover` is cached and cheap (17ms a
+press), but the filter after it (the arrow function at engine.js:2481, 140ms
+a press) runs every check on all 6698: offsetParent, getBoundingClientRect,
+getComputedStyle, the clip checks, textContent for "skip to" links,
+closest('details'), the inert ancestors. The cheap check that drops what is
+far from the screen (`withinReach`) comes near the end. Hot lines: 2487
+(offsetParent), 2524-2525 (getComputedStyle), 2580-2591 (clip, textContent).
+Likely fix: take the rectangle and drop what is out of reach first, before
+any other check. Expected: most of the 140ms.
+
+**2. Stack Overflow (80ms a press): the page search is redone on every
+press.** The page keeps changing (ads, animations), every change marks the
+search stale, so `discover` runs each time (43ms a press). In it, the walk
+of the whole DOM for shadow roots (`shadowRoots`, 23ms) and the scan of
+every element's cursor style (`scanPointerTargets`, 16ms) are the cost.
+Possible fixes: find shadow roots without walking every element, limit the
+cursor scan to what is within reach, or redo only the part of the page that
+changed.
+
+Both are guesses about the fix until they are measured: change one, run
+`profile` and `perf.js` again, and compare with the old build (`--ext` on a
+worktree).
+
 ## Where to start
 
-1. **Wikipedia** first: one page, no frames, 100 to 250ms a key, so the
-   cost is in the engine's search itself. Profile one ArrowDown there
-   (Chrome DevTools Performance, or a CPU profile through CDP in tui.js) and
-   see what takes the time: probably the scan of every element for targets
-   (discover), getBoundingClientRect / getComputedStyle on each, forcing
-   layout again and again.
-2. **Stack Overflow and CNN**: the slowest keys, and the most frames.
+1. **Done:** the profile step, and the two causes above.
+2. **Cause 1 (filter order)**, then **cause 2 (search redone)**; profile CNN,
+   eBay and Amazon too, to see which of the two they share.
 3. **Frames**: load only a small starter script in a frame, and the rest of
    the engine on the first arrow it receives. Needs the background to inject
    the scripts (chrome.scripting) or a dynamic import; check what is allowed.

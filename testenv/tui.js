@@ -33,6 +33,11 @@
  *                    With this step the run loads a timed copy of the
  *                    extension from .work/; src/ is not changed. The numbers
  *                    are also saved to .work/last-timing.json
+ *   profile:<Key>[*n] press a key as key: does, under Chrome's CPU profiler,
+ *                    and print the extension's functions that took the time
+ *                    and the browser calls they made (see profile.js). The
+ *                    profile is saved to .work/last-profile.cpuprofile, for
+ *                    DevTools. The extension runs as it is
   report           after F10 > Report a problem: read the log the report window shows
   report-has:<re>  fail unless that log matches the regular expression
   report-lacks:<re> fail if it does
@@ -73,6 +78,7 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const { unpack } = require('./mhtml');
 const timing = require('./timing');
+const profiler = require('./profile');
 
 let EXT = path.resolve(__dirname, '../src');
 const WORK = path.join(__dirname, '.work');
@@ -369,6 +375,23 @@ async function runStep(page, step, state) {
         case 'wait': await page.waitForTimeout(Number(arg) || 500); break;
         case 'goto': await page.goto(arg, { waitUntil: 'domcontentloaded' }); await page.waitForTimeout(1500); break;
         case 'eval': console.log('  eval  ', await page.evaluate(arg)); break;
+        case 'profile': {
+            const [key, times] = arg.split('*');
+            const presses = Number(times) || 1;
+            const stop = await profiler.startProfile(page);
+            for (let n = 0; n < presses; n++) {
+                await page.keyboard.press(key);
+                await page.waitForTimeout(state.settle);
+            }
+            const profile = await stop();
+            const file = path.join(WORK, `last-profile${state.suffix}.cpuprofile`);
+            fs.writeFileSync(file, JSON.stringify(profile));
+            const r = await ring(page);
+            console.log(`  ${arg}  ring → ${fmt(r.ring)}`);
+            for (const l of profiler.describe(profiler.analyse(profile), presses)) console.log(`  ${l}`);
+            console.log(`  saved  ${file}`);
+            break;
+        }
         case 'timing': {
             const frames = await timing.readTiming(page);
             const { summary, lines } = timing.describe(frames);
@@ -501,7 +524,7 @@ async function main() {
     });
     const missing = archive ? await replay(ctx, archive) : [];
     const state = { failed: 0, shots: 0, settle: 250, headed: opts.headed, ctx: ctx,
-        live: /^https?:/i.test(url) && !archive, timingFile: path.join(WORK, `last-timing${suffix}.json`) };
+        live: /^https?:/i.test(url) && !archive, timingFile: path.join(WORK, `last-timing${suffix}.json`), suffix };
     // Routed after replay, so it is the one that answers the report's address.
     await standInServer(ctx, state);
     try {
