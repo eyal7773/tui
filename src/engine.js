@@ -1956,7 +1956,13 @@ class SpatialEngine {
                 currentRect = exitOrigin.rect;
             } else if (current && current !== document.body && !this.isLayoutWrapper(current) &&
                 !(firstPress && (this.isInEdgeBar(current) || this.isOutOfSight(current)))) {
-                currentRect = this.rectOf(current);
+                // A wrapper that took focus for its text box is stepped from
+                // where the ring is drawn: round the box, not the wrapper.
+                // GitHub's clone URL shares its wrapper with a copy button,
+                // and ArrowRight from the box went past the button, which
+                // lay inside the wrapper's edge.
+                const box = current._tui_input;
+                currentRect = this.rectOf(box && box.isConnected && this.composedContains(current, box) ? box : current);
             }
 
             // The element under the ring was hidden or removed since it got
@@ -2845,6 +2851,11 @@ class SpatialEngine {
                 // parent._tui_input === el means we own this tabindex, so never filter it.
                 if (el.parentElement._tui_input === el) {
                     // allow through
+                } else if (el.parentElement._tui_tabindex) {
+                    // The -1 is the engine's, given when a text box beside
+                    // this control took the ring. GitHub's clone URL shares
+                    // its wrapper with a copy button, and from the first
+                    // visit to the box on, the button could not be reached.
                 } else if (el.getAttribute('tabindex') === '0') {
                     // It put itself in the tab order, so it is no hidden
                     // helper. YouTube's sidebar entries are paper-items with
@@ -3605,6 +3616,7 @@ class SpatialEngine {
                 // Make parent focusable if not already
                 if (!parent.hasAttribute('tabindex')) {
                     parent.setAttribute('tabindex', '-1');
+                    parent._tui_tabindex = true;
                 }
 
                 // Link them so Enter key knows where to go

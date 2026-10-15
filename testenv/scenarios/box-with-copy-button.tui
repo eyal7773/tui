@@ -1,0 +1,14 @@
+# A text box sharing its wrapper with a copy button: ArrowRight from the box reaches the button, ArrowLeft goes back, and the button stays reachable after the box was visited.
+pages/box-with-copy-button.html
+start:css=#https
+key:ArrowDown
+expect:css=#clone-url
+key:ArrowRight
+expect:css=#copy
+key:ArrowLeft
+expect:css=#clone-url
+key:ArrowDown
+expect:css=#download
+key:ArrowUp
+key:ArrowRight
+expect:css=#copy

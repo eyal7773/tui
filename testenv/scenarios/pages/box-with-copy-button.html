@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A box with a copy button beside it</title>
+<style>
+  body { font: 16px/1.5 sans-serif; margin: 20px; }
+  .row { display: flex; gap: 24px; align-items: flex-start; }
+  .panel { width: 380px; border: 1px solid #ccc; padding: 12px; }
+  .clone { display: flex; margin: 8px 0; }
+  .clone input { flex-grow: 1; font-family: monospace; }
+  .side a { display: block; margin: 6px 0; }
+</style>
+</head>
+<body>
+  <!-- A read-only address shares one wrapper with its copy button, as on a
+       code host's clone panel. With the ring on the box, ArrowRight went
+       past the button to the links at the side: the step started from the
+       wrapper's right edge, and the -1 tabindex given to the wrapper hid
+       the button too. -->
+  <div class="row">
+    <div class="panel">
+      <button id="https">HTTPS</button> <button id="ssh">SSH</button>
+      <div class="clone">
+        <label for="clone-url" style="position:absolute;left:-9999px">Clone URL</label>
+        <input id="clone-url" readonly value="https://example.com/sample/project.git">
+        <button id="copy" aria-label="Copy URL">&#x2398;</button>
+      </div>
+      <button id="download">Download ZIP</button>
+    </div>
+    <div class="side">
+      <a id="stars" href="#stars">12 stars</a>
+      <a id="forks" href="#forks">3 forks</a>
+    </div>
+  </div>
+</body>
+</html>
