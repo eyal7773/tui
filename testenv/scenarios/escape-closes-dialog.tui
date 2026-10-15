@@ -1,0 +1,25 @@
+# Escape in a page's dialog or menu closes it and leaves the extension on: the arrows still step. On the page itself, Escape still hands the keyboard over.
+pages/escape-closes-dialog.html
+start:css=#card-1
+key:Enter
+wait:200
+key:ArrowRight
+expect:css=#share
+key:Escape
+wait:300
+eval:(() => { if (!document.getElementById('issue').hidden) throw new Error('the dialog is still open'); return 'dialog closed'; })()
+key:ArrowRight
+expect:css=#card-2
+start:css=#more
+key:Enter
+wait:200
+key:ArrowDown
+expect:css=#archive
+key:Escape
+wait:300
+eval:(() => { if (!document.getElementById('menu').hidden) throw new Error('the menu is still open'); return 'menu closed'; })()
+key:ArrowDown
+expect:css=#below
+key:Escape
+wait:300
+eval:(() => { if (document.activeElement !== document.body) throw new Error('Escape on the page did not hand over: ' + document.activeElement.id); return 'handed over'; })()

@@ -550,7 +550,28 @@ class SpatialEngine {
     canToggleHandover() {
         if (!this.userEnabled || this.isExcluded) return false;
         if (this.isMenuOpen) return false;
-        return !this.shouldTrapArrows(this.deepActiveElement());
+        const active = this.deepActiveElement();
+        if (this.shouldTrapArrows(active)) return false;
+        // In a page's dialog, popup or menu, Escape closes it. On Jira it
+        // closed an issue's popup and handed the keyboard over too, so the
+        // arrows did nothing after it. Taking the keyboard back still works
+        // from anywhere.
+        if (!this.isSuspended) {
+            const at = active && active !== document.body ? active : this.lastActiveElement;
+            if (at && at.isConnected && this.inPagePopup(at)) return false;
+        }
+        return true;
+    }
+
+    /** Whether el is in a dialog, popup or menu of the page's, which Escape closes. */
+    inPagePopup(el) {
+        const popup = 'dialog[open], [aria-modal="true"], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]';
+        if (this.composedClosest(el, popup)) return true;
+        try {
+            if (this.composedClosest(el, ':popover-open')) return true;
+        } catch (e) { /* :popover-open unsupported */ }
+        // One drawn over a dimmed page with no role to say what it is.
+        return this.isOverCoveredPage(el);
     }
 
     /**

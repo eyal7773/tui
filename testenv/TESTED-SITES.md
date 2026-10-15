@@ -29,10 +29,12 @@ and a recheck.
 | eBay | ebay.com/sch/i.html?_nkw=headphones (local page) | Carousel back arrow hidden at opacity 0 over the links | hidden-carousel-arrow | e16f060 |
 | Gmail | open message (report zip + local page) | Message taller than the window is one focusable list item: arrows step into it, and the message's own scroll box scrolls before ArrowDown leaves for the folders | message-in-scroll-box | the commit adding the scenario |
 | GitHub | pull request diff (local page) | Review thread's buttons inside a grid cell | github-review-thread | 2f1d227 |
+| GitHub | a repository's Code panel (report zip + local page) | Clone URL box sharing its wrapper with a copy button: ArrowRight from the box reaches the button, ArrowLeft goes back, and the button stays reachable once the box was visited | box-with-copy-button | the commit adding the scenario |
 | Google Calendar | event details over the week view (report zip + local page) | Icons marked aria-hidden inside the details dialog: the arrows stay on the dialog's links instead of going to the small calendar and checkboxes behind it | dialog-hidden-icons | 545b204 |
 | Google Drive | drive.google.com (report zip + local page) | Sidebar tree with one tabindex, file grid, Enter twice opens a file | drive-new-down-home, double-enter | 864664e, 3aa87f0, 3280ca5, 9a9f926 |
 | Google Sheets | a spreadsheet (report zip + local page) | Cell editor parked out of sight: once the user clicked the grid, the arrows move between cells | offscreen-cell-editor | 6a5b736 |
 | Hacker News | news.ycombinator.com | ArrowLeft from the leftmost upvote arrow climbing up | hackernews-left-edge | 83fb8f7 |
+| Jira | a board with an issue opened in a dialog (report zip, dialog emulated + local page) | Escape in the issue dialog or a menu closes it and the extension stays on; Escape on the page itself still hands the keyboard over | escape-closes-dialog | the commit adding the scenario |
 | MDN | developer.mozilla.org/.../Elements/button | Enter into a live-example iframe and back out; ring hidden before first key | mdn-frame-round-trip | f461870, 6a65389 |
 | Microsoft | microsoft.com/en-us | Floating Back to Top button; stacked full-width panels | microsoft-back-to-top | ee1c3a4, c419971 |
 | OneLogin | app portal (saved page, local pages) | Grid of app tiles whose own script moves focus on an arrow press: the arrows skipped every other tile; also a tile spilling over its neighbours; the search box the portal focuses as it loads, or on ArrowUp from its tab bar, kept the arrows, so the header and profile menu were out of reach | grid-moves-focus, tile-spills-over, page-focused-search, page-focused-search-typed, arrow-moves-into-search, arrow-moves-into-search-enter | a76c0cc, 8be1edd, fe6863c, cf93f97 |
@@ -318,6 +320,7 @@ Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed o
 | Wikipedia | Shift+ArrowDown scrolling the article 40px a press, the ring staying on the main menu button | the commit adding Shift+arrow scrolling |
 | ynet, Wikipedia, CNN, YouTube, GitHub | The Shift+arrow scroll cue drawn by the right edge in the ring's colour, page CSS not changing it (YouTube logged out has nothing to scroll: the bump); the Esc switch on Wikipedia and ynet | the commit adding the scroll and Esc cues |
 | Google, Amazon, Wikipedia | Search box reached by arrows: the plain ring on arrival, the ring hugging the box after Enter and while typing, plain again after Esc (ASOS, the box the page focuses itself, answers Access Denied: covered by edit-look) | the commit adding the in-a-box ring |
+| Gemini | ArrowRight from the chat box's row does not climb to the buttons in the top-right corner: Right stays on its row by design; ArrowUp to the top row, then Right, reaches them | - |
 | Google Search | Edge-to-edge related-search chips | f135756 |
 | The Guardian | Sourcepoint consent iframe; support banner pinned over the page | 82e8a29, 3e3df69, f461870 |
 | IKEA | Neighbour in the same row taken as "below" | 8d02a26 |
@@ -327,6 +330,7 @@ Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed o
 | Target | Bot check covering the whole window | 5741640 |
 | USA Today | Sideways step climbing into the pinned masthead | 839715b |
 | Yahoo | `<main tabindex=-1>` taken as a stop | 8e7e2e9 |
+| Coralogix | Logs explorer (report zip): ArrowDown from a toolbar button scrolled the logs box. Not reproduced: the page needs a login and its saved copy lays out differently without the app's scripts | - |
 
 ## Dropped
 

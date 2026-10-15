@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Escape closes the page's dialog</title>
+<style>
+  body { font: 16px/1.5 sans-serif; margin: 20px; }
+  .cards { display: flex; gap: 16px; }
+  .card { width: 160px; height: 120px; }
+  #issue { position: fixed; left: 220px; top: 60px; width: 420px; height: 260px; background: #fff;
+           border: 1px solid #888; padding: 16px; box-shadow: 0 4px 24px rgba(0,0,0,.3); }
+  #issue[hidden] { display: none; }
+  #menu { position: absolute; left: 20px; top: 240px; border: 1px solid #888; background: #fff; }
+  #menu[hidden] { display: none; }
+  #menu button { display: block; }
+</style>
+</head>
+<body>
+  <!-- A board whose card opens an issue in a dialog, and a button that opens
+       a menu. Escape closes either, as on a task tracker. It turned the
+       extension off too, and the arrows did nothing after it. -->
+  <div class="cards">
+    <button class="card" id="card-1">Task one</button>
+    <button class="card" id="card-2">Task two</button>
+  </div>
+  <button id="more" aria-haspopup="menu">More</button>
+  <div id="menu" role="menu" hidden>
+    <button role="menuitem" id="rename">Rename</button>
+    <button role="menuitem" id="archive">Archive</button>
+  </div>
+  <p style="margin-top: 120px"><a id="below" href="#below">Below link</a></p>
+  <section id="issue" role="dialog" aria-modal="true" aria-label="Task one" hidden>
+    <button id="watch">Watch</button> <button id="share">Share</button>
+  </section>
+  <script>
+    const issue = document.getElementById('issue');
+    const menu = document.getElementById('menu');
+    let opener = null;
+    document.getElementById('card-1').addEventListener('click', (e) => {
+      opener = e.currentTarget; issue.hidden = false; document.getElementById('watch').focus();
+    });
+    document.getElementById('more').addEventListener('click', (e) => {
+      opener = e.currentTarget; menu.hidden = false; document.getElementById('rename').focus();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      for (const box of [issue, menu]) {
+        if (!box.hidden) { box.hidden = true; if (opener) opener.focus(); }
+      }
+    });
+  </script>
+</body>
+</html>
