@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A shared contact in a chat</title>
+<style>
+  body { font: 16px/1.5 sans-serif; margin: 20px; background: #dfe8d8; }
+  .bubble { background: #fff; border-radius: 12px; padding: 6px 10px; margin: 10px 0; width: max-content; }
+  /* The card's pointer is its own, and so is each footer button's. */
+  .card { position: relative; cursor: pointer; border-left: 3px solid #3a6; padding: 6px; width: 240px; }
+  /* An empty layer over the whole card, for the ripple a click draws. */
+  .ripple { position: absolute; inset: 0; overflow: hidden; }
+  .who { display: flex; gap: 8px; align-items: center; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: #6b6; color: #fff; display: grid; place-items: center; }
+  .footer { display: flex; border-top: 1px solid #ddd; margin-top: 6px; }
+  .footer-button { position: relative; flex: 1; text-align: center; padding: 8px; cursor: pointer; color: #3a6; font-weight: bold; }
+  #out { margin-top: 20px; }
+</style>
+</head>
+<body>
+  <!-- A contact shared in a chat, drawn as a chat app draws it: a div with
+       role=button and no tabindex opens the contact, under an empty layer
+       for the click ripple, and the footer's MESSAGE and ADD are divs that
+       only the pointer cursor marks. None of it was reached. -->
+  <div class="bubble" id="above" tabindex="-1">See you at nine</div>
+  <div class="bubble">
+    <div class="card">
+      <div class="ripple"></div>
+      <div class="who" role="button" id="open" aria-label="Open contact Dana Levi">
+        <div class="avatar" role="img" aria-label="Dana Levi">DL</div>
+        <div><strong>Dana Levi</strong><br>+1 555 0100</div>
+      </div>
+      <div class="footer">
+        <div class="footer-button" id="message"><div class="ripple"></div><span>MESSAGE</span></div>
+        <div class="footer-button" id="add"><div class="ripple"></div><span>ADD</span></div>
+      </div>
+    </div>
+  </div>
+  <a id="below" href="#below">Below link</a>
+  <div id="out"></div>
+  <script>
+    const out = document.getElementById('out');
+    document.querySelector('.card').addEventListener('click', (e) => {
+      out.textContent = e.target.closest('#message') ? 'message' : e.target.closest('#add') ? 'add' : 'open';
+    });
+  </script>
+</body>
+</html>

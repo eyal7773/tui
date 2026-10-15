@@ -1,0 +1,23 @@
+# A contact shared in a chat: the card opens the contact through a role=button with no tabindex, under an empty ripple layer, and its MESSAGE and ADD are divs only the pointer cursor marks. The arrows reach all three, and Enter clicks each.
+pages/contact-card.html
+start:css=#above
+key:ArrowDown
+expect:css=#open
+key:Enter
+wait:200
+eval:(() => { const t = document.getElementById('out').textContent; if (t !== 'open') throw new Error(t); return t; })()
+key:ArrowDown
+expect:css=#message
+key:Enter
+wait:200
+eval:(() => { const t = document.getElementById('out').textContent; if (t !== 'message') throw new Error(t); return t; })()
+key:ArrowRight
+expect:css=#add
+key:Enter
+wait:200
+eval:(() => { const t = document.getElementById('out').textContent; if (t !== 'add') throw new Error(t); return t; })()
+key:ArrowUp
+expect:css=#open
+key:ArrowDown
+key:ArrowDown
+expect:css=#below

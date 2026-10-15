@@ -2462,11 +2462,25 @@ class SpatialEngine {
             if (!rules.isGenericTag(el)) return NodeFilter.FILTER_SKIP;
             return cursor(el) === 'pointer' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
         };
+        // A pointer box with a control inside is no target, and is looked
+        // into instead: there each part the page itself gives the pointer is
+        // one, and a part with none in it is one whole. Telegram's contact
+        // card holds a button that opens the contact, and under it MESSAGE
+        // and ADD, which the pointer alone marks; none was reached.
+        const opened = new Set();
         const consider = (el) => {
             const parent = this.composedParent(el);
-            if (parent && parent.nodeType === 1 && cursor(parent) === 'pointer') return;
-            if (el.querySelector(controls)) return;
+            const inOpened = !!parent && opened.has(parent);
+            if (parent && parent.nodeType === 1 && cursor(parent) === 'pointer' && !inOpened) return;
+            if (el.querySelector(controls)) {
+                opened.add(el);
+                return;
+            }
             if (!el.textContent.trim() && !el.querySelector('img, svg')) return;
+            if (inOpened && !this.ownPointer(el) && this.hasOwnPointerInside(el)) {
+                opened.add(el);
+                return;
+            }
             found.push(el);
         };
         for (const scope of scopes) {
@@ -2482,6 +2496,65 @@ class SpatialEngine {
             for (let el = walker.nextNode(); el; el = walker.nextNode()) consider(el);
         }
         return found;
+    }
+
+    /**
+     * The selectors of the page's style rules that give the pointer cursor,
+     * as one list, or '' when none can be read. Sheets from another origin
+     * cannot be. Put together once a discovery, and only when a pointer box
+     * with a control inside is met (see scanPointerTargets). Each sheet is
+     * read again only when its number of rules changed: reading them all
+     * took 67ms on Yahoo, at each change of the page.
+     */
+    pointerRuleSelector() {
+        if (this.pointerRules !== undefined) return this.pointerRules;
+        if (!this.sheetPointers) this.sheetPointers = new WeakMap();
+        const selectors = [];
+        for (const sheet of [...document.styleSheets, ...(document.adoptedStyleSheets || [])]) {
+            let rules;
+            try { rules = sheet.cssRules; } catch (e) { continue; /* another origin's */ }
+            let kept = this.sheetPointers.get(sheet);
+            if (!kept || kept.count !== rules.length) {
+                kept = { count: rules.length, selectors: this.pointerSelectorsIn(rules) };
+                this.sheetPointers.set(sheet, kept);
+            }
+            selectors.push(...kept.selectors);
+        }
+        this.pointerRules = selectors.join(', ');
+        return this.pointerRules;
+    }
+
+    /** The selectors of the rules in a sheet that give the pointer cursor. */
+    pointerSelectorsIn(rules) {
+        const selectors = [];
+        const walk = (list) => {
+            for (const rule of list) {
+                if (rule.selectorText && rule.style && rule.style.cursor === 'pointer') {
+                    // A pseudo-element is never an element to match.
+                    rule.selectorText.split(',').forEach(s => { if (!s.includes('::')) selectors.push(s.trim()); });
+                } else if (rule.cssRules) {
+                    walk(rule.cssRules);
+                }
+            }
+        };
+        walk(rules);
+        // One that matches cannot raise; an odd one would spoil the list.
+        return selectors.filter(s => {
+            try { document.documentElement.matches(s); return true; } catch (e) { return false; }
+        });
+    }
+
+    /** Whether the page gives el the pointer cursor itself, not only by inheritance. */
+    ownPointer(el) {
+        if (el.style && el.style.cursor === 'pointer') return true;
+        const rules = this.pointerRuleSelector();
+        return !!rules && el.matches(rules);
+    }
+
+    /** Whether something inside el has a pointer cursor of its own (see ownPointer). */
+    hasOwnPointerInside(el) {
+        const rules = this.pointerRuleSelector();
+        return !!el.querySelector('[style*="cursor: pointer"], [style*="cursor:pointer"]' + (rules ? ', ' + rules : ''));
     }
 
     /**
@@ -2765,7 +2838,23 @@ class SpatialEngine {
                 known.add(target);
                 all.push(target);
             });
+            // A button or link by its role alone, with no tabindex: the
+            // mouse clicks it, but Tab and the search above never meet it.
+            // Telegram draws a shared contact's card as one. Not one inside
+            // another control, which is the stop already.
+            const roleOnly = '[role="button"]:not([tabindex]), [role="link"]:not([tabindex])';
+            const inControl = 'a[href], button, [role="button"], [role="link"]';
+            scopes.flatMap(scope => Array.from(scope.querySelectorAll(roleOnly))).forEach(el => {
+                if (known.has(el) || !targetRules.isGenericTag(el)) return;
+                const parent = this.composedParent(el);
+                if (parent && parent.nodeType === 1 && this.composedClosest(parent, inControl)) return;
+                el._tui_pointer_target = true;
+                known.add(el);
+                all.push(el);
+            });
         }
+        // The page's style rules are read anew, as sheets come and go.
+        this.pointerRules = undefined;
         this.pointerScan = targetRules ? this.scanPointerTargets(scopes) : [];
         this.scopes = scopes;
         if (this.restyled) this.restyled.clear();
@@ -3406,6 +3495,8 @@ class SpatialEngine {
 
             if (isRelatedControl) {
                 // Valid obstruction by related control -> Allow
+            } else if (this.isSeeThroughLayer(topEl, cand)) {
+                // An empty layer drawn over its own box shows what is under it.
             } else if (this.spillsFromRing(currentEl, topEl, centerX, centerY)) {
                 // Drawn by the ring's own element, and gone once the ring leaves it.
             } else {
@@ -3472,6 +3563,27 @@ class SpatialEngine {
         }
 
         return false;
+    }
+
+    /**
+     * Is layer an empty, see-through layer laid over a small box that holds
+     * cand too? Such a layer hides nothing: Telegram lays one over a shared
+     * contact's card for the ripple a click draws, and the card's button
+     * under it was taken as covered. A dimmed backdrop has a colour, and a
+     * click-catcher over the window lies in a box far bigger than this.
+     */
+    isSeeThroughLayer(layer, cand) {
+        if (!layer || layer.nodeType !== 1 || layer.textContent.trim() ||
+            layer.querySelector('img, svg, video, canvas, iframe, input, button, a, [role]')) return false;
+        const style = window.getComputedStyle(layer);
+        if (style.backgroundImage !== 'none') return false;
+        const color = style.backgroundColor;
+        const alpha = color === 'transparent' ? 0 : /^rgba\(/.test(color) ? parseFloat(color.split(',')[3]) : 1;
+        if (alpha > 0.05) return false;
+        const box = this.composedParent(layer);
+        if (!box || box.nodeType !== 1 || !this.composedContains(box, cand)) return false;
+        const rect = box.getBoundingClientRect();
+        return rect.width * rect.height <= window.innerWidth * window.innerHeight * 0.2;
     }
 
     /**
