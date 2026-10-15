@@ -2462,22 +2462,25 @@ class SpatialEngine {
             if (!rules.isGenericTag(el)) return NodeFilter.FILTER_SKIP;
             return cursor(el) === 'pointer' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
         };
-        // A pointer box with a control inside is no target, and is looked
-        // into instead: there each part the page itself gives the pointer is
-        // one, and a part with none in it is one whole. Telegram's contact
-        // card holds a button that opens the contact, and under it MESSAGE
-        // and ADD, which the pointer alone marks; none was reached.
+        // A pointer box with a control inside is no target. When the page's
+        // own style gives the pointer to something in it, it is looked into
+        // instead: there each part the page itself gives the pointer is one,
+        // and a part with none in it is one whole. Telegram's contact card
+        // holds a button that opens the contact, and under it MESSAGE and
+        // ADD, which the pointer alone marks; none was reached. Only then:
+        // looking into every such box (Microsoft's cards, each with links
+        // in it) made a key press there a third slower.
         const opened = new Set();
         const consider = (el) => {
             const parent = this.composedParent(el);
             const inOpened = !!parent && opened.has(parent);
             if (parent && parent.nodeType === 1 && cursor(parent) === 'pointer' && !inOpened) return;
             if (el.querySelector(controls)) {
-                opened.add(el);
+                if (this.hasOwnPointerInside(el, controls)) opened.add(el);
                 return;
             }
             if (!el.textContent.trim() && !el.querySelector('img, svg')) return;
-            if (inOpened && !this.ownPointer(el) && this.hasOwnPointerInside(el)) {
+            if (inOpened && !this.ownPointer(el) && this.hasOwnPointerInside(el, controls)) {
                 opened.add(el);
                 return;
             }
@@ -2551,10 +2554,24 @@ class SpatialEngine {
         return !!rules && el.matches(rules);
     }
 
-    /** Whether something inside el has a pointer cursor of its own (see ownPointer). */
-    hasOwnPointerInside(el) {
+    /**
+     * Whether a plain element inside el has a pointer cursor of its own
+     * (see ownPointer), with no control in it or around it. The pointer of
+     * a control, or of a box holding one, says nothing: Microsoft gives it
+     * to its button elements, each with a real button in its shadow root,
+     * and every card was looked into, its heading and picture taken as
+     * targets, and a key press there was a third slower.
+     */
+    hasOwnPointerInside(el, controls) {
         const rules = this.pointerRuleSelector();
-        return !!el.querySelector('[style*="cursor: pointer"], [style*="cursor:pointer"]' + (rules ? ', ' + rules : ''));
+        const own = '[style*="cursor: pointer"], [style*="cursor:pointer"]' + (rules ? ', ' + rules : '');
+        for (const part of el.querySelectorAll(own)) {
+            if (!window.TuiTargetRules.isGenericTag(part) || part.closest(controls) || part.querySelector(controls)) continue;
+            const root = this.shadowRootOf(part);
+            if (root && root.querySelector(controls)) continue;
+            return true;
+        }
+        return false;
     }
 
     /**
