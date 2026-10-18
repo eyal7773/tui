@@ -1,0 +1,13 @@
+# An open message shorter than the window, one list item that does nothing itself: ArrowDown from above steps into it, to its picture and its link, then on to Reply, and ArrowUp goes back through it.
+pages/short-message-item.html
+start:css=#label
+key:ArrowDown
+expect:css=#banner
+key:ArrowDown
+expect:css=#track
+key:ArrowDown
+expect:css=#reply
+key:ArrowUp
+expect:css=#track
+key:ArrowUp
+expect:css=#banner

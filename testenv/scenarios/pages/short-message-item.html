@@ -1,0 +1,26 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Short message item</title>
+<style>
+  body { margin: 0; font: 15px sans-serif; }
+  #toolbar { padding: 16px 300px; }
+  #toolbar span { display: inline-block; margin-right: 16px; }
+  #message { margin: 16px 300px; padding: 16px; height: 420px; border: 1px solid #ccc; }
+  #message p { margin: 0 0 24px; }
+  #banner { display: block; width: 400px; height: 120px; background: #ddd; }
+  #reply-bar { margin: 16px 300px; }
+  #reply-bar span { display: inline-block; margin-right: 16px; }
+</style></head>
+<body>
+  <!-- A mail client's open message, shorter than the window, is one list
+       item with tabindex=-1 that does nothing itself. ArrowDown from the
+       label above ringed the whole message, and the next ArrowDown went
+       past it to Reply: its picture and link were never reached. -->
+  <div id="toolbar"><span id="label" role="button" tabindex="0">Inbox</span><span id="print" role="button" tabindex="0">Print</span></div>
+  <div id="message" role="listitem" tabindex="-1">
+    <p>Example Store &lt;news@example.com&gt;</p>
+    <img id="banner" tabindex="0" alt="">
+    <p>Your order has shipped.</p>
+    <p><a id="track" href="#track">Track the parcel</a></p>
+  </div>
+  <div id="reply-bar"><span id="reply" role="link" tabindex="0">Reply</span><span id="forward" role="link" tabindex="0">Forward</span></div>
+</body></html>

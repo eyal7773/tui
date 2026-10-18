@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Roving list rows</title>
+<style>
+  body { margin: 0; font: 15px sans-serif; }
+  aside { position: absolute; top: 0; left: 0; width: 240px; }
+  aside a { display: block; margin: 20px; }
+  ul { list-style: none; margin: 0 0 0 300px; padding: 0; width: 700px; }
+  li { border-bottom: 1px solid #ccc; padding: 8px; height: 48px; }
+  li h4 { margin: 0; }
+  li .by { margin-left: 260px; }
+</style></head>
+<body>
+  <!-- A list of runs that hands its one tab stop from row to row: the
+       current row has tabindex=0, the others -1, and so do the links in
+       them. Every link below the first row was taken for hidden, and
+       ArrowDown left the list for the sidebar. -->
+  <aside>
+    <a id="all" href="#all">All runs</a>
+    <a id="build" href="#build">Build</a>
+    <a id="deploy" href="#deploy">Deploy</a>
+  </aside>
+  <ul role="list">
+    <li id="row1" tabindex="0"><h4><a id="title1" href="#r1" tabindex="-1">Deploy service one</a></h4><div class="by">by <a id="by1" href="#u" tabindex="-1">sample-user</a></div></li>
+    <li id="row2" tabindex="-1"><h4><a id="title2" href="#r2" tabindex="-1">Deploy service two</a></h4><div class="by">by <a id="by2" href="#u" tabindex="-1">sample-user</a></div></li>
+    <li id="row3" tabindex="-1"><h4><a id="title3" href="#r3" tabindex="-1">Deploy service three</a></h4><div class="by">by <a id="by3" href="#u" tabindex="-1">sample-user</a></div></li>
+  </ul>
+</body></html>

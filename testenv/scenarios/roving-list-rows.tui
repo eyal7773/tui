@@ -1,0 +1,11 @@
+# A list that hands its one tab stop from row to row (the current row tabindex=0, the others and their links -1): ArrowDown goes from row to row, not out to the sidebar.
+pages/roving-list-rows.html
+start:css=#by1
+key:ArrowDown
+expect:css=#by2
+key:ArrowDown
+expect:css=#by3
+key:ArrowLeft
+expect:css=#title3
+key:ArrowUp
+expect:css=#title2

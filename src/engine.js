@@ -3452,10 +3452,14 @@ class SpatialEngine {
         // it is. Gmail makes an open message one focusable list item, and
         // ArrowLeft from the side panel ringed the whole message, never the
         // link inside it level with the start.
+        // So is a list item that does nothing itself, whatever its size: a
+        // shorter Gmail message took the ring as a whole, and the next
+        // ArrowDown stepped past it to Reply, never reaching its links.
         if (bestCandidate && mode !== 'extreme') {
             const box = scored.find(s => s.cand === bestCandidate).rect;
-            if (box.height > window.innerHeight) {
-                const inside = scored.filter(s => s.cand !== bestCandidate && this.composedContains(bestCandidate, s.cand) && clear(s));
+            if (box.height > window.innerHeight || this.isPlainListItem(bestCandidate)) {
+                const inside = scored.filter(s => s.cand !== bestCandidate && s.score < Infinity &&
+                    this.composedContains(bestCandidate, s.cand) && clear(s));
                 if (inside.length) bestCandidate = inside.reduce((a, b) => (b.score < a.score ? b : a)).cand;
             }
         }
@@ -3672,6 +3676,19 @@ class SpatialEngine {
      * tabindex="-1" and are navigated via arrow keys.
      * This allows TUI to include those children as spatial navigation candidates.
      */
+    /**
+     * A list item that is no control: not drawn to be clicked, not
+     * editable. Its tabindex is for the page's own focus handling, so what
+     * the user can act on is inside it.
+     */
+    isPlainListItem(el) {
+        const targetRules = window.TuiTargetRules;
+        if (!targetRules || !targetRules.isGenericTag(el) || el.isContentEditable) return false;
+        const role = el.getAttribute('role');
+        if (role ? role !== 'listitem' : el.tagName !== 'LI') return false;
+        return getComputedStyle(el).cursor !== 'pointer';
+    }
+
     isRovingTabindexMember(el) {
         // A grid takes every control inside its cells out of the tab order
         // until the cell is entered. GitHub's diff does this, so a review
@@ -3686,6 +3703,15 @@ class SpatialEngine {
             const ati = ancestor.getAttribute('tabindex');
             if (ati === '0') {
                 // Container owns the tab stop; children use roving tabindex
+                return true;
+            }
+            // A row of a list that hands its one tab stop from row to row:
+            // the row with the ring has 0 and the others -1. On GitHub's
+            // workflow runs every link below the first row was dropped,
+            // and ArrowDown left the list for the sidebar.
+            if (ati === '-1' && ancestor.parentElement &&
+                Array.from(ancestor.parentElement.children).some(s =>
+                    s !== ancestor && s.tagName === ancestor.tagName && s.getAttribute('tabindex') === '0')) {
                 return true;
             }
             const role = ancestor.getAttribute('role');
