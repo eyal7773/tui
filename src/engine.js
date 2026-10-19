@@ -2442,7 +2442,7 @@ class SpatialEngine {
         // the page on every key press, and a children list made for each
         // was a few ms of it.
         if (!el.firstElementChild || !window.TuiViewRules) return rect;
-        const head = this.cellHeadRect(el, rect);
+        const head = this.headRect(el, rect);
         if (head) return head;
         const display = window.getComputedStyle(el).display;
         if (display !== 'inline' && display !== 'contents') return rect;
@@ -2481,19 +2481,37 @@ class SpatialEngine {
     }
 
     /**
-     * A grid cell with controls of its own below its content is drawn as
-     * that content alone. GitHub's diff puts a review thread in the cell of
-     * the line it is on: the cell grew around it, the ring took in the whole
+     * An item with stops of its own below its content is drawn as that
+     * content alone, its head, and the arrows measure from it.
+     *
+     * A grid cell: GitHub's diff puts a review thread in the cell of the
+     * line it is on. The cell grew around it, the ring took in the whole
      * thread, and ArrowDown, measured from the cell's bottom, jumped past
      * the replies and "Write a reply" to the next line.
+     *
+     * A tree item: an open folder holds its files in a group under its own
+     * row, as trees are made. GitHub's file tree in a pull request ringed a
+     * folder with every file in it, and ArrowDown, measured from the bottom
+     * of all of them, went to the diff, so no file under it was reached.
      */
-    cellHeadRect(el, rect) {
-        if (el.getAttribute('role') !== 'gridcell') return null;
-        const flow = Array.from(el.children)
-            .filter(c => !/absolute|fixed/.test(window.getComputedStyle(c).position));
-        const i = flow.findIndex(c => c.querySelector('a, button, input, select, textarea, [contenteditable]:not([contenteditable="false"])'));
-        if (i < 1) return null;
-        const bottom = flow[i].getBoundingClientRect().top;
+    headRect(el, rect) {
+        const role = el.getAttribute('role');
+        let below = null;
+        if (role === 'gridcell') {
+            const flow = Array.from(el.children)
+                .filter(c => !/absolute|fixed/.test(window.getComputedStyle(c).position));
+            const i = flow.findIndex(c => c.querySelector('a, button, input, select, textarea, [contenteditable]:not([contenteditable="false"])'));
+            if (i < 1) return null;
+            below = flow[i];
+        } else if (role === 'treeitem') {
+            // Its own group, not one of an item inside it.
+            const group = el.querySelector('[role="group"]');
+            if (!group || group.closest('[role="treeitem"]') !== el) return null;
+            below = group;
+        } else {
+            return null;
+        }
+        const bottom = below.getBoundingClientRect().top;
         if (bottom - rect.top < 4) return null;
         return { left: rect.left, top: rect.top, right: rect.right, bottom, width: rect.width, height: bottom - rect.top, x: rect.x, y: rect.y };
     }
@@ -3513,7 +3531,15 @@ class SpatialEngine {
 
                 // CRITICAL FIX: Don't select ANCESTORS of the current element
                 // Navigating from Input -> Parent Div/Label is almost never desired and causes loops
-                if (this.composedContains(cand, currentEl)) return;
+                // Unless it is drawn as its head, clear of the current
+                // element (see headRect): an open folder's row lies above
+                // its files, and ArrowUp from the first file went past it,
+                // and past every folder above, out of the tree.
+                if (this.composedContains(cand, currentEl)) {
+                    const head = currentRect && this.headRect(cand, cand.getBoundingClientRect());
+                    if (!head || (head.bottom > currentRect.top && head.top < currentRect.bottom &&
+                        head.right > currentRect.left && head.left < currentRect.right)) return;
+                }
 
                 // CRITICAL FIX: Don't select LABELs that control the current input
                 if (cand.tagName === 'LABEL' && cand.getAttribute('for') === currentEl.id) return;

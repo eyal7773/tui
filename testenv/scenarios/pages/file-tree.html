@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A file tree beside a diff</title>
+<style>
+  body { font: 14px/1.5 sans-serif; margin: 20px; display: flex; gap: 24px; }
+  aside { width: 300px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  /* Each item is its row, then its group of children, as ARIA trees are made. */
+  [role="treeitem"] > .row { height: 32px; display: flex; align-items: center; cursor: pointer; }
+  [role="group"] { padding-left: 16px; }
+  [aria-expanded="false"] > [role="group"] { display: none; }
+  [role="treeitem"]:focus > .row { outline: 2px solid #48f; }
+  main { flex: 1; padding-top: 120px; }
+  td { padding: 2px 8px; border: 1px solid #ddd; }
+</style>
+</head>
+<body>
+<aside>
+  <input id="filter" placeholder="Filter files">
+  <ul role="tree" aria-label="Files">
+    <li role="treeitem" id="app" tabindex="0" aria-expanded="true"><div class="row">Orchard.App</div>
+      <ul role="group">
+        <li role="treeitem" id="services" tabindex="-1" aria-expanded="true"><div class="row">Services</div>
+          <ul role="group">
+            <li role="treeitem" id="harvest" tabindex="-1"><div class="row">HarvestService.cs</div></li>
+            <li role="treeitem" id="weather" tabindex="-1"><div class="row">WeatherClient.cs</div></li>
+          </ul>
+        </li>
+        <li role="treeitem" id="models" tabindex="-1" aria-expanded="true"><div class="row">Models</div>
+          <ul role="group">
+            <li role="treeitem" id="tree" tabindex="-1"><div class="row">AppleTree.cs</div></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</aside>
+<main>
+  <!-- The diff: cells a grid hands focus between, below the tree's top. -->
+  <table role="grid">
+    <tr><td role="gridcell" id="line-12" tabindex="-1">12</td><td role="gridcell" tabindex="-1">var yield = Harvest();</td></tr>
+    <tr><td role="gridcell" tabindex="-1">13</td><td role="gridcell" tabindex="-1">return yield;</td></tr>
+  </table>
+</main>
+<script>
+  // A folder's row opens and closes it.
+  for (const row of document.querySelectorAll('[role="treeitem"] > .row')) {
+    row.addEventListener('click', () => {
+      const item = row.parentElement;
+      if (item.hasAttribute('aria-expanded')) {
+        item.setAttribute('aria-expanded', item.getAttribute('aria-expanded') === 'true' ? 'false' : 'true');
+      }
+    });
+  }
+</script>
+</body>
+</html>

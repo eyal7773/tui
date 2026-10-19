@@ -31,6 +31,7 @@ and a recheck.
 | Gmail | open message shorter than the window (report zip + local page) | The message is a list item that does nothing itself: ArrowDown from the toolbar steps into it, to its picture and link, then on to Reply | short-message-item | the commit adding the scenario |
 | GitHub | pull request diff (local page) | Review thread's buttons inside a grid cell | github-review-thread | 2f1d227 |
 | GitHub | a workflow's runs (report zip + local page) | The list hands its one tab stop from row to row: ArrowDown from the first row reaches the second and on, not the sidebar | roving-list-rows | the commit adding the scenario |
+| GitHub | a pull request's file tree (report zip + local page) | Open folders hold their files in a group under their own row: the ring is the row alone, ArrowDown steps through every folder and file and ArrowUp back up through them, a closed folder is stepped past | file-tree | the commit adding the scenario |
 | GitHub | a repository's Code panel (report zip + local page) | Clone URL box sharing its wrapper with a copy button: ArrowRight from the box reaches the button, ArrowLeft goes back, and the button stays reachable once the box was visited | box-with-copy-button | the commit adding the scenario |
 | Google Calendar | event details over the week view (report zip + local page) | Icons marked aria-hidden inside the details dialog: the arrows stay on the dialog's links instead of going to the small calendar and checkboxes behind it | dialog-hidden-icons | 545b204 |
 | Google Drive | drive.google.com (report zip + local page) | Sidebar tree with one tabindex, file grid, Enter twice opens a file | drive-new-down-home, double-enter | 864664e, 3aa87f0, 3280ca5, 9a9f926 |
@@ -334,6 +335,7 @@ Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed o
 | USA Today | Sideways step climbing into the pinned masthead | 839715b |
 | Yahoo | `<main tabindex=-1>` taken as a stop | 8e7e2e9 |
 | vscode.dev | Shift+F10 on a title-bar and a sidebar button opens VS Code's own right-click menu at the button (the page took the made-up right-click), the arrows step through it, Esc closes it and the ring is back on the button with the keyboard kept | the commit adding Shift+F10 |
+| TimeWatch | Attendance page (report zip): Enter on a link with no href that a script handles did nothing visible. Not reproduced: the page needs a login, and the saved copy holds none of the scripts that handle the link | - |
 | Coralogix | Logs explorer (report zip): ArrowDown from a toolbar button scrolled the logs box. Not reproduced: the page needs a login and its saved copy lays out differently without the app's scripts | - |
 
 ## Dropped

@@ -1,0 +1,35 @@
+# A file tree beside a pull request's diff: an open folder holds its files in a group under its own row. The ring took in the folder with every file in it, ArrowDown went from there to the diff, and ArrowUp from a file went past every folder above it, out of the tree. The arrows now step row by row, down and back up, and a folder closed with Enter is stepped past.
+pages/file-tree.html
+start:css=#filter
+key:ArrowDown
+expect:css=#app
+key:ArrowDown
+expect:css=#services
+key:ArrowDown
+expect:css=#harvest
+key:ArrowDown
+expect:css=#weather
+key:ArrowDown
+expect:css=#models
+key:ArrowDown
+expect:css=#tree
+key:ArrowUp
+expect:css=#models
+key:ArrowUp
+expect:css=#weather
+key:ArrowUp
+expect:css=#harvest
+key:ArrowUp
+expect:css=#services
+key:ArrowUp
+expect:css=#app
+key:ArrowUp
+expect:css=#filter
+# Closed, a folder is its row alone.
+key:ArrowDown
+key:ArrowDown
+expect:css=#services
+key:Enter
+wait:200
+key:ArrowDown
+expect:css=#models
