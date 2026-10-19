@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Right-click menus</title>
+<style>
+  body { font: 16px/1.5 sans-serif; margin: 20px; }
+  .file { display: block; width: 260px; padding: 8px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; }
+  ul { list-style: none; padding: 0; }
+  /* Each menu opens where the click was, over the page. */
+  .menu { position: fixed; background: #fff; border: 1px solid #999; box-shadow: 0 2px 8px #0004; padding: 4px 0; min-width: 160px; }
+  .menu button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 6px 12px; font: inherit; }
+  .menu button:focus { background: #def; }
+  #out { margin-top: 20px; }
+</style>
+</head>
+<body>
+<p><a id="above" href="#top">All files</a></p>
+
+<!-- A file whose menu is a role=menu that focuses its first item, and puts focus back on the file when it closes. -->
+<div class="file" id="budget" tabindex="0" role="button">Budget 2027.xlsx</div>
+
+<!-- A picture whose menu has no role and never takes focus. -->
+<div class="file" id="photo" tabindex="0" role="button">Harbour at dawn.jpg</div>
+
+<!-- A row that owns the tabindex, as a chat list's does; the menu belongs to the box inside it. -->
+<div role="list"><div class="file" id="notes" role="listitem" tabindex="0"><div class="name" id="notes-name">Meeting notes.txt</div></div></div>
+
+<!-- A menu that opens on the right button's mousedown, as some apps do. -->
+<div class="file" id="slides" tabindex="0" role="button">Quarterly review.pptx</div>
+
+<!-- A page that only blocks right-click: nothing opens. -->
+<div class="file" id="locked" tabindex="0" role="button">Contract (read only).pdf</div>
+
+<!-- No menu of the page's: the browser's own is the one. -->
+<p><button id="plain">Download all</button></p>
+
+<p><label>Folder name <input id="folder" type="text"></label></p>
+
+<p><a id="below" href="#bottom">Shared with me</a></p>
+
+<!-- Changes while the photo's menu opens, as a carousel turning might. -->
+<p id="news" class="slide-a"><a id="news-link" href="#news">Storage is almost full</a></p>
+
+<div id="out"></div>
+
+<script>
+  const out = document.getElementById('out');
+  // What reached the page: the menu's clicks, and every right-click as the
+  // page heard it, made up (the extension's) or the browser's own.
+  window.heard = [];
+  window.addEventListener('contextmenu', (e) => {
+    heard.push((e.isTrusted ? 'browser' : 'made') + ':' + (e.target.id || e.target.tagName) +
+      (e.isTrusted ? '' : ':' + e.button + ':' + Math.round(e.clientX) + ',' + Math.round(e.clientY)));
+  }, true);
+  // The middle of an element, where a right-click from the keyboard lands
+  // (an event's coordinates are whole pixels, rounded down).
+  window.middle = (id) => {
+    const r = document.getElementById(id).getBoundingClientRect();
+    return Math.floor(r.left + r.width / 2) + ',' + Math.floor(r.top + r.height / 2);
+  };
+
+  let open = null;
+  function closeMenu(refocus) {
+    if (!open) return;
+    const { menu, from } = open;
+    open = null;
+    menu.remove();
+    if (refocus) from.focus();
+  }
+
+  // A menu at (x, y). focusFirst: it takes focus as a role=menu does; refocus:
+  // it gives focus back to what it was opened from when it closes.
+  function openMenu(from, x, y, items, { role, focusFirst, refocus }) {
+    closeMenu(false);
+    const menu = document.createElement('div');
+    menu.className = 'menu';
+    if (role) menu.setAttribute('role', role);
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    for (const name of items) {
+      const item = document.createElement('button');
+      item.id = from.id + '-' + name.toLowerCase();
+      item.textContent = name;
+      if (role) item.setAttribute('role', 'menuitem');
+      item.addEventListener('click', () => {
+        out.textContent = from.id + ':' + name.toLowerCase();
+        closeMenu(refocus);
+      });
+      menu.appendChild(item);
+    }
+    document.body.appendChild(menu);
+    open = { menu, from };
+    if (focusFirst) menu.firstChild.focus();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && open) closeMenu(open.from === budget);
+  });
+
+  const budget = document.getElementById('budget');
+  budget.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    openMenu(budget, e.clientX, e.clientY, ['Open', 'Rename', 'Delete'], { role: 'menu', focusFirst: true, refocus: true });
+  });
+
+  const photo = document.getElementById('photo');
+  photo.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    openMenu(photo, e.clientX, e.clientY, ['View', 'Share'], {});
+    const news = document.getElementById('news');
+    const turn = setInterval(() => { news.className = news.className === 'slide-a' ? 'slide-b' : 'slide-a'; }, 50);
+    setTimeout(() => clearInterval(turn), 400);
+  });
+
+  const notes = document.getElementById('notes-name');
+  notes.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    openMenu(notes, e.clientX, e.clientY, ['Edit', 'Print'], { role: 'menu', focusFirst: true });
+  });
+
+  const slides = document.getElementById('slides');
+  slides.addEventListener('mousedown', (e) => {
+    if (e.button === 2) openMenu(slides, e.clientX, e.clientY, ['Present', 'Export'], { role: 'menu', focusFirst: true });
+  });
+  slides.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  document.getElementById('locked').addEventListener('contextmenu', (e) => e.preventDefault());
+</script>
+</body>
+</html>

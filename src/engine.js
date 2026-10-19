@@ -1119,6 +1119,15 @@ class SpatialEngine {
             return;
         }
 
+        // The Escape after a right-click menu opened closes it, as it would
+        // after a mouse's: the page hears it, and the keyboard stays.
+        const menu = this.contextMenu;
+        if (e.key === 'Escape' && menu && !this.isSuspended &&
+            (menu.seen || this.deepActiveElement() !== menu.focus)) {
+            this.closeContextMenu(e.key);
+            return;
+        }
+
         // Escape hands the keyboard back to the page, and takes it again. Read
         // before the enabled check, because once the keyboard is handed over the
         // engine is disabled and would otherwise have no way to hear the key that
@@ -1139,6 +1148,11 @@ class SpatialEngine {
         this.endClickWatch();
         this.hideHint();
 
+        // Enter picks an item of a right-click menu, and the menu closes;
+        // Tab and F10 leave it. Escape is no longer the menu's after them.
+        if (this.contextMenu && e.key === 'Enter') this.closeContextMenu(e.key);
+        else if (this.contextMenu && (e.key === 'Tab' || e.key === 'F10')) this.endContextMenu();
+
         if (e.key === 'F10' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
             e.preventDefault();
             e.stopPropagation();
@@ -1153,6 +1167,14 @@ class SpatialEngine {
 
         // Ignore if user is typing in an input
         const active = this.deepActiveElement();
+
+        // Shift+F10 or the menu key: the right-click menu of what is in the
+        // ring. In a text box the browser's own, with Paste, is the one
+        // wanted, and the key is left to it.
+        if (window.TuiClickRules && window.TuiClickRules.opensContextMenu(e)) {
+            if (!this.shouldTrapArrows(active)) this.openContextMenu(e);
+            return;
+        }
 
         // BUG FIX: Only trap navigation if the input actually USES arrow keys (Text, Select, etc.)
         // Simple buttons (submit, reset, button) should NOT trap navigation.
@@ -1220,7 +1242,7 @@ class SpatialEngine {
             // We handle this navigation action
             e.preventDefault();
             e.stopImmediatePropagation(); // CRITICAL: Stop the page from seeing this key
-            this.navigate(e.key);
+            if (!this.stepIntoContextMenu(e.key)) this.navigate(e.key);
         } else if (e.key === 'Enter') {
             const active = this.deepActiveElement();
 
@@ -1304,23 +1326,27 @@ class SpatialEngine {
         }
     }
 
-    simulateClick(el, clickCount = 1) {
-        // SMART TARGETING: the focused element is often not the element that
-        // does the work. A list row keeps the tabindex while the link inside it
-        // carries the href, and clicking the row does nothing at all.
-        // click-rules.js decides; _tui_activate is the element navigation was
-        // aiming at when the browser bounced focus up to this container.
-        let target = el;
+    /**
+     * SMART TARGETING: the focused element is often not the element that
+     * does the work. A list row keeps the tabindex while the link inside it
+     * carries the href, and clicking the row does nothing at all.
+     * click-rules.js decides; _tui_activate is the element navigation was
+     * aiming at when the browser bounced focus up to this container.
+     */
+    clickTargetOf(el) {
         const intended = (el._tui_activate && el._tui_activate.isConnected)
             ? el._tui_activate : null;
+        if (!window.TuiClickRules) return { target: el, intended: intended };
+        const target = window.TuiClickRules.resolveClickTarget(el, intended, (node) => {
+            const style = getComputedStyle(node);
+            if (style.pointerEvents === 'none' || style.visibility === 'hidden') return null;
+            return node.getBoundingClientRect();
+        }) || el;
+        return { target: target, intended: intended };
+    }
 
-        if (window.TuiClickRules) {
-            target = window.TuiClickRules.resolveClickTarget(el, intended, (node) => {
-                const style = getComputedStyle(node);
-                if (style.pointerEvents === 'none' || style.visibility === 'hidden') return null;
-                return node.getBoundingClientRect();
-            }) || el;
-        }
+    simulateClick(el, clickCount = 1) {
+        const { target, intended } = this.clickTargetOf(el);
 
         const options = {
             view: window,
@@ -1371,6 +1397,190 @@ class SpatialEngine {
 
         // 3. The second click of a pair is followed by dblclick.
         if (pair) target.dispatchEvent(new MouseEvent('dblclick', pair));
+    }
+
+    /**
+     * Shift+F10 or the menu key: right-clicks what is in the ring, where
+     * Enter would click. A page with a menu of its own opens it and says so
+     * by cancelling the contextmenu event; the key is then taken, so Chrome
+     * opens no menu of its own as well. Otherwise the key goes on to Chrome,
+     * which opens its own menu on what has focus. A page that heeds only
+     * real events hears Chrome's then: Chrome sends one after the key
+     * (button -1, which a page waiting for the right button passes over).
+     */
+    openContextMenu(e) {
+        const el = this.lastActiveElement;
+        // No ring: the key is the browser's, on whatever has focus.
+        if (!this.isActiveMode || !el || !el.isConnected) return;
+
+        // A frame the ring only marks: its page is not this one, and a menu
+        // of this page's body is not what the user is looking at. Enter goes
+        // in first, and the frame's own engine takes the key there.
+        if (this.isTrapElement(el) && this.deepActiveElement() !== el) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            LOG.event('context-menu', { on: LOG.describe(el), by: 'none', why: 'frame' });
+            return;
+        }
+
+        // A text box the ring stands on, not in, is right-clicked itself.
+        const box = el._tui_input && el._tui_input.isConnected ? el._tui_input : null;
+        const target = box || this.clickTargetOf(el).target;
+        const point = window.TuiClickRules.menuPoint(target.getBoundingClientRect(), window.innerWidth, window.innerHeight);
+        const down = {
+            view: window, bubbles: true, cancelable: true, composed: true,
+            button: 2, buttons: 2, clientX: point.x, clientY: point.y, pointerType: 'mouse'
+        };
+        const up = { ...down, buttons: 0 };
+
+        // Watching from before the right-click: the menu the page opens
+        // inside it is already there after.
+        this.watchContextMenu(el);
+        // The order Chrome gives a right-click on Windows. Some pages open
+        // their menu on the right button's mousedown.
+        target.dispatchEvent(new PointerEvent('pointerdown', down));
+        target.dispatchEvent(new MouseEvent('mousedown', down));
+        target.dispatchEvent(new PointerEvent('pointerup', up));
+        target.dispatchEvent(new MouseEvent('mouseup', up));
+        const byPage = !target.dispatchEvent(new MouseEvent('contextmenu', up));
+
+        LOG.event('context-menu', {
+            key: e.key,
+            on: LOG.describe(target),
+            from: target !== el ? LOG.describe(el) : undefined,
+            by: byPage ? 'page' : 'browser'
+        });
+        if (byPage) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return;
+        }
+
+        // Nothing of the page's to close.
+        this.endContextMenu();
+        // Chrome's menu goes to what has focus: the box, for Paste. Its menu
+        // in a box is one to type with, so the box is gone into, as Enter does.
+        if (box) {
+            this.arrival = null;
+            this.arrivedIn = null;
+            box.focus();
+        }
+    }
+
+    /**
+     * After the page took a right-click, watches CLICK_EFFECT_MS for the
+     * menu it opens: something of the page's added, shown or restyled. Only
+     * then, or once focus has moved, is the next Escape the menu's (see
+     * handleKeydown). A page that only blocks the right-click opens nothing,
+     * and Escape there hands the keyboard over as anywhere. What was added
+     * or shown, outside the element, is where the menu may be (see
+     * stepIntoContextMenu).
+     */
+    watchContextMenu(from) {
+        this.endContextMenu();
+        const rules = window.TuiClickRules;
+        const menu = { from: from, focus: this.deepActiveElement(), seen: false, shown: [], stop: null };
+        const ours = (node) => node === this.spotlight || node === this.hint || this.isCue(node) ||
+            node.id === 'tui-menu-container' || node.id === 'tui-help';
+        // The menu comes first, in the page's handler; a feed loading in the
+        // same moment adds far more, and each is searched on an arrow.
+        const MAX_SHOWN = 50;
+        const observer = new MutationObserver((records) => {
+            for (const r of records) {
+                if (menu.shown.length >= MAX_SHOWN) break;
+                if (r.type === 'attributes') {
+                    // The ring's element takes our scroll-margin (see scrollToReveal).
+                    if (ours(r.target) || (r.target === from && r.attributeName === 'style')) continue;
+                    menu.seen = true;
+                    // A class on <body> that shows the menu holds the element too.
+                    if (!this.composedContains(r.target, from)) menu.shown.push(r.target);
+                } else {
+                    for (const node of r.addedNodes) {
+                        if (node.nodeType !== 1 || ours(node)) continue;
+                        menu.seen = true;
+                        menu.shown.push(node);
+                    }
+                }
+            }
+        });
+        observer.observe(document.documentElement, {
+            subtree: true, childList: true, attributes: true,
+            attributeFilter: ['style', 'class', 'hidden', 'open', 'aria-expanded']
+        });
+        const timer = setTimeout(() => stop(), rules.CLICK_EFFECT_MS);
+        const stop = () => {
+            clearTimeout(timer);
+            observer.disconnect();
+        };
+        menu.stop = stop;
+        this.contextMenu = menu;
+    }
+
+    /**
+     * ArrowDown or ArrowUp while a right-click menu that took no focus is
+     * open, the ring still on what it was opened from: into the menu, to its
+     * first stop or its last. The menu opens where the click was, in the
+     * middle of the element, and lies over it, so no step from the element
+     * finds it below or above. Of what the page added or showed, only the
+     * stops of something by the element are the menu's: a carousel turning
+     * at the same moment elsewhere is not. Their own boxes are measured, as
+     * a menu put in a portal sits in a wrapper with no size.
+     */
+    stepIntoContextMenu(key) {
+        const menu = this.contextMenu;
+        if (!menu || !menu.shown.length || this.lastActiveElement !== menu.from) return false;
+        if (key !== 'ArrowDown' && key !== 'ArrowUp') return false;
+        const rules = window.TuiClickRules;
+        this.refreshCandidates();
+        const fromRect = menu.from.getBoundingClientRect();
+        const kept = new Set();
+        for (const node of menu.shown) {
+            if (!node.isConnected) continue;
+            const inside = this.candidates.filter(c => c !== menu.from && c.getClientRects().length &&
+                this.composedContains(node, c));
+            if (!inside.length) continue;
+            const rects = inside.map(c => c.getBoundingClientRect());
+            const box = {
+                left: Math.min(...rects.map(r => r.left)), right: Math.max(...rects.map(r => r.right)),
+                top: Math.min(...rects.map(r => r.top)), bottom: Math.max(...rects.map(r => r.bottom))
+            };
+            if (rules.rectGap(box, fromRect) <= rules.MENU_REACH_PX) inside.forEach(c => kept.add(c));
+        }
+        const stops = this.candidates.filter(c => kept.has(c));
+        if (!stops.length) return false;
+        const stop = key === 'ArrowDown' ? stops[0] : stops[stops.length - 1];
+        LOG.event('context-menu-step', { key: key, to: LOG.describe(stop) });
+        return this.focusElement(stop);
+    }
+
+    /** Forgets the right-click menu: Escape is the handover's again. */
+    endContextMenu() {
+        const menu = this.contextMenu;
+        this.contextMenu = null;
+        if (menu) menu.stop();
+    }
+
+    /**
+     * Escape after a right-click menu opened, or Enter on one of its items.
+     * The page closes its menu as it hears the key, after this. When that
+     * took the ring's element away and left focus nowhere, the ring goes
+     * back to what the menu was opened from, where a mouse user is left
+     * too. An item that opened something, a dialog to rename in, keeps
+     * focus there.
+     */
+    closeContextMenu(key) {
+        const menu = this.contextMenu;
+        this.endContextMenu();
+        LOG.event('context-menu-close', { key: key, from: LOG.describe(menu.from) });
+        const shown = (el) => !!el && el.isConnected && el !== document.body && el.getClientRects().length > 0;
+        // A page may close its menu a moment later than the key: React does.
+        setTimeout(() => {
+            const at = this.lastActiveElement;
+            if (!this.isEnabled || !menu.from.isConnected || at === menu.from || shown(at)) return;
+            const focus = this.deepActiveElement();
+            if (shown(focus) && focus !== menu.from) return;
+            this.focusElement(menu.from);
+        }, 100);
     }
 
     /**
@@ -1850,6 +2060,8 @@ class SpatialEngine {
             // The mouse selects for itself; a caret left behind would only
             // fight it.
             this.exitTextMode(false);
+            // A click closes a right-click menu, or is in it.
+            this.endContextMenu();
             this.isActiveMode = false;
             this.userHasActed = true;   // the focus is theirs now, see isInEdgeBar
             // Immediate update to hide the ring
@@ -4518,6 +4730,7 @@ class SpatialEngine {
             ['Acting', [
                 [['Enter'], 'Click the item in the ring'],
                 [['Enter Enter'], 'Twice, quickly: a double-click'],
+                [['Shift+F10', 'Menu'], 'Right-click the item in the ring: the site’s menu, or else the browser’s. Esc closes it'],
                 [['Enter'], 'On a text box or a list: go in, to type or pick. The ring then hugs it'],
                 [['Esc'], 'Leave a text box']
             ]],

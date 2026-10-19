@@ -333,6 +333,7 @@ Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed o
 | Target | Bot check covering the whole window | 5741640 |
 | USA Today | Sideways step climbing into the pinned masthead | 839715b |
 | Yahoo | `<main tabindex=-1>` taken as a stop | 8e7e2e9 |
+| vscode.dev | Shift+F10 on a title-bar and a sidebar button opens VS Code's own right-click menu at the button (the page took the made-up right-click), the arrows step through it, Esc closes it and the ring is back on the button with the keyboard kept | the commit adding Shift+F10 |
 | Coralogix | Logs explorer (report zip): ArrowDown from a toolbar button scrolled the logs box. Not reproduced: the page needs a login and its saved copy lays out differently without the app's scripts | - |
 
 ## Dropped
@@ -345,4 +346,5 @@ Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed o
 ## Local pages only (no real site)
 
 modal-over-page, fixed-frame-over-page, select-text, select-text-menu,
-report-log, stretched-link, shift-scroll, restyled-pointer, cues, menu-order, edit-look, escape-pulled-box.
+report-log, stretched-link, shift-scroll, restyled-pointer, cues, menu-order, edit-look, escape-pulled-box,
+context-menu.

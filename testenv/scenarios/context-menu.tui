@@ -1,0 +1,103 @@
+# Shift+F10 or the menu key right-clicks what is in the ring, where Enter would click. A page's own menu opens (one made-up right-click, and Chrome adds none of its own); without one, the key goes on to Chrome, whose menu opens. A menu that takes focus has the ring; ArrowDown/ArrowUp step into one that does not, though it opens over the element. Enter picks an item, Escape closes the menu without handing the keyboard over, and the ring is back on the element either way. Where the page only blocks right-click, Escape hands over as anywhere; in a text box the key is the browser's.
+pages/context-menu.html
+start:css=#above
+# A role=menu that focuses its first item and gives focus back when it closes.
+key:ArrowDown
+expect:css=#budget
+key:Shift+F10
+wait:200
+expect:css=#budget-open
+eval:(() => { const h = heard.join(' '); if (h !== 'made:budget:2:' + middle('budget')) throw new Error(h); return h; })()
+key:ArrowDown
+expect:css=#budget-rename
+key:Enter
+wait:300
+expect:css=#budget
+eval:(() => { const t = document.getElementById('out').textContent; if (t !== 'budget:rename') throw new Error(t); return t; })()
+key:Shift+F10
+wait:200
+expect:css=#budget-open
+key:Escape
+wait:300
+expect:css=#budget
+eval:(() => { if (document.querySelector('.menu')) throw new Error('the menu is still open'); const cue = document.querySelector('#tui-toggle-cue .tui-cue-said'); if (cue && /off/.test(cue.textContent)) throw new Error('the keyboard was handed over'); return 'closed, keyboard kept'; })()
+# A menu with no role that never takes focus, from the menu key: the arrows step into it.
+key:ArrowDown
+expect:css=#photo
+key:ContextMenu
+wait:200
+expect:css=#photo
+key:ArrowDown
+expect:css=#photo-view
+key:ArrowDown
+expect:css=#photo-share
+key:Enter
+wait:300
+expect:css=#photo
+eval:(() => { const t = document.getElementById('out').textContent; if (t !== 'photo:share') throw new Error(t); return t; })()
+key:ContextMenu
+wait:200
+key:ArrowUp
+expect:css=#photo-share
+key:Escape
+wait:300
+expect:css=#photo
+eval:(() => { if (document.querySelector('.menu')) throw new Error('the menu is still open'); return 'closed'; })()
+# A row whose menu belongs to the box inside it: right-clicked there, as Enter would click.
+key:ArrowDown
+expect:css=#notes
+key:Shift+F10
+wait:200
+expect:css=#notes-name-edit
+key:Enter
+wait:300
+expect:css=#notes
+eval:(() => { const t = document.getElementById('out').textContent; if (t !== 'notes-name:edit') throw new Error(t); return t; })()
+# A menu that opens on the right button's mousedown.
+key:ArrowDown
+expect:css=#slides
+key:Shift+F10
+wait:200
+expect:css=#slides-present
+key:Escape
+wait:300
+expect:css=#slides
+# No menu of the page's: Chrome's own event follows ours, and its menu opens.
+key:ArrowDown
+key:ArrowDown
+expect:css=#plain
+eval:heard.length = 0
+key:Shift+F10
+wait:200
+eval:(() => { const h = heard.join(' '); if (h !== 'made:plain:2:' + middle('plain') + ' browser:plain') throw new Error(h); return h; })()
+# A text box the ring stands on: right-clicked itself, and gone into for Chrome's menu, with Paste.
+key:ArrowDown
+eval:heard.length = 0
+key:Shift+F10
+wait:200
+eval:(() => { const h = heard.join(' '); if (h !== 'made:folder:2:' + middle('folder') + ' browser:folder') throw new Error(h); if (document.activeElement.id !== 'folder') throw new Error(document.activeElement.id); return h; })()
+# In the box, the key is the browser's alone.
+eval:heard.length = 0
+key:Shift+F10
+wait:200
+eval:(() => { const h = heard.join(' '); if (h !== 'browser:folder') throw new Error(h); return h; })()
+key:Escape
+# A page that only blocks right-click opens nothing: Escape hands the keyboard over.
+key:ArrowUp
+key:ArrowUp
+expect:css=#locked
+key:Shift+F10
+wait:300
+expect:css=#locked
+key:Escape
+wait:300
+eval:(() => { const cue = document.querySelector('#tui-toggle-cue .tui-cue-said'); if (!cue || !/off/.test(cue.textContent)) throw new Error('the keyboard was not handed over'); return cue.textContent; })()
+key:Escape
+# The log says what was right-clicked and whose menu opened, nothing of the page's.
+key:F10
+key:ArrowUp
+key:Enter
+report
+report-has:context-menu key=F10 on=.* by=page
+report-has:context-menu key=F10 on=.* by=browser
+report-lacks:Budget 2027

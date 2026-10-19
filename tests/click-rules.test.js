@@ -298,3 +298,38 @@ test('a link or button holding a picture is still clicked itself', () => {
   const box = () => ({ width: 100, height: 100 });
   assert.equal(resolveClickTarget(link, null, box), link);
 });
+
+test('the menu key and Shift+F10 open the right-click menu; F10 alone is the extension\'s', () => {
+  const { opensContextMenu } = globalThis.TuiClickRules;
+  assert.equal(opensContextMenu({ key: 'ContextMenu' }), true);
+  assert.equal(opensContextMenu({ key: 'F10', shiftKey: true }), true);
+  assert.equal(opensContextMenu({ key: 'F10' }), false);
+  assert.equal(opensContextMenu({ key: 'F10', shiftKey: true, ctrlKey: true }), false);
+  assert.equal(opensContextMenu({ key: 'ContextMenu', altKey: true }), false);
+  assert.equal(opensContextMenu({ key: 'Enter', shiftKey: true }), false);
+  assert.equal(opensContextMenu(null), false);
+});
+
+test('a right-click from the keyboard lands in the middle of what shows of the element', () => {
+  const { menuPoint } = globalThis.TuiClickRules;
+  const box = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
+  // Chrome's own: the middle of the box.
+  assert.deepEqual(menuPoint(box(8, 50, 94, 20), 1000, 800), { x: 55, y: 60 });
+  // A row running below the window: the middle of its part on screen.
+  assert.deepEqual(menuPoint(box(0, 600, 400, 1000), 1000, 800), { x: 200, y: 700 });
+  // Out of sight altogether: the middle of the box.
+  assert.deepEqual(menuPoint(box(0, 900, 100, 20), 1000, 800), { x: 50, y: 910 });
+});
+
+test('a right-click\'s menu is told by lying by the element', () => {
+  const { rectGap, MENU_REACH_PX } = globalThis.TuiClickRules;
+  const box = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
+  const row = box(20, 100, 280, 40);
+  // Opened at the click, over the row.
+  assert.equal(rectGap(box(160, 120, 160, 72), row), 0);
+  // Under the row, a few pixels down.
+  assert.ok(rectGap(box(20, 146, 160, 72), row) <= MENU_REACH_PX);
+  // A carousel further down the page.
+  assert.ok(rectGap(box(20, 400, 300, 100), row) > MENU_REACH_PX);
+  assert.equal(rectGap(box(0, 0, 3, 4), box(6, 8, 1, 1)), 5);
+});

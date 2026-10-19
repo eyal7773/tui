@@ -339,8 +339,55 @@
     return !!el && !isActivating(el);
   }
 
+  /**
+   * Whether a key opens the right-click menu: the menu key, or Shift+F10,
+   * the keys Windows gives the keyboard for it. F10 alone is the
+   * extension's own menu.
+   */
+  function opensContextMenu(e) {
+    if (!e || e.ctrlKey || e.altKey || e.metaKey) return false;
+    if (e.key === 'ContextMenu') return true;
+    return e.key === 'F10' && !!e.shiftKey;
+  }
+
+  /**
+   * Where a right-click from the keyboard lands: the middle of the part of
+   * rect inside a window width by height, where Chrome puts its own. A page
+   * opens its menu at that point. A row taller than the window is clicked
+   * in the middle of what shows of it, not off screen.
+   */
+  function menuPoint(rect, width, height) {
+    const left = Math.max(rect.left, 0);
+    const right = Math.min(rect.right, width);
+    const top = Math.max(rect.top, 0);
+    const bottom = Math.min(rect.bottom, height);
+    // Wholly out of sight: the middle of the box itself.
+    if (right < left || bottom < top) {
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+    return { x: (left + right) / 2, y: (top + bottom) / 2 };
+  }
+
+  /**
+   * How far from the element a right-click's menu may lie. A page opens it
+   * at the click, over the element, or flipped up or left to fit the window,
+   * or under the element; a little more for the gap some leave.
+   */
+  const MENU_REACH_PX = 24;
+
+  /** The distance between two boxes; 0 when they touch or overlap. */
+  function rectGap(a, b) {
+    const dx = Math.max(a.left - b.right, b.left - a.right, 0);
+    const dy = Math.max(a.top - b.bottom, b.top - a.bottom, 0);
+    return Math.hypot(dx, dy);
+  }
+
   root.TuiClickRules = {
     resolveClickTarget: resolveClickTarget,
+    opensContextMenu: opensContextMenu,
+    menuPoint: menuPoint,
+    MENU_REACH_PX: MENU_REACH_PX,
+    rectGap: rectGap,
     isOverlay: isOverlay,
     mayWantDoubleClick: mayWantDoubleClick,
     EFFECT_ATTRIBUTES: EFFECT_ATTRIBUTES,

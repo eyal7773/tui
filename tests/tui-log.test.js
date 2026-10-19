@@ -81,9 +81,11 @@ test('a typed character is never recorded, only the keys the engine acts on', ()
   log.event('key', { key: 'ArrowDown' });
   log.event('key', { key: 'p' });
   log.event('key', { key: 'Enter' });
+  log.event('key', { key: 'ContextMenu' });
   const text = log.exportText({});
   assert.ok(text.includes('key=ArrowDown'));
   assert.ok(text.includes('key=Enter'));
+  assert.ok(text.includes('key=ContextMenu'));
   assert.ok(text.includes('key=other'));
   assert.ok(!/key=p\b/.test(text));
 });

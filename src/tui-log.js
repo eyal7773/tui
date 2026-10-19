@@ -42,7 +42,7 @@
   /** The keys the engine acts on. Anything else is recorded as "other". */
   const SAFE_KEYS = new Set([
     'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-    'Enter', 'Home', 'End', 'F10', 'Escape', 'Tab'
+    'Enter', 'Home', 'End', 'F10', 'Escape', 'Tab', 'ContextMenu'
   ]);
 
   let entries = [];
