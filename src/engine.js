@@ -867,6 +867,13 @@ class SpatialEngine {
      * the call.
      */
     scrollToReveal(el) {
+        // Ctrl+ArrowUp out to an item bigger than the window, which it
+        // already shows a part of: scrolling to its edge would lose the place
+        // the user came out from.
+        if (this.keepView) {
+            const r = el.getBoundingClientRect();
+            if (r.height > window.innerHeight && r.bottom > 0 && r.top < window.innerHeight) return;
+        }
         const covered = this.coveredEdges(el);
         const style = el.style;
         const saved = [style.scrollMarginTop, style.scrollMarginBottom];
@@ -1242,7 +1249,10 @@ class SpatialEngine {
             // We handle this navigation action
             e.preventDefault();
             e.stopImmediatePropagation(); // CRITICAL: Stop the page from seeing this key
-            if (!this.stepIntoContextMenu(e.key)) this.navigate(e.key);
+            // Ctrl+ArrowDown goes into the item in the ring, Ctrl+ArrowUp out
+            // of it (see inside-rules.js).
+            const move = window.TuiInsideRules ? window.TuiInsideRules.insideMove(e) : null;
+            if (!this.stepIntoContextMenu(e.key)) this.navigate(e.key, move || undefined);
         } else if (e.key === 'Enter') {
             const active = this.deepActiveElement();
 
@@ -2252,7 +2262,16 @@ class SpatialEngine {
             // the step goes on from where the ring was, not from the top.
             const placed = current && current !== document.body && !emptyRect &&
                 (!this.steppedTo || !this.composedContains(current, this.steppedTo));
-            let target = mode !== 'extreme' && placed ? this.firstInside(current) : null;
+            // Ctrl+ArrowDown into the ring's item, Ctrl+ArrowUp out of it;
+            // with nowhere to go they are plain arrows.
+            let direct = null;
+            if (mode === 'in' || mode === 'out') {
+                const from = current && current !== document.body ? current : null;
+                direct = from && (mode === 'in' ? this.stopInside(from) : this.stopAround(from));
+                if (direct) LOG.event('inside', { move: mode, to: LOG.describe(direct) });
+                else mode = undefined;
+            }
+            let target = direct || (mode !== 'extreme' && placed ? this.firstInside(current) : null);
             if (target) this.lastRanking = undefined;
             else target = this.findBestCandidate(currentRect, key, current, mode);
             let leftBar = false;
@@ -2270,7 +2289,7 @@ class SpatialEngine {
             let ranking = this.lastRanking;
             let widened;
             // Already searched as wide as it goes, and without the bar.
-            if (target && mode !== 'extreme' && !leftBar && this.leavesColumnUnseen(currentRect, target, key)) {
+            if (target && !direct && mode !== 'extreme' && !leftBar && this.leavesColumnUnseen(currentRect, target, key)) {
                 const wider = this.withWiderReach(() => this.findBestCandidate(currentRect, key, current, mode));
                 widened = !!wider && (this.besideOrBefore(this.rectOf(wider), this.rectOf(target), key) ||
                               this.sharesColumn(current, wider, target));
@@ -2289,7 +2308,7 @@ class SpatialEngine {
             // message could not be read. A bar pinned inside the box, such as
             // the message's Reply bar, waits for the box's end too.
             let scrollBox = null;
-            if (target && mode !== 'extreme' && current && current !== document.body &&
+            if (target && !direct && mode !== 'extreme' && current && current !== document.body &&
                 (key === 'ArrowDown' || key === 'ArrowUp')) {
                 const box = this.scrollBoxOf(current, key);
                 // Not for the menu the ring's element opened, which lies outside
@@ -2306,10 +2325,15 @@ class SpatialEngine {
             // 4. Action
             if (target) {
                 // Try to focus. access result to see if we should stop or retry.
-                const focusResult = this.focusElement(target, attempts);
+                // Out to an item bigger than the window, the page stays where it is.
+                this.keepView = !!direct && mode === 'out';
+                let focusResult;
+                try { focusResult = this.focusElement(target, attempts); }
+                finally { this.keepView = false; }
 
                 if (focusResult) {
                     success = true;
+                    this.noteArrival(!!direct);
                     this.steppedTo = target;   // see firstInside
                     if (this.isTrapElement(target) && mode !== 'extreme') this.offerFrameEntry(target, key, currentRect);
                     if (this.leftBar && (!this.leftBar.isConnected || this.composedContains(this.leftBar, target))) this.leftBar = null;
@@ -4231,6 +4255,80 @@ class SpatialEngine {
         return inside[window.TuiViewRules.firstInReadingOrder(inside.map(c => this.rectOf(c)), rtl)];
     }
 
+    /** The stops inside el, el itself left out. */
+    stopsInside(el) {
+        return this.candidates.filter(c => c !== el && this.composedContains(el, c) && !this.failedFocusElements.has(c));
+    }
+
+    /**
+     * Ctrl+ArrowDown: the first stop inside the ring's item, at the start of
+     * its top row, of those on screen if any are. None in a wrapper round a
+     * text box, which Enter goes into, nor in a frame, which Enter steps
+     * into and whose stops are its own engine's.
+     */
+    stopInside(el) {
+        if (!el || el._tui_input || this.isTrapElement(el) || !window.TuiViewRules) return null;
+        const inside = this.stopsInside(el);
+        if (!inside.length) return null;
+        const shown = inside.filter(c => window.TuiViewRules.onScreen(this.rectOf(c)));
+        const pool = shown.length ? shown : inside;
+        const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
+        return pool[window.TuiViewRules.firstInReadingOrder(pool.map(c => this.rectOf(c)), rtl)];
+    }
+
+    /**
+     * Ctrl+ArrowUp: the nearest stop around the ring's item. From a file,
+     * its folder; from a link in an open message, the message, from which
+     * the next ArrowDown goes on past it. A folder that is no stop itself,
+     * whose row holds the stop instead (GitHub's file tree, signed out, has
+     * a button in each folder's row), is that stop.
+     */
+    stopAround(el) {
+        const stops = new Set(this.candidates);
+        for (let node = this.composedParent(el); node && node !== document.body && node !== document.documentElement;
+            node = this.composedParent(node)) {
+            if (stops.has(node) && !this.failedFocusElements.has(node)) return node;
+            const head = this.headRect(node, node.getBoundingClientRect());
+            if (!head) continue;
+            const inHead = this.stopsInside(node).filter(c => {
+                const r = c.getBoundingClientRect();
+                return !this.composedContains(c, el) && r.top >= head.top - 1 && r.bottom <= head.bottom + 1;
+            });
+            if (inHead.length) {
+                const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
+                return inHead[window.TuiViewRules.firstInReadingOrder(inHead.map(c => this.rectOf(c)), rtl)];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * After a step: keeps the trail of where the ring arrived, and shows the
+     * way into an item with stops inside that the arrows brought the ring to
+     * (see inside-rules.js). Not after Ctrl+ArrowDown or Ctrl+ArrowUp, whose
+     * user knows the keys. The candidates are the ones the step was chosen
+     * from: searching the page again on every press would double its work.
+     */
+    noteArrival(viaInside) {
+        const rules = window.TuiInsideRules;
+        const at = this.lastActiveElement;
+        if (!rules || !at) return;
+        const trail = this.ringTrail || (this.ringTrail = []);
+        const back = rules.cameBack(trail, at);
+        trail.push(at);
+        if (trail.length > rules.BACK_WITHIN) trail.shift();
+        if (viaInside || at._tui_input || this.isTrapElement(at)) return;
+        // An open folder is drawn as its row, and ArrowDown goes on into
+        // it: no way in to show (see headRect).
+        if (this.headRect(at, at.getBoundingClientRect())) return;
+        const hinted = this.hintedInside || (this.hintedInside = new WeakSet());
+        const stops = this.stopsInside(at).length;
+        if (!rules.shouldHint(stops, hinted.has(at), back)) return;
+        hinted.add(at);
+        LOG.event('hint-inside', { on: LOG.describe(at), stops: stops, back: back || undefined });
+        this.showKeyHint(this.rectOf(at), 'Press Ctrl and the down arrow to go inside', [['Ctrl', '↓']], null);
+    }
+
     /**
      * Where ArrowDown goes on from, out of a bar pinned along the bottom of
      * the window with nothing further down in it: the bar's top edge, under
@@ -4751,6 +4849,7 @@ class SpatialEngine {
                 [['↑', '↓'], 'The item above or below'],
                 [['←', '→'], 'Along the row you are on'],
                 [['Home', 'End'], 'Either end of the line. The last arrow decides: after a sideways step the row, after up or down the column'],
+                [['Ctrl+↓', 'Ctrl+↑'], 'Into the item in the ring (a folder, a message, a card), or back out to the one around it'],
                 [['Shift+↑↓'], 'Scroll the page, or the box the ring is in. The ring stays where it is']
             ]],
             ['Acting', [

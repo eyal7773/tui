@@ -29,6 +29,7 @@
         "click-rules.js",
         "target-rules.js",
         "text-rules.js",
+        "inside-rules.js",
         "tui-log.js",
         "engine.js"
       ],

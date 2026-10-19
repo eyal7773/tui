@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Going into an item</title>
+<style>
+  body { font: 15px/1.5 sans-serif; margin: 20px; width: 520px; }
+  .card { border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin: 10px 0; cursor: pointer; }
+  .card button { margin-right: 6px; }
+  .message { border-left: 3px solid #69c; padding: 6px 10px; margin: 10px 0; }
+  .message p { margin: 4px 0; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  [role="treeitem"] > .row { height: 28px; display: flex; align-items: center; cursor: pointer; }
+  [role="group"] { padding-left: 16px; }
+</style>
+</head>
+<body>
+<p><a id="inbox" href="#inbox">Inbox</a></p>
+
+<!-- A card that is a control itself, with buttons inside: the arrows step past it whole. -->
+<div class="card" id="card" role="button" tabindex="0">Picnic at the lake
+  <div><button id="like">Like</button><button id="share">Share</button></div>
+</div>
+
+<!-- Nothing inside. -->
+<p><button id="archive">Archive all</button></p>
+
+<!-- An open message: one list item that does nothing itself, with its links. -->
+<div role="list"><div class="message" id="message" role="listitem" tabindex="-1">
+  <p>The schedule for the orchard visit:</p>
+  <p><a id="link-1" href="#1">Morning route</a></p>
+  <p><a id="link-2" href="#2">Picking rows</a></p>
+  <p><a id="link-3" href="#3">Lunch spot</a></p>
+  <p><a id="link-4" href="#4">Cider tasting</a></p>
+  <p><a id="link-5" href="#5">Bus back</a></p>
+  <p><a id="link-6" href="#6">Weather</a></p>
+</div></div>
+<p><button id="reply">Reply</button></p>
+
+<!-- A text box: the ring stands on its wrapper, which holds one control that Enter goes into. -->
+<p id="search-row"><input id="search" type="text" aria-label="Search mail" placeholder="Search mail"></p>
+
+<ul role="tree" aria-label="Folders">
+  <li role="treeitem" id="trips" tabindex="0" aria-expanded="true"><div class="row">Trips</div>
+    <ul role="group">
+      <li role="treeitem" id="lake" tabindex="-1"><div class="row">Lake.txt</div></li>
+      <li role="treeitem" id="hills" tabindex="-1"><div class="row">Hills.txt</div></li>
+    </ul>
+  </li>
+</ul>
+<!-- A tree whose items are no stops: each row holds a button or a link (GitHub's file tree, signed out). -->
+<ul role="tree" aria-label="Shared folders">
+  <li role="treeitem" aria-expanded="true"><div class="row"><button id="shared">Shared</button></div>
+    <ul role="group">
+      <li role="treeitem" aria-expanded="true"><div class="row"><button id="photos">Photos</button></div>
+        <ul role="group">
+          <li role="treeitem"><div class="row"><a id="beach" href="#beach">Beach.jpg</a></div></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+<p><a id="settings" href="#settings">Settings</a></p>
+</body>
+</html>

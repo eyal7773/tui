@@ -1,0 +1,62 @@
+# Ctrl+ArrowDown goes into the item in the ring, Ctrl+ArrowUp back out to the one around it; with nowhere to go they are plain arrows. A card with buttons, which the arrows step past whole, shows the way in once, and again when the user leaves it and comes back. Out of an open message, the next ArrowDown goes past the rest of its links to Reply. In a tree, out of a file is its folder, or its folder's button where the rows hold the stops; an open folder, which ArrowDown goes into anyway, shows no hint.
+pages/go-inside.html
+start:css=#inbox
+# The card: the hint, in, along, and out.
+key:ArrowDown
+expect:css=#card
+eval:(() => { const h = document.getElementById('tui-hint'); if (!h || !/go inside/.test(h.getAttribute('aria-label'))) throw new Error('no hint on the card'); return h.getAttribute('aria-label'); })()
+key:Control+ArrowDown
+expect:css=#like
+key:ArrowRight
+expect:css=#share
+key:Control+ArrowUp
+expect:css=#card
+eval:(() => { if (document.getElementById('tui-hint')) throw new Error('a hint after Ctrl+ArrowUp'); return 'no hint'; })()
+# Nothing inside: Ctrl+ArrowDown is a plain ArrowDown.
+key:ArrowDown
+expect:css=#archive
+key:Control+ArrowUp
+expect:css=#card
+eval:(() => { if (!document.getElementById('tui-hint')) throw new Error('no hint on coming back'); return 'hint again'; })()
+key:ArrowDown
+key:Control+ArrowDown
+expect:css=#link-1
+# Out of the message, past the rest of its links.
+key:ArrowDown
+expect:css=#link-2
+key:Control+ArrowUp
+expect:css=#message
+key:ArrowDown
+expect:css=#reply
+# Left and come back after more presses than that: the card shows no hint again.
+key:ArrowUp*4
+key:ArrowUp*4
+expect:css=#card
+eval:(() => { if (document.getElementById('tui-hint')) throw new Error('the hint again, long after'); return 'no hint'; })()
+# A text box's wrapper (the ring stands on it) holds one control: Ctrl+ArrowDown is a plain ArrowDown.
+start:css=#reply
+key:ArrowUp
+key:ArrowDown
+expect:css=#reply
+key:ArrowDown
+expect:css=#search-row
+key:Control+ArrowDown
+expect:css=#trips
+eval:(() => { if (document.getElementById('tui-hint')) throw new Error('a hint on an open folder'); return 'no hint'; })()
+# The tree: in to the first file, out to the folder.
+key:Control+ArrowDown
+expect:css=#lake
+key:ArrowDown
+expect:css=#hills
+key:Control+ArrowUp
+expect:css=#trips
+# A tree whose rows hold the stops: out of a file is its folder's button, then the folder above.
+key:ArrowDown*5
+expect:css=#beach
+key:Control+ArrowUp
+expect:css=#photos
+key:Control+ArrowUp
+expect:css=#shared
+# Out of what nothing is around: a plain ArrowUp.
+key:Control+ArrowUp
+expect:css=#hills
