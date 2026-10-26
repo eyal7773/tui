@@ -563,6 +563,16 @@ class SpatialEngine {
         return true;
     }
 
+    /** Whether el is in a modal dialog, which the page means to be used before the rest. */
+    inModalDialog(el) {
+        try {
+            return !!this.composedClosest(el, 'dialog:modal, [aria-modal="true"]');
+        } catch (e) {
+            // :modal unsupported; the aria-modal half is checked on its own.
+            return !!this.composedClosest(el, '[aria-modal="true"]');
+        }
+    }
+
     /** Whether el is in a dialog, popup or menu of the page's, which Escape closes. */
     inPagePopup(el) {
         const popup = 'dialog[open], [aria-modal="true"], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]';
@@ -921,13 +931,7 @@ class SpatialEngine {
      */
     isInEdgeBar(el) {
         const bar = this.pinnedAncestor(el);
-        if (!bar || !window.TuiViewRules) return false;
-        try {
-            if (this.composedClosest(el, 'dialog:modal, [aria-modal="true"]')) return false;
-        } catch (e) {
-            // :modal unsupported; the aria-modal half is checked on its own.
-            if (this.composedClosest(el, '[aria-modal="true"]')) return false;
-        }
+        if (!bar || !window.TuiViewRules || this.inModalDialog(el)) return false;
 
         // A floating card counts too. Stack Overflow's OneTrust box sits 16px
         // above the bottom edge, and the first ArrowDown from its focus went
@@ -3639,7 +3643,12 @@ class SpatialEngine {
                 // when they visually overlap or are geometrically closer than the scrolling content.
                 // BUG FIX: Only apply penalty if we are moving FROM non-sticky TO sticky.
                 // If we are already in a sticky container (like Header), we should be able to move to other sticky containers (Sidebar) freely.
-                if (targetIsSticky && !currentIsSticky && !this.adjoinsRing(cand, currentRect)) {
+                // Nor is a modal dialog: it is open over the page to be used.
+                // Google Calendar draws an event's details in a fixed layer,
+                // with no backdrop, and ArrowRight from the side menu passed
+                // the whole dialog for an event behind it.
+                if (targetIsSticky && !currentIsSticky && !this.adjoinsRing(cand, currentRect) &&
+                    !this.inModalDialog(cand)) {
                     score += 500;
 
                     // A sideways step never leaves its row for a pinned bar. On
@@ -3717,12 +3726,22 @@ class SpatialEngine {
         // So is a list item that does nothing itself, whatever its size: a
         // shorter Gmail message took the ring as a whole, and the next
         // ArrowDown stepped past it to Reply, never reaching its links.
+        // What it holds then competes with what lies beyond it: the box came
+        // first only because it reached the ring's line, and what it holds
+        // may be far from it. Google Calendar's day column runs the whole
+        // height of the week, and ArrowRight from the side menu went to an
+        // event 260px down it, past the event's details open level with it.
         if (bestCandidate && mode !== 'extreme') {
             const box = scored.find(s => s.cand === bestCandidate).rect;
             if (box.height > window.innerHeight || this.isPlainListItem(bestCandidate)) {
                 const inside = scored.filter(s => s.cand !== bestCandidate && s.score < Infinity &&
                     this.composedContains(bestCandidate, s.cand) && clear(s));
-                if (inside.length) bestCandidate = inside.reduce((a, b) => (b.score < a.score ? b : a)).cand;
+                if (inside.length) {
+                    const held = inside.reduce((a, b) => (b.score < a.score ? b : a));
+                    const beyond = scored.find(s => s.cand !== bestCandidate && s.score < held.score &&
+                        !this.composedContains(bestCandidate, s.cand) && clear(s));
+                    bestCandidate = (beyond || held).cand;
+                }
             }
         }
 
@@ -4341,12 +4360,7 @@ class SpatialEngine {
     belowBottomBar(current, currentRect, key) {
         if (key !== 'ArrowDown' || !current || !currentRect || !window.TuiViewRules || this.windowCover()) return null;
         const bar = this.pinnedAncestor(current);
-        if (!bar) return null;
-        try {
-            if (this.composedClosest(current, 'dialog:modal, [aria-modal="true"]')) return null;
-        } catch (e) {
-            if (this.composedClosest(current, '[aria-modal="true"]')) return null;
-        }
+        if (!bar || this.inModalDialog(current)) return null;
         const box = bar.getBoundingClientRect();
         if (!(window.TuiViewRules.coveredEdges(window.innerHeight, [box], 40).bottom > 0)) return null;
         return {

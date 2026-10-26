@@ -1,0 +1,5 @@
+# ArrowRight from a side button goes into the modal dialog open beside it, not past it to an event down the tall column behind (Google Calendar's event details).
+pages/modal-beside-tall-column.html
+start:css=#side
+key:ArrowRight
+expect:css=#phones
