@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Close button hidden from screen readers</title>
+<style>
+  body { margin: 0; font: 14px sans-serif; }
+  /* A side panel over the whole page, as a details drawer is. */
+  .panel { position: fixed; inset: 0; background: rgba(0, 0, 0, .3); }
+  .drawer { position: absolute; top: 0; right: 0; bottom: 0; width: 700px; background: #fff; }
+  /* The X in the corner, a little higher than the header's buttons. */
+  #close { position: absolute; top: 10px; right: 40px; width: 26px; height: 31px;
+           border: 0; background: none; font-size: 20px; cursor: pointer; }
+  .header { position: absolute; top: 37px; left: 20px; right: 80px; height: 36px;
+            display: flex; justify-content: flex-end; gap: 5px; }
+  .header button { height: 36px; }
+</style>
+</head>
+<body>
+  <p><a href="#home">Home</a></p>
+  <div class="panel">
+    <div class="drawer">
+      <button id="close" aria-hidden="true"><span aria-hidden="true">&times;</span></button>
+      <div class="header">
+        <button id="sync">SYNC</button>
+        <button id="delete">DELETE</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

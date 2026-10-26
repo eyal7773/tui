@@ -1,0 +1,5 @@
+# ArrowRight from a panel's last header button reaches the X that closes it, a button the page marks aria-hidden but shows and keeps in the tab order (Argo CD's side panel).
+pages/hidden-close-button.html
+start:css=#delete
+key:ArrowRight
+expect:css=#close

@@ -21,6 +21,7 @@ and a recheck.
 |---|---|---|---|---|
 | Amazon | amazon.com/s?k=headphones, amazon.com/dp/B09XSDMT4F | See-through `<input>` buttons, inline-link colour swatches, carousel "next slide" disappearing under the ring | amazon-result-swatches, amazon-thumbnails | 9dfa9a9, df11f9d, af9135b |
 | Argo CD | argocd application tree (report zip + local page) | Menu opened from a node's three-dots button, pinned under it outside the scrolling tree: ArrowDown enters it | menu-opened-from-button | 3aca213 |
+| Argo CD | resource details side panel (report zip + local page) | ArrowRight from the panel's last header button (DELETE) reaches the X that closes the panel, a button marked aria-hidden but shown and in the tab order | hidden-close-button | the commit adding hidden-close-button |
 | AWS console | us-east-1.console.aws.amazon.com/ec2 Instances (local page) | Page drawn into one big frame: arrows step into it level with where they start, and back out the same way | page-frame, mdn-frame-round-trip | 78e9c88 |
 | AWS access portal | awsapps.com/start accounts list (report zip + local page) | Treegrid of accounts with plain <th>/<td> cells: ArrowDown from an opened account reaches its role links (tabindex=-1) | treegrid-role-links | 63d3412 |
 | Admin dashboard | an internal results list (report zip + local page) | Rows a script makes clickable, with only the pointer cursor (no link, tabindex or role): ArrowDown from the search box steps through them, Enter opens one; a submenu shown by CSS alone still reached | script-click-rows, css-only-menu | 9787f18 |

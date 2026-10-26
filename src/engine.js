@@ -3319,9 +3319,9 @@ class SpatialEngine {
                 // Labels with 'for' attribute are functional, not decorative
                 if (el.tagName === 'LABEL' && el.hasAttribute('for')) {
                     // Keep this label - it controls an input
-                } else if (this.isGridCellControl(el)) {
-                    // GitHub hides a review thread's buttons from screen
-                    // readers, not from the eye or the mouse.
+                } else if (this.isHiddenFromReadersOnly(el)) {
+                    // A control the page hides from screen readers, not from
+                    // the eye or the mouse.
                 } else {
                     return false;  // Filter out other aria-hidden elements
                 }
@@ -3392,7 +3392,7 @@ class SpatialEngine {
 
             // FILTER: Elements that are explicitly aria-hidden
             // (Unless they are labels, which we handled above)
-            if (el.getAttribute('aria-hidden') === 'true' && !this.isGridCellControl(el)) {
+            if (el.getAttribute('aria-hidden') === 'true' && !this.isHiddenFromReadersOnly(el)) {
                 return false;
             }
 
@@ -4039,6 +4039,18 @@ class SpatialEngine {
      */
     isGridCellControl(el) {
         return ['BUTTON', 'A', 'INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) && this.isInGridCell(el);
+    }
+
+    /**
+     * Is el, marked aria-hidden, a control hidden from screen readers only?
+     * GitHub hides a review thread's buttons that way (see isGridCellControl).
+     * So does Argo CD the X that closes its side panel: a button in the tab
+     * order, on screen above the panel's DELETE, which the arrows never
+     * reached. A button the page keeps out of the tab order is left out.
+     */
+    isHiddenFromReadersOnly(el) {
+        if (this.isGridCellControl(el)) return true;
+        return el.tagName === 'BUTTON' && !el.disabled && el.getAttribute('tabindex') !== '-1';
     }
 
     focusElement(el, attempt = 1) {
