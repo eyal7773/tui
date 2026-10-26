@@ -339,6 +339,7 @@ Etsy, Yelp, Ars Technica, NIH (Cloudflare check), Al Jazeera (connection timed o
 | vscode.dev | Shift+F10 on a title-bar and a sidebar button opens VS Code's own right-click menu at the button (the page took the made-up right-click), the arrows step through it, Esc closes it and the ring is back on the button with the keyboard kept | the commit adding Shift+F10 |
 | TimeWatch | Attendance page (report zip): Enter on a link with no href that a script handles did nothing visible. Not reproduced: the page needs a login, and the saved copy holds none of the scripts that handle the link | - |
 | Coralogix | Logs explorer (report zip): ArrowDown from a toolbar button scrolled the logs box. Not reproduced: the page needs a login and its saved copy lays out differently without the app's scripts | - |
+| AWS console | Auto Scaling group details, page drawn into one big frame (report zip): the F10 menu showed in the frame without F10. Not reproduced: the steps into and out of the frame from the log show no menu on the saved copy, and a frame's own key presses are not logged, so what was pressed inside it is unknown | - |
 
 ## Dropped
 
