@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Menus that open on hover</title>
+<style>
+  body { margin: 0; font: 14px sans-serif; }
+  nav { display: flex; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #ccc; }
+  nav a, nav button { font: inherit; padding: 4px; }
+  .drop { position: relative; }
+  .panel { display: none; position: absolute; top: 34px; left: 0; width: 260px;
+           padding: 12px; background: #fff; border: 1px solid #ccc; }
+  .drop.open .panel { display: block; }
+  .panel a { display: block; padding: 6px 0; }
+  main { padding: 120px 24px; }
+</style>
+</head>
+<body>
+  <nav>
+    <a id="home" href="#home">Home</a>
+    <a id="news" href="#news">News</a>
+    <!-- Opens when the mouse comes over it, as React's onMouseEnter does:
+         one mouseover listener for the whole page. A click does nothing. -->
+    <div class="drop" id="more-menu">
+      <button id="more" aria-expanded="false">More</button>
+      <div class="panel">
+        <a id="more-first" href="#weather">Weather</a>
+        <a href="#games">Games</a>
+      </div>
+    </div>
+    <!-- Opens on mouseenter on its container, a listener of its own. -->
+    <div class="drop" id="tools-menu">
+      <button id="tools" aria-expanded="false">Tools</button>
+      <div class="panel">
+        <a id="tools-first" href="#calendar">Calendar</a>
+        <a href="#notes">Notes</a>
+      </div>
+    </div>
+  </nav>
+  <main><a id="story" href="#story">A story further down</a></main>
+<script>
+  function open(drop, on) {
+    drop.classList.toggle('open', on);
+    drop.querySelector('button').setAttribute('aria-expanded', String(on));
+  }
+  const more = document.getElementById('more-menu');
+  document.addEventListener('mouseover', (e) => open(more, more.contains(e.target)));
+  const tools = document.getElementById('tools-menu');
+  tools.addEventListener('mouseenter', () => open(tools, true));
+  tools.addEventListener('mouseleave', () => open(tools, false));
+</script>
+</body>
+</html>

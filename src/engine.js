@@ -1372,7 +1372,13 @@ class SpatialEngine {
             pointerType: 'mouse'  // Explicitly mark as mouse event (not pen/touch)
         };
 
-        // 1. Dispatch generic Down/Up events first (required for some UI frameworks)
+        // 1. A mouse is over the element before it presses. Some menus open
+        // on that alone and ignore the click: Yahoo's More opens on hover,
+        // and Enter on it did nothing. The second click of a pair is
+        // already there.
+        if (clickCount === 1) this.hoverOnto(target);
+
+        // 2. Dispatch generic Down/Up events first (required for some UI frameworks)
         // Standard sequence: pointerdown -> mousedown -> pointerup -> mouseup -> click
         target.dispatchEvent(new PointerEvent('pointerdown', options));
         target.dispatchEvent(new MouseEvent('mousedown', options));
@@ -1384,7 +1390,7 @@ class SpatialEngine {
         const r = clickCount === 2 ? target.getBoundingClientRect() : null;
         const pair = r ? { ...options, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 } : null;
 
-        // 2. Perform the Click
+        // 3. Perform the Click
         // Use native click() if available as it effectively triggers the 'click' event
         // AND handles default behaviors (like navigation for <a> tags).
         // Not for the second click of a pair: native click() always has
@@ -1409,8 +1415,34 @@ class SpatialEngine {
             target.dispatchEvent(new MouseEvent('click', options));
         }
 
-        // 3. The second click of a pair is followed by dblclick.
+        // 4. The second click of a pair is followed by dblclick.
         if (pair) target.dispatchEvent(new MouseEvent('dblclick', pair));
+    }
+
+    /**
+     * The events Chrome sends when the mouse comes onto an element, in its
+     * order, at the element's middle: over bubbles, enter goes to the
+     * element and each parent it is inside, outermost first. React's
+     * onMouseEnter listens for the over; a plain listener on the menu's
+     * container for its enter.
+     */
+    hoverOnto(target) {
+        const r = target.getBoundingClientRect();
+        const at = {
+            view: window, bubbles: true, cancelable: true, composed: true,
+            clientX: r.left + r.width / 2, clientY: r.top + r.height / 2,
+            pointerType: 'mouse', isPrimary: true
+        };
+        const entered = [];
+        for (let node = target; node && node !== document.body;) {
+            if (node.nodeType === 1) entered.unshift(node);
+            node = node.parentNode && node.parentNode.nodeType === 11 ? node.parentNode.host : node.parentNode;
+        }
+        const enter = { ...at, bubbles: false, cancelable: false };
+        target.dispatchEvent(new PointerEvent('pointerover', at));
+        for (const node of entered) node.dispatchEvent(new PointerEvent('pointerenter', enter));
+        target.dispatchEvent(new MouseEvent('mouseover', at));
+        for (const node of entered) node.dispatchEvent(new MouseEvent('mouseenter', enter));
     }
 
     /**

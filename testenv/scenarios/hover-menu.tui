@@ -1,0 +1,12 @@
+# Enter on a button whose menu opens on hover, not on a click, opens it, and ArrowDown steps into it: the click comes with the mouse moving over first.
+pages/hover-menu.html
+start:css=#news
+key:ArrowRight
+expect:css=#more
+key:Enter
+key:ArrowDown
+expect:css=#more-first
+start:css=#tools
+key:Enter
+key:ArrowDown
+expect:css=#tools-first
