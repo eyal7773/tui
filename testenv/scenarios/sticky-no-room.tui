@@ -1,0 +1,13 @@
+# ArrowDown from a dialog's tabs reaches the box under them, though it is position sticky: its parent is no taller, so it can never move and is plain content. A bar that does stick still waits for the end of its box.
+pages/sticky-no-room.html
+start:css=#history-tab
+key:ArrowDown
+expect:css=#composer
+start:css=#history-tab
+eval:placeAboveFoot('history-tab', 227)
+key:ArrowDown
+expect:css=#composer
+start:css=#thread-2
+eval:placeAboveFoot('thread-2', 100)
+key:ArrowDown
+expect:css=#thread-3

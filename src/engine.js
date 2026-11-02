@@ -1076,10 +1076,30 @@ class SpatialEngine {
     /** The nearest ancestor-or-self that is position fixed or sticky, or null. */
     pinnedAncestor(node) {
         for (; node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
-            const position = window.getComputedStyle(node).position;
-            if (position === 'fixed' || position === 'sticky') return node;
+            const style = window.getComputedStyle(node);
+            if (style.position === 'fixed' || (style.position === 'sticky' && this.hasRoomToStick(node, style))) return node;
         }
         return null;
+    }
+
+    /**
+     * Can this position: sticky box move at all? It moves only within its
+     * parent, so one as big as its parent stays where it is, plain content
+     * whatever the CSS says. Jira's "Add a comment" is such a box, under the
+     * tabs of an issue, and ArrowDown from the tabs passed it, for a bar
+     * pinned inside the box at first and for a widget at the window's foot
+     * when it lay near there.
+     */
+    hasRoomToStick(node, style) {
+        const parent = this.composedParent(node);
+        if (!parent || parent.nodeType !== 1) return true;
+        const outer = parent.getBoundingClientRect();
+        // No box of its own (display: contents): what it sticks in is further up.
+        if (!outer.height && !outer.width) return true;
+        const inner = node.getBoundingClientRect();
+        const room = 1;
+        return ((style.top !== 'auto' || style.bottom !== 'auto') && outer.height > inner.height + room) ||
+            ((style.left !== 'auto' || style.right !== 'auto') && outer.width > inner.width + room);
     }
 
     /**
@@ -2665,7 +2685,7 @@ class SpatialEngine {
         let iter = el;
         while (iter && iter !== document.body) {
             const style = window.getComputedStyle(iter);
-            if (style.position === 'fixed' || style.position === 'sticky') {
+            if (style.position === 'fixed' || (style.position === 'sticky' && this.hasRoomToStick(iter, style))) {
                 return true;
             }
             iter = this.composedParent(iter);

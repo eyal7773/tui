@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A sticky box with no room to stick</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; font: 14px sans-serif; }
+  .layer { position: fixed; inset: 0; background: rgba(0, 0, 0, .4); }
+  .dialog { position: absolute; top: 40px; bottom: 40px; left: 200px; width: 660px; background: #fff; }
+  .scroller { height: 100%; overflow-y: auto; }
+  .intro { height: 900px; padding: 24px; box-sizing: border-box; }
+  .tabs { display: flex; gap: 8px; justify-content: center; padding: 8px 24px; }
+  /* The parent is exactly as tall as the sticky box, so it can never move. */
+  .sticky-parent { margin: 8px 0 0 40px; }
+  .composer { position: sticky; top: 0; bottom: -2px; z-index: 10; padding: 16px 16px 40px; background: #fff; }
+  .composer button { display: block; width: 100%; height: 90px; text-align: left; }
+  .rows { padding: 16px 24px; }
+  .rows button { display: block; width: 16px; height: 16px; margin: 0 0 120px; padding: 0; }
+  /* A bar that does stick: its parent is far taller than it is. */
+  .thread { position: relative; margin: 0 24px; padding-bottom: 8px; }
+  .thread a { display: block; height: 28px; margin-bottom: 200px; }
+  .bar { position: sticky; bottom: 0; padding: 12px; background: #eee; }
+  .end { height: 300px; }
+</style>
+</head>
+<body>
+  <div class="layer">
+    <section class="dialog" role="dialog" aria-label="Task">
+      <div class="scroller" id="scroller">
+        <div class="intro"><a id="intro" href="#intro">Task details</a></div>
+        <div class="tabs" role="tablist">
+          <button id="all-tab" role="tab" aria-selected="true">All</button>
+          <button id="notes-tab" role="tab" aria-selected="false" tabindex="-1">Notes</button>
+          <button id="history-tab" role="tab" aria-selected="false" tabindex="-1">History</button>
+        </div>
+        <div role="tabpanel">
+          <div class="sticky-parent">
+            <div class="composer"><button id="composer">Add a note…</button></div>
+          </div>
+          <div class="rows">
+            <button id="row-1" aria-label="Open"></button>
+            <button id="row-2" aria-label="Open"></button>
+          </div>
+        </div>
+        <div class="thread">
+          <a id="thread-1" href="#thread-1">First reply</a>
+          <a id="thread-2" href="#thread-2">Second reply</a>
+          <a id="thread-3" href="#thread-3">Third reply</a>
+          <a id="thread-4" href="#thread-4">Fourth reply</a>
+          <a id="thread-5" href="#thread-5">Fifth reply</a>
+          <div class="bar"><button id="reply">Reply</button></div>
+        </div>
+        <div class="end"></div>
+      </div>
+    </section>
+  </div>
+<script>
+  // Scrolls so that el's top is y pixels above the foot of the window.
+  function placeAboveFoot(id, y) {
+    const scroller = document.getElementById('scroller');
+    const top = document.getElementById(id).getBoundingClientRect().top;
+    scroller.scrollTop += top - (window.innerHeight - y);
+    return document.getElementById(id).getBoundingClientRect().top;
+  }
+</script>
+</body>
+</html>
