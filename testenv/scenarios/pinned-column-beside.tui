@@ -1,0 +1,15 @@
+# Up and down from a pinned bar stay in the page's column: the card below a filter chip lies past its tall picture, which takes no focus, and a pinned side column one step across and just below is still the next line over. The same column is still reached from the bar above it, and within itself.
+pages/pinned-column-beside.html
+start:css=#chip-all
+key:ArrowDown
+expect:css=#card-1
+key:ArrowUp
+expect:css=#chip-all
+start:css=#chip-music
+key:ArrowDown
+expect:css=#card-1
+start:css=#logo
+key:ArrowDown
+expect:css=#side-1
+key:ArrowDown
+expect:css=#side-2

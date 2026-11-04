@@ -1073,6 +1073,21 @@ class SpatialEngine {
         return !bar && !col && fb.bottom >= window.innerHeight - 80 && fb.top > window.innerHeight * 0.3;
     }
 
+    /**
+     * On an up or down step, is cand in a pinned column that the ring is
+     * neither in nor above or below? Such a column runs beside the page, so
+     * it is the next line over, whatever bar the ring is on. One right next
+     * to the ring is still reached the plain way (see adjoinsRing).
+     */
+    besidePinnedColumn(cand, currentEl, currentRect, rect, key) {
+        if (key !== 'ArrowUp' && key !== 'ArrowDown') return false;
+        if (!window.TuiLineRules || window.TuiLineRules.sameLine(currentRect, rect, window.TuiLineRules.VERTICAL)) return false;
+        const pinned = this.pinnedAncestor(cand);
+        if (!pinned || this.composedContains(pinned, currentEl) || this.adjoinsRing(cand, currentRect)) return false;
+        const box = pinned.getBoundingClientRect();
+        return box.height >= box.width * 1.5 && box.height >= window.innerHeight * 0.3;
+    }
+
     /** The nearest ancestor-or-self that is position fixed or sticky, or null. */
     pinnedAncestor(node) {
         for (; node && node !== document.body && node !== document.documentElement; node = this.composedParent(node)) {
@@ -3751,6 +3766,18 @@ class SpatialEngine {
                     // of the window: a header's menus hang from the top.
                     if (this.canScrollPage(key)) return;
                     score += 1000;
+                }
+
+                // Neither penalty above says a side column off the ring's own
+                // line is further than what lies straight ahead. On YouTube
+                // the video below a filter chip lay past its tall thumbnail,
+                // which takes no focus, and ArrowDown left the page for the
+                // side menu, one step across and just below. ArrowUp from that
+                // video went the same way, not back to the chip: both are
+                // pinned, so both paid the penalty above.
+                if (targetIsSticky && currentEl && !this.enteringFrame &&
+                    this.besidePinnedColumn(cand, currentEl, currentRect, rect, key)) {
+                    score += 500;
                 }
             }
 

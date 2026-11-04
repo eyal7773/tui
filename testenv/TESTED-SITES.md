@@ -52,6 +52,7 @@ and a recheck.
 | Wikipedia | en.wikipedia.org/wiki/Albert_Einstein, .../Python_(programming_language) | Appearance radios, Main menu Enter, page preview hover card, sticky side column | wikipedia-appearance-radios, wikipedia-main-menu-enter, dialog-hidden-icons (preview card, local page) | e9314d0, edaca2a, b42c7ec, 6e7cf43, ee1c3a4 |
 | ynet | ynet.co.il | Inline link wrapping a lead photo | ynet-photo-link | 53b9229 |
 | YouTube | youtube.com | Sidebar entries inside `tabindex=-1` links; "Continue watching?" dialog with one button, focused by the page: the arrows enter it (report zip + local page) | youtube-sidebar, dialog-one-button | 3e98875, 6f1381f |
+| YouTube | youtube.com home page (report zip + local page) | ArrowDown from a filter chip reaches the video below its tall thumbnail, not the pinned side menu beside it; ArrowUp comes back to the chip | pinned-column-beside | the commit adding pinned-column-beside |
 | Yahoo | yahoo.com (report zip + live page + local page) | Enter on the header's "More" button opens its menu, which opens on hover and ignores a click; ArrowDown then steps into the menu | hover-menu | the commit adding hover-menu |
 
 ## Surveyed
