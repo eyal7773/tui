@@ -1,12 +1,17 @@
-# A card about the link that opened a modal dialog stays open beside it, outside it, and the dialog takes focus straight back from anything outside: the arrows tried the card on every press and the ring never moved. A menu the dialog opens outside its own box is still reached.
+# A modal dialog opened from a side panel's link, low on the right, with a card about the link left open beside it, outside the dialog, which takes focus straight back from anything outside it. The arrows tried the card on every press and the ring never moved; then, with the card left out, ArrowDown from the link under the backdrop found nothing below and scrolled the panel. The first arrow now goes into the dialog, the card stays out of reach while it is open, and a menu the dialog opens outside its own box is still reached.
 pages/card-beside-modal.html
 start:css=#open
 key:Enter
 wait:800
 key:ArrowDown
+expect:css=#feedback
+key:ArrowDown
 expect:css=#more
 key:ArrowDown
 expect:css=#change-2
+start:css=#close
+key:ArrowRight
+expect:css=#close
 start:css=#more
 key:Enter
 wait:200

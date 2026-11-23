@@ -2394,6 +2394,22 @@ class SpatialEngine {
                 }
             }
 
+            // Nothing that way, and the ring was left on the page behind a
+            // modal dialog, under what covers it: the arrow goes into the
+            // dialog, at its start, rather than scrolling the page behind.
+            // On Jira, Enter on "2 branches" in the side panel opens the
+            // Development dialog and leaves the ring on the link, low on the
+            // right, with the whole dialog above it: ArrowDown found nothing
+            // below but the panel behind, and scrolled it.
+            if (!target && mode !== 'extreme') {
+                const dialog = this.modalOver(current);
+                target = dialog && this.firstInside(dialog);
+                if (target) {
+                    scrollBox = null;
+                    LOG.event('inside', { move: 'dialog', to: LOG.describe(target) });
+                }
+            }
+
             // 4. Action
             if (target) {
                 // Try to focus. access result to see if we should stop or retry.
@@ -3037,6 +3053,37 @@ class SpatialEngine {
         if (!this.focusLocks) this.focusLocks = new Map();
         this.focusLocks.set(branch, modal);
         LOG.event('focus-lock', { dialog: LOG.describe(modal), out: LOG.describe(branch) });
+    }
+
+    /**
+     * The open modal dialog whose backdrop lies over el, which is on the page
+     * behind it. Only when something else is drawn over el's middle: a menu
+     * the dialog put outside its own box is in sight, and is stepped from as
+     * usual, and so is a page beside a dialog marked modal that covers
+     * nothing.
+     */
+    modalOver(el) {
+        if (!el || el === document.body || el === document.documentElement || !el.isConnected) return null;
+        let dialogs;
+        try {
+            dialogs = document.querySelectorAll('dialog:modal, [aria-modal="true"]');
+        } catch (e) {
+            dialogs = document.querySelectorAll('[aria-modal="true"]'); // :modal unsupported
+        }
+        // The last one opened is on top.
+        let dialog = null;
+        for (let i = dialogs.length - 1; i >= 0 && !dialog; i--) {
+            const d = dialogs[i];
+            if (d.getClientRects().length && !this.composedContains(d, el)) dialog = d;
+        }
+        if (!dialog || !window.TuiViewRules) return null;
+        const r = this.rectOf(el);
+        if (!r || !window.TuiViewRules.onScreen(r)) return null;
+        const x = (Math.max(r.left, 0) + Math.min(r.right, window.innerWidth)) / 2;
+        const y = (Math.max(r.top, 0) + Math.min(r.bottom, window.innerHeight)) / 2;
+        const hit = this.deepElementFromPoint(x, y);
+        if (!hit || hit === el || this.composedContains(el, hit) || this.composedContains(hit, el)) return null;
+        return dialog;
     }
 
     /** Whether el refused focus this press, or a dialog keeps it out of reach (see learnFocusLock). */

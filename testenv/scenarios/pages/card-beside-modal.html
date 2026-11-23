@@ -3,7 +3,8 @@
 <style>
   body { font: 15px sans-serif; margin: 0; }
   main { padding: 30px; }
-  #side { position: fixed; right: 30px; top: 60px; width: 260px; }
+  #side { position: fixed; right: 30px; top: 380px; width: 260px; }
+  #side p { margin: 40px 0; }
   #blanket { position: fixed; inset: 0; background: rgba(9, 30, 66, .5); z-index: 500; }
   #dialog { position: fixed; left: 200px; top: 50px; width: 800px; height: 560px; background: #fff;
             z-index: 510; padding: 20px; box-sizing: border-box; }
@@ -15,7 +16,7 @@
   #menu { position: fixed; z-index: 520; background: #fff; border: 1px solid #ccc; padding: 6px;
           display: flex; flex-direction: column; gap: 4px; }
   #menu[hidden] { display: none; }
-  #card { position: fixed; right: 20px; top: 100px; width: 260px; z-index: 510; background: #fff;
+  #card { position: fixed; right: 20px; top: 420px; width: 260px; z-index: 510; background: #fff;
           border: 1px solid #ccc; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
 </style></head>
 <body>
@@ -27,6 +28,11 @@
     <div id="side">
       <button id="open">1 change</button>
       <button id="builds">3 builds</button>
+      <p><a href="#deploys">1 deployment</a></p>
+      <p><a href="#release">Release one</a></p>
+      <p><button>More fields</button></p>
+      <p><button>Add options</button></p>
+      <p><a href="#rules">New rule</a></p>
     </div>
   </main>
 
