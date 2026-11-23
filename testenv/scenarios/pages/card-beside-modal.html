@@ -1,0 +1,111 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Card beside a modal dialog</title>
+<style>
+  body { font: 15px sans-serif; margin: 0; }
+  main { padding: 30px; }
+  #side { position: fixed; right: 30px; top: 60px; width: 260px; }
+  #blanket { position: fixed; inset: 0; background: rgba(9, 30, 66, .5); z-index: 500; }
+  #dialog { position: fixed; left: 200px; top: 50px; width: 800px; height: 560px; background: #fff;
+            z-index: 510; padding: 20px; box-sizing: border-box; }
+  #dialog header { display: flex; gap: 10px; align-items: center; }
+  #dialog h2 { flex: 1; margin: 0; }
+  [role=tablist] { margin: 24px 0; display: flex; gap: 16px; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 10px 6px; border-bottom: 1px solid #ddd; }
+  #menu { position: fixed; z-index: 520; background: #fff; border: 1px solid #ccc; padding: 6px;
+          display: flex; flex-direction: column; gap: 4px; }
+  #menu[hidden] { display: none; }
+  #card { position: fixed; right: 20px; top: 100px; width: 260px; z-index: 510; background: #fff;
+          border: 1px solid #ccc; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+</style></head>
+<body>
+  <!-- The page: an item, with a panel beside it whose link opens the
+       dialog, and a card about that link that stays open beside it. -->
+  <main id="app">
+    <h1>Clock shows the wrong hour</h1>
+    <p>Some readers see every time one hour off.</p>
+    <div id="side">
+      <button id="open">1 change</button>
+      <button id="builds">3 builds</button>
+    </div>
+  </main>
+
+  <!-- The dialog's layer: a dimmed blanket, the dialog, and a menu the
+       dialog opens, put outside the dialog box but in its layer. -->
+  <div id="dialog-layer" hidden>
+    <div id="blanket"></div>
+    <section id="dialog" role="dialog" aria-modal="true" aria-label="Work details">
+      <header>
+        <h2>Work details</h2>
+        <button id="feedback">Send feedback</button>
+        <button id="close" aria-label="Close">&times;</button>
+      </header>
+      <div role="tablist">
+        <button role="tab" id="tab-branches" aria-selected="false">Branches</button>
+        <button role="tab" id="tab-changes" aria-selected="true">Changes</button>
+      </div>
+      <table>
+        <tr><td><a id="change-1" href="#c1">Fix the clock offset</a></td><td>Merged</td>
+            <td><button id="more">2 more people</button></td></tr>
+        <tr><td><a id="change-2" href="#c2">Move the hour table</a></td><td>Closed</td><td></td></tr>
+      </table>
+    </section>
+    <div id="menu" hidden>
+      <button id="person-1">Dana Levi</button>
+      <button id="person-2">Omer Shani</button>
+    </div>
+  </div>
+
+  <!-- The card, in a layer of its own, drawn over the blanket. -->
+  <div id="card-layer" hidden>
+    <div id="card">
+      <a id="card-title" href="#c1">Fix the clock offset</a>
+      <button>Reviewer one</button>
+      <button>Reviewer two</button>
+      <button>Reviewer three</button>
+      <button id="card-more">+1 more change</button>
+    </div>
+  </div>
+
+  <script>
+    // The dialog's focus lock: focus anywhere outside the dialog's layer is
+    // sent back to the dialog's first button at once, and dropped there
+    // before the rest of the page hears that the button got it, as the page
+    // this copies did. Focus ends on nothing.
+    const layer = document.getElementById('dialog-layer');
+    const first = document.getElementById('feedback');
+    let bouncing = false;
+    window.addEventListener('focusin', (e) => {
+      if (layer.hidden) return;
+      if (bouncing && e.target === first) {
+        e.stopImmediatePropagation();
+        first.blur();
+        return;
+      }
+      if (layer.contains(e.target)) return;
+      bouncing = true;
+      first.focus();
+      bouncing = false;
+    }, true);
+
+    // The panel's link opens the dialog, which takes focus and drops it at
+    // once. A moment later the card about that link opens beside it and
+    // stays, as on the page this copies.
+    const open = document.getElementById('open');
+    open.addEventListener('click', () => {
+      layer.hidden = false;
+      first.focus();
+      first.blur();
+      setTimeout(() => { document.getElementById('card-layer').hidden = false; }, 300);
+    });
+
+    const more = document.getElementById('more');
+    const menu = document.getElementById('menu');
+    more.addEventListener('click', () => {
+      const r = more.getBoundingClientRect();
+      menu.style.left = r.left + 'px';
+      menu.style.top = (r.bottom + 4) + 'px';
+      menu.hidden = !menu.hidden;
+    });
+  </script>
+</body></html>

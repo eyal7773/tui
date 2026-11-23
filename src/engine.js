@@ -65,6 +65,7 @@ class SpatialEngine {
         this.observer = null;
         this.focusMonitorInterval = null;
         this.failedFocusElements = new Set(); // Elements that refused focus during this key press
+        this.focusLocks = null; // Parts of the page a modal dialog keeps focus out of (see learnFocusLock)
         this.steppedTo = null; // Where the last arrow step landed, as opposed to focus the page placed
         this.leavingBar = null; // The bottom bar a step down is leaving (see belowBottomBar)
         this.leftBar = null; // The bottom bar the ring stepped down out of, passed by after
@@ -3007,6 +3008,52 @@ class SpatialEngine {
         return el;
     }
 
+    /**
+     * A modal dialog that took focus straight back from el, the moment el got
+     * it, keeps the part of the page el is in out of reach while it is open.
+     * On Jira a pull request's card, opened from the panel behind the
+     * Development dialog, stays open beside it, over the dimmed page. Every arrow tried the
+     * card's links first; the dialog sent focus back to its own first button
+     * and the page then dropped it, so the ring never moved. The part locked
+     * out is the widest box around el that holds nothing of the dialog: a
+     * menu the dialog opens is put outside it too, beside it, and still
+     * takes focus.
+     */
+    learnFocusLock(el, moves) {
+        const back = moves.find(m => m && m !== el && !this.composedContains(el, m));
+        if (!back || !moves.some(m => m === el || this.composedContains(el, m))) return;
+        let modal;
+        try {
+            modal = this.composedClosest(back, 'dialog:modal, [aria-modal="true"]');
+        } catch (e) {
+            modal = this.composedClosest(back, '[aria-modal="true"]'); // :modal unsupported
+        }
+        if (!modal || this.composedContains(modal, el)) return;
+        let branch = el;
+        for (let up = this.composedParent(branch); up && up !== document.documentElement &&
+            !this.composedContains(up, modal); up = this.composedParent(branch)) {
+            branch = up;
+        }
+        if (!this.focusLocks) this.focusLocks = new Map();
+        this.focusLocks.set(branch, modal);
+        LOG.event('focus-lock', { dialog: LOG.describe(modal), out: LOG.describe(branch) });
+    }
+
+    /** Whether el refused focus this press, or a dialog keeps it out of reach (see learnFocusLock). */
+    refusedFocus(el) {
+        if (this.failedFocusElements.has(el)) return true;
+        if (!this.focusLocks) return false;
+        for (const [branch, modal] of this.focusLocks) {
+            // Only while that dialog is open and the part still on the page.
+            if (!modal.isConnected || !branch.isConnected || !modal.getClientRects().length) {
+                this.focusLocks.delete(branch);
+                continue;
+            }
+            if (this.composedContains(branch, el)) return true;
+        }
+        return false;
+    }
+
     /** parentElement, stepping from a shadow root's top out to its host. */
     composedParent(node) {
         if (!node) return null;
@@ -3536,7 +3583,7 @@ class SpatialEngine {
             // Without the ones that just refused focus, or a retry picks the
             // same one again.
             const onScreen = window.TuiViewRules
-                ? this.candidates.filter(c => !this.failedFocusElements.has(c) && window.TuiViewRules.onScreen(this.rectOf(c)))
+                ? this.candidates.filter(c => !this.refusedFocus(c) && window.TuiViewRules.onScreen(this.rectOf(c)))
                 : [];
             // Tested at the middle of the part on screen: a carousel card
             // half past the left edge has its middle off the window, where
@@ -3645,7 +3692,7 @@ class SpatialEngine {
             }
 
             // 5. Skip elements that recently failed to receive focus
-            if (this.failedFocusElements.has(cand)) {
+            if (this.refusedFocus(cand)) {
                 return;
             }
 
@@ -4210,22 +4257,39 @@ class SpatialEngine {
             el._tui_tabindex = true;
         }
         const focusBefore = this.deepActiveElement();
-        el.focus();
-
-        // Nor can a link without an href, which pages drive from a click
-        // handler: Le Monde's consent wall is made of them, focus stayed on
-        // the body, and the ring went round the whole page. Given a
-        // tabindex, it takes focus like the control it stands for.
-        // (Chrome reports tabIndex 0 for such a link, so the attribute decides.)
-        // Only when focus went nowhere at all: a label hands it to its input.
-        // Nor for a disabled control, which refuses focus for that alone,
-        // and would keep the -1 once enabled (see the candidate filter).
-        if (this.deepActiveElement() === focusBefore && focusBefore !== el &&
-            el.tagName !== 'LABEL' && !el.disabled && !el.hasAttribute('tabindex')) {
-            el.setAttribute('tabindex', '-1');
-            el._tui_tabindex = true;
+        // Where focus went while el.focus() ran, to see a modal dialog take
+        // it back (see learnFocusLock). Also where it was headed as it left
+        // an element: Jira drops it on the dialog's button before anyone
+        // hears that the button got it.
+        const moves = [];
+        const seen = (e) => {
+            if (e.type === 'focusin') moves.push(e.composedPath ? e.composedPath()[0] : e.target);
+            else if (e.relatedTarget) moves.push(e.relatedTarget);
+        };
+        document.addEventListener('focusin', seen, true);
+        document.addEventListener('focusout', seen, true);
+        try {
             el.focus();
+
+            // Nor can a link without an href, which pages drive from a click
+            // handler: Le Monde's consent wall is made of them, focus stayed on
+            // the body, and the ring went round the whole page. Given a
+            // tabindex, it takes focus like the control it stands for.
+            // (Chrome reports tabIndex 0 for such a link, so the attribute decides.)
+            // Only when focus went nowhere at all: a label hands it to its input.
+            // Nor for a disabled control, which refuses focus for that alone,
+            // and would keep the -1 once enabled (see the candidate filter).
+            if (this.deepActiveElement() === focusBefore && focusBefore !== el &&
+                el.tagName !== 'LABEL' && !el.disabled && !el.hasAttribute('tabindex')) {
+                el.setAttribute('tabindex', '-1');
+                el._tui_tabindex = true;
+                el.focus();
+            }
+        } finally {
+            document.removeEventListener('focusin', seen, true);
+            document.removeEventListener('focusout', seen, true);
         }
+        this.learnFocusLock(el, moves);
 
         // CRITICAL FIX: Check if focusing this element caused a DIFFERENT element to get focus
         // This can happen with:
@@ -4348,7 +4412,7 @@ class SpatialEngine {
     firstInside(box) {
         if (!box || !window.TuiViewRules) return null;
         const inside = this.candidates.filter(c => c !== box && this.composedContains(box, c) &&
-            !this.failedFocusElements.has(c) && window.TuiViewRules.onScreen(this.rectOf(c)));
+            !this.refusedFocus(c) && window.TuiViewRules.onScreen(this.rectOf(c)));
         // A box around one control is a wrapper that took focus for it,
         // not a place to enter. Booking re-renders its destination field, so
         // the wrapper's input is not the one stepped to, and the ring went
@@ -4367,7 +4431,7 @@ class SpatialEngine {
 
     /** The stops inside el, el itself left out. */
     stopsInside(el) {
-        return this.candidates.filter(c => c !== el && this.composedContains(el, c) && !this.failedFocusElements.has(c));
+        return this.candidates.filter(c => c !== el && this.composedContains(el, c) && !this.refusedFocus(c));
     }
 
     /**
@@ -4397,7 +4461,7 @@ class SpatialEngine {
         const stops = new Set(this.candidates);
         for (let node = this.composedParent(el); node && node !== document.body && node !== document.documentElement;
             node = this.composedParent(node)) {
-            if (stops.has(node) && !this.failedFocusElements.has(node)) return node;
+            if (stops.has(node) && !this.refusedFocus(node)) return node;
             const head = this.headRect(node, node.getBoundingClientRect());
             if (!head) continue;
             const inHead = this.stopsInside(node).filter(c => {

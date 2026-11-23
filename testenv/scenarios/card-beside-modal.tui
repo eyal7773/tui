@@ -1,0 +1,14 @@
+# A card about the link that opened a modal dialog stays open beside it, outside it, and the dialog takes focus straight back from anything outside: the arrows tried the card on every press and the ring never moved. A menu the dialog opens outside its own box is still reached.
+pages/card-beside-modal.html
+start:css=#open
+key:Enter
+wait:800
+key:ArrowDown
+expect:css=#more
+key:ArrowDown
+expect:css=#change-2
+start:css=#more
+key:Enter
+wait:200
+key:ArrowDown
+expect:css=#person-1
