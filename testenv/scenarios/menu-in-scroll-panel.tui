@@ -1,0 +1,11 @@
+# An issue's "..." menu pinned to the window inside a side panel that scrolls on its own, which takes focus straight back from anything outside it. ArrowDown from the menu's first item was kept to the panel's buttons, which the menu refused, and the ring never moved. The panel's scrolling moves nothing in the menu, so the menu's next item is reached.
+pages/menu-in-scroll-panel.html
+start:css=#more
+key:Enter
+wait:200
+key:ArrowDown
+expect:css=#flag
+key:ArrowDown*2
+expect:css=#clone
+key:ArrowUp*3
+expect:css=#log

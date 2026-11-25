@@ -2379,13 +2379,19 @@ class SpatialEngine {
             // link went to the folders on the left, and the rest of the
             // message could not be read. A bar pinned inside the box, such as
             // the message's Reply bar, waits for the box's end too.
+            // Only when the ring's element scrolls with the box: from a menu
+            // pinned inside it, the box's scrolling moves nothing the ring is
+            // in. On Jira the issue's "..." menu lies in the side panel, and
+            // ArrowDown from its first item was kept to the panel's buttons
+            // behind it, which the open menu would not let take focus.
             let scrollBox = null;
             if (target && !direct && mode !== 'extreme' && current && current !== document.body &&
                 (key === 'ArrowDown' || key === 'ArrowUp')) {
                 const box = this.scrollBoxOf(current, key);
                 // Not for the menu the ring's element opened, which lies outside
                 // the box, against it (see adjoinsRing).
-                if (box && !this.inScrollBox(box, target) && !this.adjoinsRing(target, currentRect)) {
+                if (box && this.inScrollBox(box, current) &&
+                    !this.inScrollBox(box, target) && !this.adjoinsRing(target, currentRect)) {
                     this.keepInside = box;
                     try { target = this.findBestCandidate(currentRect, key, current, mode); }
                     finally { this.keepInside = null; }
