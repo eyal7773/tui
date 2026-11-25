@@ -18,6 +18,8 @@
  *   expect:<what>    fail unless the ring is on that element
  *   expect-not:<what> fail if it is; for pages whose right answer changes
  *   expect-ring:<what> fail unless the ring is drawn around it, focus or not
+ *   expect-no-ring   fail if the page's ring is shown at all (a frame's own
+ *                    ring is not looked at)
  *   expect-badge:<text> fail unless the toolbar badge for the tab reads <text>
  *                    (expect-badge: with nothing after it: no badge)
  *   click:<what>     a real mouse click
@@ -361,6 +363,17 @@ async function runStep(page, step, state) {
             const r = await ring(page);
             if (hit === want) console.log(`  PASS   ring is ${want ? '' : 'not '}on "${arg}"`);
             else { console.log(`  FAIL   expected ${want ? '' : 'anything but '}"${arg}", ring is on ${fmt(r.ring)}`); state.failed++; }
+            break;
+        }
+        case 'expect-no-ring': {
+            const shown = await page.evaluate(() => {
+                const spot = document.getElementById('tui-spotlight');
+                if (!spot || getComputedStyle(spot).display === 'none') return null;
+                const s = spot.getBoundingClientRect();
+                return `@${Math.round(s.left)},${Math.round(s.top)} ${Math.round(s.width)}x${Math.round(s.height)}`;
+            });
+            if (!shown) console.log('  PASS   no ring on the page');
+            else { console.log(`  FAIL   expected no ring, a ring is drawn ${shown}`); state.failed++; }
             break;
         }
         case 'expect-badge': {

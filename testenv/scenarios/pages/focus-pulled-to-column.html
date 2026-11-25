@@ -1,0 +1,33 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Focus pulled back to a column</title>
+<style>
+  body { font: 16px sans-serif; margin: 0; background: #666; }
+  #dialog { position: fixed; left: 60px; top: 40px; right: 60px; bottom: 40px; background: #fff; display: flex; }
+  /* The dialog's left column scrolls on its own and takes focus for that. */
+  #column { flex: 1; overflow: auto; padding: 20px; }
+  #side { width: 300px; padding: 20px; border-left: 1px solid #ccc; }
+  .heading { display: inline-block; padding: 4px 8px 4px 0; font-size: 20px; }
+  .tabs button { margin-right: 8px; }
+  p { height: 300px; }
+</style></head>
+<body>
+  <!-- An issue opened in a dialog. Its section heading's button takes focus, and the
+       page then moves focus on to the whole scrolling column around it; the
+       ring went round the column. -->
+  <section id="dialog" role="dialog" aria-modal="true" aria-label="Issue">
+    <div id="column" tabindex="0">
+      <h2>Retry the upload after a timeout</h2>
+      <button id="add">Add</button> <button id="link">Link</button>
+      <div><div id="details" class="heading"><div><button id="toggle" aria-label="Collapse details" style="width: 24px; height: 24px">▾</button> <span>Details</span></div></div></div>
+      <div class="tabs" role="tablist"><button id="general" role="tab">General</button><button role="tab">Notes</button></div>
+      <p>A long description of the issue.</p>
+      <button id="comment">Add a comment</button>
+      <p>More of it.</p>
+    </div>
+    <div id="side"><button>To do</button><p>Assignee: Sam Reed</p></div>
+  </section>
+  <script>
+    const column = document.getElementById('column');
+    document.getElementById('toggle').addEventListener('focus', () => setTimeout(() => column.focus(), 100));
+  </script>
+</body></html>

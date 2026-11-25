@@ -1,0 +1,11 @@
+# An app in one frame filling the window under the header, with an item open in a dialog of the host page. Closing the dialog with Enter gives focus back to the frame, and the ring went round the whole frame, out on the host page. The frame draws its own ring, so the host page's is hidden, and the next arrow moves inside the frame.
+pages/frame-takes-focus.html
+start:css=#key
+key:ArrowRight
+expect:css=#close
+key:Enter
+wait:600
+expect-no-ring
+key:ArrowDown
+wait:300
+expect:css=#launch

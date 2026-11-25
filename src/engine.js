@@ -2185,6 +2185,40 @@ class SpatialEngine {
                     return;
                 }
 
+                // The page took focus back to a box around the ring's
+                // element, one holding other stops too: the ring stays on
+                // the element, and Enter still clicks it. On Jira, ArrowUp
+                // reached an issue dialog's "Key details" heading, the page
+                // moved focus to the dialog's whole scrolling column, and the
+                // ring went round the column. A box around this one element
+                // alone is its wrapper, which focusElement rings instead.
+                // So is the wrapper round a text box, which Escape gives
+                // focus back to, with the box's label beside it.
+                const ring = this.lastActiveElement;
+                if (this.isActiveMode && ring && ring.isConnected && ring !== active && !active._tui_input &&
+                    this.composedContains(active, ring) &&
+                    this.stopsInside(active).some(c => c !== ring && !this.composedContains(ring, c) && !this.composedContains(c, ring))) {
+                    active._tui_activate = ring;
+                    LOG.event('focus', { result: 'kept-inside', el: LOG.describe(ring), focused: LOG.describe(active) });
+                    this.stopFocusMonitor();
+                    return;
+                }
+
+                // Focus went into a frame, which draws its own ring: one
+                // round the whole frame out here shows nothing of where it
+                // is. On Jira, closing an issue dialog gave focus back to the
+                // board's frame, and the ring went round all of it.
+                if (this.isTrapElement(active)) {
+                    this.lastActiveElement = active;
+                    this.isActiveMode = false;
+                    if (this.spotlight) this.spotlight.style.display = 'none';
+                    LOG.event('focus', { result: 'into-frame', el: LOG.describe(active) });
+                    this.stopFocusMonitor();
+                    return;
+                }
+
+                // An aim left from a bounce long ago is not this focus's.
+                active._tui_activate = null;
                 this.lastActiveElement = active;
                 this.highlight(active);
                 // Once found, we can stop polling to save resources

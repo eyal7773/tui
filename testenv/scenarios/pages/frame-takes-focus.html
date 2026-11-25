@@ -1,0 +1,29 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Focus given back to a frame</title>
+<style>
+  body { font: 15px sans-serif; margin: 0; }
+  header { position: fixed; top: 0; left: 0; right: 0; height: 48px; background: #eee; }
+  header button { margin: 8px; height: 30px; }
+  /* An app drawn in one frame under the header, nearly the whole window. */
+  #app { position: fixed; top: 48px; left: 0; width: 100%; height: calc(100% - 48px); border: 0; }
+  #dialog { position: fixed; left: 200px; top: 100px; width: 500px; height: 300px; background: #fff;
+            border: 1px solid #888; z-index: 5; padding: 20px; }
+</style></head>
+<body>
+  <!-- A tracker's board app lives in a frame; an item opens in a dialog of
+       the host page. Closing the dialog gives focus back to the frame, and
+       the ring went round the whole frame, out here, while the frame's own
+       ring is the one that moves. -->
+  <header><button id="search">Search</button><button id="create">Create</button></header>
+  <iframe id="app" title="Board" src="page-frame-inner.html"></iframe>
+  <div id="dialog" role="dialog" aria-label="Item">
+    <a id="key" href="#item">ITEM-12</a> <button id="close">Close</button>
+    <p>Rename the export button</p>
+  </div>
+  <script>
+    document.getElementById('close').addEventListener('click', () => {
+      document.getElementById('dialog').remove();
+      setTimeout(() => document.getElementById('app').focus(), 100);
+    });
+  </script>
+</body></html>

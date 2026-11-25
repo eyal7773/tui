@@ -1,0 +1,13 @@
+# A section heading's button in a dialog's scrolling column: once it has focus, the page moves focus on to the whole column, and the ring went round the column. The ring stays on the button, and the arrows go on from it.
+pages/focus-pulled-to-column.html
+start:css=#general
+key:ArrowUp
+wait:500
+expect-ring:css=#toggle
+key:ArrowUp
+expect:css=#add
+key:ArrowDown
+wait:500
+expect-ring:css=#toggle
+key:ArrowDown
+expect:css=#general
